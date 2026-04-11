@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-navy: #0f1b2d;
+  --color-navy-light: #162036;
+  --color-gold: #c9a85c;
+  --color-gold-light: #e8d5a0;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background-color: var(--color-navy);
+  color: white;
+}
+
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--color-navy); }
+::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
