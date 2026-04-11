@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { supabase } from '@/lib/db';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  const audit = await prisma.audit.findUnique({ where: { id } });
-  if (!audit) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  const { data: audit, error } = await supabase
+    .from('Audit')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (error || !audit) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   const response: Record<string, unknown> = {
     id: audit.id,

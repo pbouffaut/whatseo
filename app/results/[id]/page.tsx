@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/db';
+import { supabase } from '@/lib/db';
 import { notFound, redirect } from 'next/navigation';
 import ScoreGauge from '@/components/ScoreGauge';
 import ScoreBreakdown from '@/components/ScoreBreakdown';
@@ -16,7 +16,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 export default async function ResultsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const audit = await prisma.audit.findUnique({ where: { id } });
+  const { data: audit } = await supabase.from('Audit').select('*').eq('id', id).single();
 
   if (!audit) notFound();
   if (audit.status !== 'complete') redirect(`/analyze?id=${id}`);
@@ -28,7 +28,6 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
     weight: (val as { weight: number }).weight,
   }));
 
-  // Collect all checks
   const allChecks: { name: string; status: string; message: string; category: string }[] = [];
   for (const [cat, data] of Object.entries(results)) {
     if (data && typeof data === 'object' && 'checks' in data) {
@@ -44,7 +43,6 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
   return (
     <div className="min-h-screen pt-24 pb-16 px-6">
       <div className="max-w-3xl mx-auto">
-        {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-3xl font-bold mb-2">SEO Audit Results</h1>
           <p className="text-gray-500">{audit.url}</p>
@@ -53,17 +51,14 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
           </p>
         </div>
 
-        {/* Score */}
         <div className="flex justify-center mb-12">
           <ScoreGauge score={audit.score || 0} />
         </div>
 
-        {/* Breakdown */}
         <div className="flex justify-center mb-16">
           <ScoreBreakdown categories={categories} />
         </div>
 
-        {/* Issues */}
         {issues.length > 0 && (
           <div className="bg-navy-light rounded-xl border border-white/5 p-6 mb-6">
             <h2 className="text-lg font-semibold mb-4 text-red-400">Top Issues</h2>
@@ -81,7 +76,6 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
           </div>
         )}
 
-        {/* Wins */}
         {wins.length > 0 && (
           <div className="bg-navy-light rounded-xl border border-white/5 p-6 mb-12">
             <h2 className="text-lg font-semibold mb-4 text-green-400">What&apos;s Working</h2>
@@ -99,7 +93,6 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
           </div>
         )}
 
-        {/* Actions */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <button disabled className="px-6 py-3 bg-white/5 text-gray-500 rounded-lg font-semibold cursor-not-allowed">
             Download PDF (Coming Soon)

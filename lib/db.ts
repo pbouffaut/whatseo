@@ -1,7 +1,11 @@
-import { PrismaClient } from '@/app/generated/prisma';
+import { createClient } from '@supabase/supabase-js';
 
-const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-export const prisma = globalForPrisma.prisma || new PrismaClient();
+export const supabase = createClient(supabaseUrl, supabaseKey);
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+// Helper to generate cuid-like IDs
+export function generateId(): string {
+  return crypto.randomUUID();
+}
