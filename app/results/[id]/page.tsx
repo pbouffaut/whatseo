@@ -51,9 +51,17 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
           </p>
         </div>
 
-        <div className="flex justify-center mb-12">
+        <div className="flex justify-center mb-6">
           <ScoreGauge score={audit.score || 0} />
         </div>
+
+        {(audit.score || 0) < 50 && (
+          <div className="bg-white/5 rounded-lg px-4 py-3 mb-12 text-center max-w-xl mx-auto">
+            <p className="text-xs text-gray-500">
+              <span className="text-gold font-medium">Low score?</span> This is normal for homepages that are minimal (like search engines) or heavily app-based. Large brands often rely on domain authority rather than on-page SEO. The score reflects technical SEO best practices that matter most for businesses competing for organic rankings.
+            </p>
+          </div>
+        )}
 
         <div className="flex justify-center mb-16">
           <ScoreBreakdown categories={categories} />
