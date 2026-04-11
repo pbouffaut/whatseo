@@ -93,12 +93,109 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
           </div>
         )}
 
+        {/* Upsell Section */}
+        <div className="relative bg-gradient-to-br from-navy-light to-[#1a2a45] rounded-2xl border-2 border-gold/30 p-8 mb-12 overflow-hidden">
+          {/* Glow effect */}
+          <div className="absolute -top-20 -right-20 w-60 h-60 bg-gold/5 rounded-full blur-3xl" />
+          <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-gold/5 rounded-full blur-3xl" />
+
+          <div className="relative">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="bg-gold/10 text-gold text-xs font-bold px-3 py-1 rounded-full border border-gold/20">FREE AUDIT LIMITATION</span>
+            </div>
+            <h2 className="text-2xl font-bold mb-3">
+              This scan only checked <span className="text-gold">one page</span>.
+              <br />
+              Your full site tells a different story.
+            </h2>
+            <p className="text-gray-400 mb-6 max-w-2xl">
+              The free audit analyzes your homepage against 47 criteria. But the issues costing you the most traffic are often hiding deeper &mdash; in your location pages, blog posts, product pages, and site architecture.
+            </p>
+
+            <div className="grid md:grid-cols-2 gap-6 mb-8">
+              <div>
+                <h3 className="text-sm font-semibold text-gold mb-3 uppercase tracking-wider">What the free audit checks</h3>
+                <ul className="space-y-2">
+                  {['Homepage title & meta tags', 'Basic schema detection', 'Image alt text on one page', 'Single-page performance', 'Surface-level content check'].map((item) => (
+                    <li key={item} className="flex items-center gap-2 text-sm text-gray-500">
+                      <span className="text-gray-600">{'\u2713'}</span> {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-gold mb-3 uppercase tracking-wider">What a Full Audit uncovers</h3>
+                <ul className="space-y-2">
+                  {[
+                    'Every page crawled & analyzed (up to 500)',
+                    'Real Google Search Console data (your actual clicks, impressions, rankings)',
+                    'Google Analytics organic traffic & conversion data',
+                    'Real user Core Web Vitals (not just lab tests)',
+                    'Schema markup for every page + ready-to-use code',
+                    'Thin content & index bloat detection',
+                    'Local SEO & Google Business Profile signals',
+                    'AI search readiness (ChatGPT, Perplexity, AI Overviews)',
+                    'Competitor visibility analysis',
+                    'Blog & content strategy audit',
+                  ].map((item) => (
+                    <li key={item} className="flex items-center gap-2 text-sm text-white">
+                      <span className="text-gold">{'\u2713'}</span> {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            <div className="bg-white/5 rounded-xl p-6 mb-8 border border-white/5">
+              <h3 className="text-lg font-semibold mb-4">What you get with a Full Audit</h3>
+              <div className="grid sm:grid-cols-3 gap-4">
+                <div className="text-center p-4">
+                  <div className="text-3xl font-bold text-gold mb-1">PDF</div>
+                  <div className="text-xs text-gray-400">Professional report with executive summary, data visualizations, and methodology</div>
+                </div>
+                <div className="text-center p-4">
+                  <div className="text-3xl font-bold text-gold mb-1">Tickets</div>
+                  <div className="text-xs text-gray-400">Prioritized dev tickets with effort estimates, acceptance criteria &mdash; ready for Jira/Linear</div>
+                </div>
+                <div className="text-center p-4">
+                  <div className="text-3xl font-bold text-gold mb-1">Code</div>
+                  <div className="text-xs text-gray-400">Production-ready schema components, config files, and implementation guide</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-navy/50 rounded-xl p-5 mb-8 border border-gold/10">
+              <p className="text-sm text-gray-300 leading-relaxed">
+                <span className="text-gold font-semibold">Real example:</span> A recent full audit on a 200+ location website uncovered that broken title tags were costing <span className="text-white font-semibold">38,000&ndash;69,000 clicks per quarter</span>, zero schema markup was hiding them from rich results, and 1,500+ thin pages were wasting crawl budget. Total estimated impact: <span className="text-white font-semibold">+$150K&ndash;$250K/quarter</span> in organic traffic value. The fixes took 2 weeks of engineering time.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center gap-6">
+              <div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-4xl font-bold text-white">$299</span>
+                  <span className="text-gray-500">one-time</span>
+                </div>
+                <p className="text-xs text-gray-600 mt-1">
+                  <span className="line-through">$15,000+</span> at a traditional SEO agency
+                </p>
+              </div>
+              <a
+                href={`mailto:hello@whatseo.ai?subject=Full%20SEO%20Audit%20Request&body=I%20ran%20a%20free%20audit%20on%20${encodeURIComponent(audit.url)}%20and%20scored%20${audit.score}%2F100.%20I%E2%80%99d%20like%20to%20get%20a%20full%20audit%20with%20Google%20Search%20Console%20data%2C%20multi-page%20crawl%2C%20and%20the%20complete%20report.`}
+                className="bg-gold text-navy px-8 py-4 rounded-xl font-bold text-lg hover:bg-gold-light transition-colors text-center"
+              >
+                Get Your Full Audit &rarr;
+              </a>
+            </div>
+            <p className="text-xs text-gray-600 mt-4">
+              Includes 30-day money-back guarantee. Report delivered within 24 hours.
+            </p>
+          </div>
+        </div>
+
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <button disabled className="px-6 py-3 bg-white/5 text-gray-500 rounded-lg font-semibold cursor-not-allowed">
-            Download PDF (Coming Soon)
-          </button>
-          <Link href="/" className="px-6 py-3 bg-gold text-navy rounded-lg font-semibold text-center hover:bg-gold-light transition-colors">
-            Run Another Audit
+          <Link href="/" className="px-6 py-3 bg-white/5 text-gray-400 rounded-lg font-semibold text-center hover:bg-white/10 transition-colors">
+            Run Another Free Audit
           </Link>
         </div>
       </div>
