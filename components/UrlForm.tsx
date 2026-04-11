@@ -28,7 +28,7 @@ export default function UrlForm({ compact = false }: { compact?: boolean }) {
           onChange={(e) => setUrl(e.target.value)}
           placeholder="https://yourwebsite.com"
           required
-          className="flex-1 px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-colors"
+          className="flex-1 px-5 py-3.5 rounded-xl bg-warm-white/5 border border-warm-white/10 text-warm-white placeholder-warm-gray-light focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-colors text-base"
         />
         <input
           type="email"
@@ -36,12 +36,12 @@ export default function UrlForm({ compact = false }: { compact?: boolean }) {
           onChange={(e) => setEmail(e.target.value)}
           placeholder="you@company.com"
           required
-          className="flex-1 px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-colors"
+          className="flex-1 px-5 py-3.5 rounded-xl bg-warm-white/5 border border-warm-white/10 text-warm-white placeholder-warm-gray-light focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-colors text-base"
         />
         <button
           type="submit"
           disabled={loading}
-          className="px-6 py-3 bg-gold text-navy font-semibold rounded-lg hover:bg-gold-light transition-colors disabled:opacity-60 flex items-center justify-center gap-2 min-w-[180px]"
+          className="px-8 py-3.5 bg-gold text-dark font-semibold rounded-full hover:bg-gold-light transition-colors disabled:opacity-60 flex items-center justify-center gap-2 min-w-[200px] text-base"
         >
           {loading ? (
             <>
@@ -52,7 +52,7 @@ export default function UrlForm({ compact = false }: { compact?: boolean }) {
               Analyzing...
             </>
           ) : (
-            'Analyze My Site \u2192'
+            'Start Your Audit'
           )}
         </button>
       </div>

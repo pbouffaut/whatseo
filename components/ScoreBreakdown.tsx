@@ -9,9 +9,9 @@ interface Category {
 }
 
 function getColor(score: number) {
-  if (score < 40) return 'bg-red-500';
-  if (score < 70) return 'bg-amber-500';
-  return 'bg-green-500';
+  if (score < 40) return 'bg-[#e05555]';
+  if (score < 70) return 'bg-[#d4952b]';
+  return 'bg-[#4aab6a]';
 }
 
 export default function ScoreBreakdown({ categories }: { categories: Category[] }) {
@@ -20,13 +20,13 @@ export default function ScoreBreakdown({ categories }: { categories: Category[] 
       {categories.map((cat, i) => (
         <div key={cat.name}>
           <div className="flex justify-between items-baseline mb-1">
-            <span className="text-sm font-medium text-gray-300">{cat.name}</span>
+            <span className="text-sm font-medium text-warm-white">{cat.name}</span>
             <div className="flex items-baseline gap-2">
-              <span className="text-xs text-gray-600">{cat.weight}%</span>
-              <span className="text-sm font-semibold text-white">{cat.score}/100</span>
+              <span className="text-xs text-warm-gray-light">{cat.weight}%</span>
+              <span className="text-sm font-semibold text-warm-white">{cat.score}/100</span>
             </div>
           </div>
-          <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+          <div className="h-2 bg-warm-white/8 rounded-full overflow-hidden">
             <motion.div
               className={`h-full rounded-full ${getColor(cat.score)}`}
               initial={{ width: 0 }}

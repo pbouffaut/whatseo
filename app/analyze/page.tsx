@@ -4,10 +4,10 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback, Suspense } from 'react';
 
 const MESSAGES = [
-  'Fetching your website...',
-  'Checking technical SEO...',
-  'Analyzing page structure...',
-  'Detecting schema markup...',
+  'Connecting to your website...',
+  'Analyzing technical foundation...',
+  'Reviewing page structure...',
+  'Detecting structured data...',
   'Measuring performance...',
   'Evaluating content quality...',
   'Checking AI readiness...',
@@ -40,13 +40,11 @@ function AnalyzeInner() {
     if (url && email) startAnalysis();
   }, [url, email, startAnalysis]);
 
-  // Rotate messages
   useEffect(() => {
     const interval = setInterval(() => setMsgIndex((i) => (i + 1) % MESSAGES.length), 2500);
     return () => clearInterval(interval);
   }, []);
 
-  // Poll status
   useEffect(() => {
     if (!auditId) return;
     const interval = setInterval(async () => {
@@ -64,8 +62,8 @@ function AnalyzeInner() {
     return (
       <div className="min-h-screen flex items-center justify-center px-6">
         <div className="text-center">
-          <div className="text-red-400 text-lg mb-4">{error}</div>
-          <button onClick={() => router.push('/')} className="px-6 py-3 bg-gold text-navy rounded-lg font-semibold">
+          <div className="text-[#e05555] text-lg mb-4">{error}</div>
+          <button onClick={() => router.push('/')} className="px-8 py-3.5 bg-gold text-dark rounded-full font-semibold hover:bg-gold-light transition-colors">
             Try Again
           </button>
         </div>
@@ -82,8 +80,8 @@ function AnalyzeInner() {
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
           </svg>
         </div>
-        <h1 className="text-2xl font-bold mb-2">Analyzing your site</h1>
-        <p className="text-gray-500 mb-6 text-sm max-w-md">{url}</p>
+        <h1 className="font-serif text-3xl text-warm-white mb-3">Analyzing your site</h1>
+        <p className="text-warm-gray mb-8 text-sm max-w-md">{url}</p>
         <p className="text-gold font-medium animate-pulse">{MESSAGES[msgIndex]}</p>
       </div>
     </div>
@@ -92,7 +90,7 @@ function AnalyzeInner() {
 
 export default function AnalyzePage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><p className="text-gray-500">Loading...</p></div>}>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><p className="text-warm-gray">Loading...</p></div>}>
       <AnalyzeInner />
     </Suspense>
   );

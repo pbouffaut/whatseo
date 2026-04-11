@@ -41,24 +41,27 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
   const wins = allChecks.filter((c) => c.status === 'pass').slice(0, 5);
 
   return (
-    <div className="min-h-screen pt-24 pb-16 px-6">
+    <div className="min-h-screen pt-28 pb-16 px-6">
       <div className="max-w-3xl mx-auto">
-        <div className="text-center mb-12">
-          <h1 className="text-3xl font-bold mb-2">SEO Audit Results</h1>
-          <p className="text-gray-500">{audit.url}</p>
-          <p className="text-xs text-gray-600 mt-1">
+        {/* Header */}
+        <div className="text-center mb-14">
+          <p className="text-gold text-sm uppercase tracking-[0.2em] font-semibold mb-3">Audit Complete</p>
+          <h1 className="font-serif text-3xl md:text-4xl text-warm-white mb-3">Your SEO Audit</h1>
+          <p className="text-warm-gray">{audit.url}</p>
+          <p className="text-xs text-warm-gray-light mt-2">
             Analyzed {new Date(audit.createdAt).toLocaleDateString()} in {Math.round((results.duration || 0) / 1000)}s
           </p>
         </div>
 
+        {/* Score */}
         <div className="flex justify-center mb-6">
           <ScoreGauge score={audit.score || 0} />
         </div>
 
         {(audit.score || 0) < 50 && (
-          <div className="bg-white/5 rounded-lg px-4 py-3 mb-12 text-center max-w-xl mx-auto">
-            <p className="text-xs text-gray-500">
-              <span className="text-gold font-medium">Low score?</span> This is normal for homepages that are minimal (like search engines) or heavily app-based. Large brands often rely on domain authority rather than on-page SEO. The score reflects technical SEO best practices that matter most for businesses competing for organic rankings.
+          <div className="bg-warm-white/5 rounded-xl px-5 py-3 mb-12 text-center max-w-xl mx-auto">
+            <p className="text-xs text-warm-gray">
+              <span className="text-gold font-medium">Low score?</span> This is normal for minimal homepages or heavily app-based sites. Large brands often rely on domain authority rather than on-page SEO. The score reflects best practices that matter most for businesses competing for organic rankings.
             </p>
           </div>
         )}
@@ -67,16 +70,17 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
           <ScoreBreakdown categories={categories} />
         </div>
 
+        {/* Issues */}
         {issues.length > 0 && (
-          <div className="bg-navy-light rounded-xl border border-white/5 p-6 mb-6">
-            <h2 className="text-lg font-semibold mb-4 text-red-400">Top Issues</h2>
+          <div className="bg-dark-card rounded-2xl border border-warm-white/8 p-6 mb-6">
+            <h2 className="text-lg font-semibold mb-4 text-[#e05555]">Top Issues</h2>
             <ul className="space-y-3">
               {issues.map((c, i) => (
                 <li key={i} className="flex items-start gap-3">
-                  <span className="w-2 h-2 rounded-full bg-red-500 mt-2 shrink-0" />
+                  <span className="w-2 h-2 rounded-full bg-[#e05555] mt-2 shrink-0" />
                   <div>
-                    <div className="text-sm font-medium">{c.name}</div>
-                    <div className="text-xs text-gray-500">{c.message}</div>
+                    <div className="text-sm font-medium text-warm-white">{c.name}</div>
+                    <div className="text-xs text-warm-gray">{c.message}</div>
                   </div>
                 </li>
               ))}
@@ -84,16 +88,17 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
           </div>
         )}
 
+        {/* Wins */}
         {wins.length > 0 && (
-          <div className="bg-navy-light rounded-xl border border-white/5 p-6 mb-12">
-            <h2 className="text-lg font-semibold mb-4 text-green-400">What&apos;s Working</h2>
+          <div className="bg-dark-card rounded-2xl border border-warm-white/8 p-6 mb-12">
+            <h2 className="text-lg font-semibold mb-4 text-[#4aab6a]">What&apos;s Working</h2>
             <ul className="space-y-3">
               {wins.map((c, i) => (
                 <li key={i} className="flex items-start gap-3">
-                  <span className="w-2 h-2 rounded-full bg-green-500 mt-2 shrink-0" />
+                  <span className="w-2 h-2 rounded-full bg-[#4aab6a] mt-2 shrink-0" />
                   <div>
-                    <div className="text-sm font-medium">{c.name}</div>
-                    <div className="text-xs text-gray-500">{c.message}</div>
+                    <div className="text-sm font-medium text-warm-white">{c.name}</div>
+                    <div className="text-xs text-warm-gray">{c.message}</div>
                   </div>
                 </li>
               ))}
@@ -101,52 +106,49 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
           </div>
         )}
 
-        {/* Upsell Section */}
-        <div className="relative bg-gradient-to-br from-navy-light to-[#1a2a45] rounded-2xl border-2 border-gold/30 p-8 mb-12 overflow-hidden">
-          {/* Glow effect */}
+        {/* Upsell */}
+        <div className="relative bg-gradient-to-br from-dark-card to-dark-warm rounded-2xl border border-gold/20 p-8 md:p-10 mb-12 overflow-hidden">
           <div className="absolute -top-20 -right-20 w-60 h-60 bg-gold/5 rounded-full blur-3xl" />
           <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-gold/5 rounded-full blur-3xl" />
 
           <div className="relative">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="bg-gold/10 text-gold text-xs font-bold px-3 py-1 rounded-full border border-gold/20">FREE AUDIT LIMITATION</span>
-            </div>
-            <h2 className="text-2xl font-bold mb-3">
-              This scan only checked <span className="text-gold">one page</span>.
+            <p className="text-gold text-sm uppercase tracking-[0.2em] font-semibold mb-3">Go Deeper</p>
+            <h2 className="font-serif text-2xl md:text-3xl text-warm-white mb-4">
+              This scan checked <span className="text-gold">one page</span>.
               <br />
               Your full site tells a different story.
             </h2>
-            <p className="text-gray-400 mb-6 max-w-2xl">
+            <p className="text-warm-gray mb-8 max-w-2xl leading-relaxed">
               The free audit analyzes your homepage against 47 criteria. But the issues costing you the most traffic are often hiding deeper &mdash; in your location pages, blog posts, product pages, and site architecture.
             </p>
 
-            <div className="grid md:grid-cols-2 gap-6 mb-8">
+            <div className="grid md:grid-cols-2 gap-8 mb-8">
               <div>
-                <h3 className="text-sm font-semibold text-gold mb-3 uppercase tracking-wider">What the free audit checks</h3>
+                <h3 className="text-xs font-semibold text-gold mb-4 uppercase tracking-wider">Free Audit</h3>
                 <ul className="space-y-2">
-                  {['Homepage title & meta tags', 'Basic schema detection', 'Image alt text on one page', 'Single-page performance', 'Surface-level content check'].map((item) => (
-                    <li key={item} className="flex items-center gap-2 text-sm text-gray-500">
-                      <span className="text-gray-600">{'\u2713'}</span> {item}
+                  {['Homepage title & meta tags', 'Basic schema detection', 'Single-page performance', 'Surface-level content check', 'Basic image audit'].map((item) => (
+                    <li key={item} className="flex items-center gap-2 text-sm text-warm-gray-light">
+                      <span className="text-warm-gray-light">{'\u2713'}</span> {item}
                     </li>
                   ))}
                 </ul>
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-gold mb-3 uppercase tracking-wider">What a Full Audit uncovers</h3>
+                <h3 className="text-xs font-semibold text-gold mb-4 uppercase tracking-wider">Full Audit</h3>
                 <ul className="space-y-2">
                   {[
-                    'Every page crawled & analyzed (up to 500)',
-                    'Real Google Search Console data (your actual clicks, impressions, rankings)',
-                    'Google Analytics organic traffic & conversion data',
-                    'Real user Core Web Vitals (not just lab tests)',
-                    'Schema markup for every page + ready-to-use code',
+                    'Up to 500 pages crawled & analyzed',
+                    'Real Search Console data (clicks, rankings)',
+                    'Google Analytics conversion data',
+                    'Real user Core Web Vitals',
+                    'Complete schema audit + code',
                     'Thin content & index bloat detection',
-                    'Local SEO & Google Business Profile signals',
-                    'AI search readiness (ChatGPT, Perplexity, AI Overviews)',
-                    'Competitor visibility analysis',
-                    'Blog & content strategy audit',
+                    'Local SEO & Google Business Profile',
+                    'AI search readiness analysis',
+                    'Prioritized dev tickets (Jira-ready)',
+                    'Professional PDF report',
                   ].map((item) => (
-                    <li key={item} className="flex items-center gap-2 text-sm text-white">
+                    <li key={item} className="flex items-center gap-2 text-sm text-warm-white">
                       <span className="text-gold">{'\u2713'}</span> {item}
                     </li>
                   ))}
@@ -154,55 +156,37 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
               </div>
             </div>
 
-            <div className="bg-white/5 rounded-xl p-6 mb-8 border border-white/5">
-              <h3 className="text-lg font-semibold mb-4">What you get with a Full Audit</h3>
-              <div className="grid sm:grid-cols-3 gap-4">
-                <div className="text-center p-4">
-                  <div className="text-3xl font-bold text-gold mb-1">PDF</div>
-                  <div className="text-xs text-gray-400">Professional report with executive summary, data visualizations, and methodology</div>
-                </div>
-                <div className="text-center p-4">
-                  <div className="text-3xl font-bold text-gold mb-1">Tickets</div>
-                  <div className="text-xs text-gray-400">Prioritized dev tickets with effort estimates, acceptance criteria &mdash; ready for Jira/Linear</div>
-                </div>
-                <div className="text-center p-4">
-                  <div className="text-3xl font-bold text-gold mb-1">Code</div>
-                  <div className="text-xs text-gray-400">Production-ready schema components, config files, and implementation guide</div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-navy/50 rounded-xl p-5 mb-8 border border-gold/10">
-              <p className="text-sm text-gray-300 leading-relaxed">
-                <span className="text-gold font-semibold">Real example:</span> A recent full audit on a 200+ location website uncovered that broken title tags were costing <span className="text-white font-semibold">38,000&ndash;69,000 clicks per quarter</span>, zero schema markup was hiding them from rich results, and 1,500+ thin pages were wasting crawl budget. Total estimated impact: <span className="text-white font-semibold">+$150K&ndash;$250K/quarter</span> in organic traffic value. The fixes took 2 weeks of engineering time.
+            <div className="bg-dark/50 rounded-xl p-5 mb-8 border border-warm-white/5">
+              <p className="text-sm text-warm-gray leading-relaxed">
+                <span className="text-gold font-semibold">Real example:</span> A recent full audit on a 200+ location website uncovered that broken title tags were costing <span className="text-warm-white font-semibold">38,000&ndash;69,000 clicks per quarter</span>, and zero schema markup was hiding them from rich results. Total impact: <span className="text-warm-white font-semibold">+$150K&ndash;$250K/quarter</span> in organic traffic value.
               </p>
             </div>
 
             <div className="flex flex-col sm:flex-row items-center gap-6">
               <div>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-bold text-white">$299</span>
-                  <span className="text-gray-500">one-time</span>
+                  <span className="text-4xl font-bold text-warm-white">$299</span>
+                  <span className="text-warm-gray">one-time</span>
                 </div>
-                <p className="text-xs text-gray-600 mt-1">
-                  <span className="line-through">$15,000+</span> at a traditional SEO agency
+                <p className="text-xs text-warm-gray-light mt-1">
+                  <span className="line-through">$15,000+</span> at a traditional agency
                 </p>
               </div>
               <a
-                href={`mailto:hello@whatseo.ai?subject=Full%20SEO%20Audit%20Request&body=I%20ran%20a%20free%20audit%20on%20${encodeURIComponent(audit.url)}%20and%20scored%20${audit.score}%2F100.%20I%E2%80%99d%20like%20to%20get%20a%20full%20audit%20with%20Google%20Search%20Console%20data%2C%20multi-page%20crawl%2C%20and%20the%20complete%20report.`}
-                className="bg-gold text-navy px-8 py-4 rounded-xl font-bold text-lg hover:bg-gold-light transition-colors text-center"
+                href={`mailto:hello@whatseo.ai?subject=Full%20SEO%20Audit%20Request&body=I%20ran%20a%20free%20audit%20on%20${encodeURIComponent(audit.url)}%20and%20scored%20${audit.score}%2F100.%20I%E2%80%99d%20like%20a%20full%20audit.`}
+                className="bg-gold text-dark px-10 py-4 rounded-full font-semibold text-lg hover:bg-gold-light transition-colors text-center"
               >
                 Get Your Full Audit &rarr;
               </a>
             </div>
-            <p className="text-xs text-gray-600 mt-4">
-              Includes 30-day money-back guarantee. Report delivered within 24 hours.
+            <p className="text-xs text-warm-gray-light mt-4">
+              30-day money-back guarantee. Report delivered within 24 hours.
             </p>
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link href="/" className="px-6 py-3 bg-white/5 text-gray-400 rounded-lg font-semibold text-center hover:bg-white/10 transition-colors">
+        <div className="flex justify-center">
+          <Link href="/" className="px-8 py-3.5 bg-warm-white/5 text-warm-gray rounded-full font-semibold text-center hover:bg-warm-white/10 transition-colors">
             Run Another Free Audit
           </Link>
         </div>
