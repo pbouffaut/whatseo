@@ -2,24 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase, generateId } from '@/lib/db';
 import { analyzeUrl } from '@/lib/analyzer';
 
-async function runAnalysis(id: string, url: string) {
-  try {
-    await supabase.from('Audit').update({ status: 'running', updatedAt: new Date().toISOString() }).eq('id', id);
-    const result = await analyzeUrl(url);
-    await supabase.from('Audit').update({
-      status: 'complete',
-      score: result.score.overall,
-      results: JSON.stringify(result),
-      updatedAt: new Date().toISOString(),
-    }).eq('id', id);
-  } catch (err) {
-    await supabase.from('Audit').update({
-      status: 'failed',
-      error: err instanceof Error ? err.message : 'Unknown error',
-      updatedAt: new Date().toISOString(),
-    }).eq('id', id);
-  }
-}
+// Vercel Pro allows up to 300s, free tier 60s
+export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,21 +17,35 @@ export async function POST(request: NextRequest) {
     if (!/^https?:\/\//i.test(url)) url = `https://${url}`;
 
     const id = generateId();
-    const { error } = await supabase.from('Audit').insert({
+    await supabase.from('Audit').insert({
       id,
       url,
       email,
-      status: 'pending',
+      status: 'running',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     });
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    try {
+      const result = await analyzeUrl(url);
+      await supabase.from('Audit').update({
+        status: 'complete',
+        score: result.score.overall,
+        results: JSON.stringify(result),
+        updatedAt: new Date().toISOString(),
+      }).eq('id', id);
 
-    // Fire and forget
-    runAnalysis(id, url).catch(console.error);
+      return NextResponse.json({ id, status: 'complete', score: result.score.overall });
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Analysis failed';
+      await supabase.from('Audit').update({
+        status: 'failed',
+        error: errorMsg,
+        updatedAt: new Date().toISOString(),
+      }).eq('id', id);
 
-    return NextResponse.json({ id, status: 'pending' });
+      return NextResponse.json({ id, status: 'failed', error: errorMsg });
+    }
   } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

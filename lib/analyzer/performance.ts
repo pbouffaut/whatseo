@@ -6,7 +6,7 @@ export async function analyzePerformance(url: string): Promise<PerformanceResult
   try {
     const apiUrl = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(url)}&strategy=MOBILE&category=PERFORMANCE&category=SEO`;
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 30000);
+    const timeout = setTimeout(() => controller.abort(), 15000); // 15s max — don't block the whole audit
 
     const r = await fetch(apiUrl, { signal: controller.signal });
     clearTimeout(timeout);
