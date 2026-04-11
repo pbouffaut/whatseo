@@ -1,4 +1,4 @@
-import { Twitter, Linkedin, Instagram } from 'lucide-react';
+import { Globe, Mail, ExternalLink } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -44,7 +44,7 @@ export default function Footer() {
           <div>
             <h4 className="text-warm-white text-sm uppercase tracking-wider font-semibold mb-4">Connect</h4>
             <div className="flex gap-4 mb-6">
-              {[Twitter, Linkedin, Instagram].map((Icon, i) => (
+              {[Globe, Mail, ExternalLink].map((Icon, i) => (
                 <span key={i} className="text-warm-gray hover:text-gold transition-colors cursor-pointer">
                   <Icon className="w-5 h-5" />
                 </span>
