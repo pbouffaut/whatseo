@@ -79,8 +79,12 @@ export default function DashboardPage() {
     const sub = subRes.data as Subscription | null;
     const creds = (creditRes.data as AuditCredit[]) || [];
 
-    // Auto-fix: if user has active subscription but zero credits (created before credits table existed)
-    if (sub && sub.status === 'active' && creds.length === 0) {
+    // Auto-fix: if user has active subscription but zero AVAILABLE credits, grant one
+    const hasAvailable = creds.some((c) => c.status === 'available');
+    const hasCompletedFullAudit = (auditRes.data || []).some(
+      (a: Record<string, unknown>) => a.audit_type === 'full' && a.status === 'complete'
+    );
+    if (sub && sub.status === 'active' && !hasAvailable && !hasCompletedFullAudit) {
       const { data: newCredit } = await supabase.from('audit_credits').insert({
         user_id: user.id,
         credit_type: sub.plan === 'professional' ? 'one_time' : 'subscription',
@@ -103,9 +107,6 @@ export default function DashboardPage() {
     setError('');
 
     try {
-      // Consume the oldest available credit
-      const credit = availableCredits[0];
-
       // Call the full audit API — it handles credit consumption, crawling, analysis
       const res = await fetch('/api/full-audit', {
         method: 'POST',
