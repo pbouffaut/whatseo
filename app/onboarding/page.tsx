@@ -54,18 +54,37 @@ export default function OnboardingPage() {
   };
 
   useEffect(() => {
-    // Pre-fill if onboarding data exists
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return;
+
+      // Check if user just returned from Google OAuth with GSC scope
+      const { data: sessionData } = await supabase.auth.getSession();
+      const providerToken = sessionData?.session?.provider_token;
+      const justConnectedGSC = !!providerToken; // If provider_token exists, Google OAuth just happened
+
       const { data } = await supabase.from('onboarding_data').select('*').eq('user_id', user.id).single();
+
+      const gscConnected = justConnectedGSC || data?.gsc_connected || false;
+
+      // If just connected GSC and we have existing onboarding data, persist it immediately
+      if (justConnectedGSC && data) {
+        await supabase.from('onboarding_data').update({
+          gsc_connected: true,
+          updated_at: new Date().toISOString(),
+        }).eq('user_id', user.id);
+      }
+
       if (data) {
         setForm({
           websiteUrl: data.website_url || '',
-          gscConnected: data.gsc_connected || false,
+          gscConnected,
           ga4PropertyId: data.ga4_property_id || '',
           competitorUrls: data.competitor_urls?.length ? data.competitor_urls : [''],
           priorityPages: data.priority_pages?.length ? data.priority_pages : [''],
         });
+      } else if (justConnectedGSC) {
+        // No onboarding data yet, but GSC was just connected — update form state
+        setForm((prev) => ({ ...prev, gscConnected: true }));
       }
     });
   }, [supabase]);
