@@ -179,6 +179,14 @@ export interface FullAuditResult {
   // Recommendations
   recommendations: Recommendation[];
 
+  // Google API data (optional — only if connected)
+  googleData?: {
+    pageSpeed?: import('../google/pagespeed').PageSpeedData;
+    crux?: import('../google/crux').CruxData;
+    gsc?: import('../google/gsc').GscData;
+    ga4?: import('../google/ga4').Ga4Data;
+  };
+
   analyzedAt: string;
   duration: number;
 }

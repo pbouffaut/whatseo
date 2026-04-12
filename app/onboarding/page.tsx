@@ -46,7 +46,8 @@ export default function OnboardingPage() {
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/auth/callback?redirect=/onboarding`,
-        scopes: 'https://www.googleapis.com/auth/webmasters.readonly',
+        scopes: 'https://www.googleapis.com/auth/webmasters.readonly https://www.googleapis.com/auth/analytics.readonly',
+        queryParams: { access_type: 'offline', prompt: 'consent' },
       },
     });
     if (error) setError(error.message);
@@ -57,21 +58,27 @@ export default function OnboardingPage() {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return;
 
-      // Check if user just returned from Google OAuth with GSC scope
+      // Check if user just returned from Google OAuth with GSC/GA4 scope
       const { data: sessionData } = await supabase.auth.getSession();
       const providerToken = sessionData?.session?.provider_token;
-      const justConnectedGSC = !!providerToken; // If provider_token exists, Google OAuth just happened
+      const providerRefreshToken = sessionData?.session?.provider_refresh_token;
+      const justConnectedGoogle = !!providerToken;
 
       const { data } = await supabase.from('onboarding_data').select('*').eq('user_id', user.id).single();
 
-      const gscConnected = justConnectedGSC || data?.gsc_connected || false;
+      const gscConnected = justConnectedGoogle || data?.gsc_connected || false;
 
-      // If just connected GSC and we have existing onboarding data, persist it immediately
-      if (justConnectedGSC && data) {
+      // If just connected Google, persist the tokens for later use by the audit
+      if (justConnectedGoogle && data) {
         await supabase.from('onboarding_data').update({
           gsc_connected: true,
+          google_access_token: providerToken,
+          google_refresh_token: providerRefreshToken || data.google_refresh_token || null,
+          google_token_expires_at: new Date(Date.now() + 3600 * 1000).toISOString(), // ~1 hour
           updated_at: new Date().toISOString(),
         }).eq('user_id', user.id);
+      } else if (justConnectedGoogle && !data) {
+        // No onboarding data yet — tokens will be saved when form is submitted
       }
 
       if (data) {
@@ -82,7 +89,7 @@ export default function OnboardingPage() {
           competitorUrls: data.competitor_urls?.length ? data.competitor_urls : [''],
           priorityPages: data.priority_pages?.length ? data.priority_pages : [''],
         });
-      } else if (justConnectedGSC) {
+      } else if (justConnectedGoogle) {
         // No onboarding data yet, but GSC was just connected — update form state
         setForm((prev) => ({ ...prev, gscConnected: true }));
       }
@@ -112,6 +119,14 @@ export default function OnboardingPage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setError('Not authenticated'); setLoading(false); return; }
 
+    // Get current tokens from session if available
+    const { data: sessionData } = await supabase.auth.getSession();
+    const currentToken = sessionData?.session?.provider_token;
+    const currentRefreshToken = sessionData?.session?.provider_refresh_token;
+
+    // Get existing tokens from DB (don't overwrite with null)
+    const { data: existing } = await supabase.from('onboarding_data').select('google_access_token, google_refresh_token').eq('user_id', user.id).single();
+
     const { error: dbError } = await supabase.from('onboarding_data').upsert({
       user_id: user.id,
       website_url: form.websiteUrl,
@@ -121,6 +136,9 @@ export default function OnboardingPage() {
       slack_webhook_url: null,
       competitor_urls: form.competitorUrls.filter(Boolean),
       priority_pages: form.priorityPages.filter(Boolean),
+      google_access_token: currentToken || existing?.google_access_token || null,
+      google_refresh_token: currentRefreshToken || existing?.google_refresh_token || null,
+      google_token_expires_at: currentToken ? new Date(Date.now() + 3600 * 1000).toISOString() : null,
       completed_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }, { onConflict: 'user_id' });

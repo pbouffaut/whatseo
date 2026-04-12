@@ -26,7 +26,18 @@ export const fullAuditTask = task({
 
   run: async (payload: FullAuditPayload) => {
     const supabase = getSupabase();
-    const { auditId, creditId, url, priorityPages, competitorUrls } = payload;
+    const { auditId, creditId, url, userId, priorityPages, competitorUrls } = payload;
+
+    // Load Google tokens from onboarding data
+    const { data: onboarding } = await supabase
+      .from('onboarding_data')
+      .select('google_access_token, google_refresh_token, ga4_property_id, gsc_connected')
+      .eq('user_id', userId)
+      .single();
+
+    const googleAccessToken = onboarding?.google_access_token || null;
+    const ga4PropertyId = onboarding?.ga4_property_id || null;
+    const apiKey = process.env.PAGESPEED_API_KEY || undefined;
 
     try {
       // Update status: running
@@ -39,12 +50,15 @@ export const fullAuditTask = task({
       metadata.set("phase", "crawling");
       metadata.set("pagesCrawled", 0);
 
-      // Run the full audit
+      // Run the full audit with Google API data
       const result = await analyzeFullSite({
         url,
         maxPages: 50,
         priorityPages,
         competitorUrls,
+        apiKey,
+        googleAccessToken: googleAccessToken || undefined,
+        ga4PropertyId: ga4PropertyId || undefined,
         onPhaseChange: async (phase) => {
           metadata.set("phase", phase);
           await supabase.from("Audit").update({

@@ -12,12 +12,20 @@ import { analyzeContent } from './content';
 import { analyzePerformance } from './performance';
 import { analyzeAIReadiness } from './ai-readiness';
 import { calculateScore } from './scorer';
+import { fetchPageSpeed, type PageSpeedData } from '../google/pagespeed';
+import { fetchCruxData, type CruxData } from '../google/crux';
+import { fetchGscData, type GscData } from '../google/gsc';
+import { fetchGa4Data, type Ga4Data } from '../google/ga4';
 
 interface FullAuditOptions {
   url: string;
   maxPages?: number;
   priorityPages?: string[];
   competitorUrls?: string[];
+  // Google API options
+  apiKey?: string;
+  googleAccessToken?: string;
+  ga4PropertyId?: string;
   onPhaseChange?: (phase: string) => void;
   onProgress?: (crawled: number, total: number) => void;
 }
@@ -220,6 +228,7 @@ function generateRecommendations(
 export async function analyzeFullSite(options: FullAuditOptions): Promise<FullAuditResult> {
   const {
     url, maxPages = 50, priorityPages = [],
+    apiKey, googleAccessToken, ga4PropertyId,
     onPhaseChange, onProgress,
   } = options;
   const start = Date.now();
@@ -241,12 +250,27 @@ export async function analyzeFullSite(options: FullAuditOptions): Promise<FullAu
   onPhaseChange?.('analyzing');
   const pageResults = await analyzePages(crawlResult.pages, onProgress);
 
-  // Phase 3: Performance + AI readiness on homepage
+  // Phase 3: Performance + AI readiness + Google APIs on homepage
   onPhaseChange?.('google_data');
   const homepagePage = crawlResult.pages[0];
-  const [performance, aiReadiness] = await Promise.all([
+  const homepageOrigin = new URL(homepagePage.finalUrl).origin;
+
+  // Build the site URL for GSC (try sc-domain first, then URL prefix)
+  const hostname = new URL(homepagePage.finalUrl).hostname.replace(/^www\./, '');
+  const gscSiteUrl = `sc-domain:${hostname}`;
+
+  // Run all Google API calls in parallel
+  const [performance, aiReadiness, pageSpeedData, cruxData, gscData, ga4Data] = await Promise.all([
     analyzePerformance(homepagePage.finalUrl),
     analyzeAIReadiness(homepagePage.html, homepagePage.finalUrl),
+    fetchPageSpeed(homepagePage.finalUrl, apiKey).catch(() => null as PageSpeedData | null),
+    fetchCruxData(homepageOrigin, apiKey).catch(() => null as CruxData | null),
+    googleAccessToken
+      ? fetchGscData(gscSiteUrl, googleAccessToken).catch(() => null as GscData | null)
+      : Promise.resolve(null as GscData | null),
+    googleAccessToken && ga4PropertyId
+      ? fetchGa4Data(ga4PropertyId, googleAccessToken).catch(() => null as Ga4Data | null)
+      : Promise.resolve(null as Ga4Data | null),
   ]);
 
   // Phase 4: Aggregate and detect patterns
@@ -321,6 +345,12 @@ export async function analyzeFullSite(options: FullAuditOptions): Promise<FullAu
       .filter((p) => p.statusCode >= 400)
       .map((p) => ({ url: p.url, statusCode: p.statusCode, foundOn: '' })),
     recommendations,
+    googleData: (pageSpeedData || cruxData || gscData || ga4Data) ? {
+      pageSpeed: pageSpeedData || undefined,
+      crux: cruxData || undefined,
+      gsc: gscData || undefined,
+      ga4: ga4Data || undefined,
+    } : undefined,
     analyzedAt: new Date().toISOString(),
     duration: Date.now() - start,
   };
