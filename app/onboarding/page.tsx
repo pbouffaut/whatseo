@@ -58,15 +58,32 @@ export default function OnboardingPage() {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return;
 
-      // Check if user just returned from Google OAuth with GSC/GA4 scope
+      // Check multiple sources for Google tokens:
+      // 1. Session provider_token (available right after OAuth)
       const { data: sessionData } = await supabase.auth.getSession();
-      const providerToken = sessionData?.session?.provider_token;
-      const providerRefreshToken = sessionData?.session?.provider_refresh_token;
+      let providerToken = sessionData?.session?.provider_token || null;
+      let providerRefreshToken = sessionData?.session?.provider_refresh_token || null;
+
+      // 2. URL params fallback (if callback couldn't save to DB)
+      if (!providerToken && typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        const urlToken = params.get('gsc_token');
+        const urlRefresh = params.get('gsc_refresh');
+        if (urlToken) {
+          providerToken = urlToken;
+          providerRefreshToken = urlRefresh;
+          // Clean URL params
+          window.history.replaceState({}, '', window.location.pathname);
+        }
+      }
+
       const justConnectedGoogle = !!providerToken;
 
       const { data } = await supabase.from('onboarding_data').select('*').eq('user_id', user.id).single();
 
-      const gscConnected = justConnectedGoogle || data?.gsc_connected || false;
+      // 3. Check if tokens were already saved by the callback route
+      const hasTokensInDb = !!data?.google_access_token;
+      const gscConnected = justConnectedGoogle || hasTokensInDb || data?.gsc_connected || false;
 
       // If just connected Google, persist the tokens for later use by the audit
       if (justConnectedGoogle && data) {

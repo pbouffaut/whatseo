@@ -16,31 +16,27 @@ export async function GET(request: Request) {
       const providerRefreshToken = session.provider_refresh_token;
       const user = session.user;
 
-      // If we got Google tokens (from GSC/GA4 OAuth), persist them immediately
-      // This is the ONLY reliable place to capture provider_token — it's ephemeral
-      if (providerToken && user && redirect.includes('/onboarding')) {
+      // ALWAYS save Google tokens when we get them — regardless of redirect destination
+      if (providerToken && user) {
         try {
-          // Check if onboarding_data exists
           const { data: existing } = await supabase
             .from('onboarding_data')
-            .select('id')
+            .select('id, website_url')
             .eq('user_id', user.id)
             .single();
 
           if (existing) {
-            // Update existing onboarding data with tokens
             await supabase.from('onboarding_data').update({
               gsc_connected: true,
               google_access_token: providerToken,
-              google_refresh_token: providerRefreshToken || undefined,
+              google_refresh_token: providerRefreshToken || null,
               google_token_expires_at: new Date(Date.now() + 3600 * 1000).toISOString(),
               updated_at: new Date().toISOString(),
             }).eq('user_id', user.id);
           } else {
-            // Create onboarding_data with tokens (website_url placeholder — user fills in onboarding form)
             await supabase.from('onboarding_data').insert({
               user_id: user.id,
-              website_url: 'https://example.com', // Placeholder — will be updated on form submit
+              website_url: '_pending_', // Will be updated in onboarding form
               gsc_connected: true,
               google_access_token: providerToken,
               google_refresh_token: providerRefreshToken || null,
@@ -48,8 +44,14 @@ export async function GET(request: Request) {
             });
           }
         } catch (err) {
-          console.error('Failed to save Google tokens:', err);
-          // Continue with redirect — don't block the auth flow
+          // If DB save fails, pass tokens via URL params as fallback
+          console.error('Failed to save Google tokens to DB:', err);
+          const redirectUrl = new URL(redirect, origin);
+          redirectUrl.searchParams.set('gsc_token', providerToken);
+          if (providerRefreshToken) {
+            redirectUrl.searchParams.set('gsc_refresh', providerRefreshToken);
+          }
+          return NextResponse.redirect(redirectUrl.toString());
         }
       }
 

@@ -2,6 +2,7 @@ import { supabase } from '@/lib/db';
 import { notFound, redirect } from 'next/navigation';
 import ScoreGauge from '@/components/ScoreGauge';
 import ScoreBreakdown from '@/components/ScoreBreakdown';
+import FullAuditResults from '@/components/FullAuditResults';
 import Link from 'next/link';
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -56,6 +57,17 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
   if (audit.status !== 'complete') redirect(`/analyze?id=${id}`);
 
   const results = JSON.parse(audit.results || '{}');
+
+  // Full audits get the rich tabbed interface
+  if (audit.audit_type === 'full') {
+    return (
+      <div className="min-h-screen pt-28 pb-16 px-6">
+        <div className="max-w-5xl mx-auto">
+          <FullAuditResults audit={audit} results={results} />
+        </div>
+      </div>
+    );
+  }
   const categories = Object.entries(results.score?.categories || {}).map(([key, val]) => ({
     name: CATEGORY_LABELS[key] || key,
     score: (val as { score: number }).score,
