@@ -1,14 +1,6 @@
 import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import type { FullAuditResult } from '../analyzer/types';
-
-// Extend jsPDF with autoTable
-declare module 'jspdf' {
-  interface jsPDF {
-    autoTable: (options: Record<string, unknown>) => jsPDF;
-    lastAutoTable: { finalY: number };
-  }
-}
 
 const GOLD: [number, number, number] = [201, 168, 92];
 const NAVY: [number, number, number] = [26, 26, 26];
@@ -114,7 +106,7 @@ export function generateAuditPdf(result: FullAuditResult, websiteUrl: string): B
   });
   catRows.push(['Total', '', '', `${result.score.overall}/100`]);
 
-  doc.autoTable({
+  autoTable(doc, {
     startY: y,
     head: [['Category', 'Score', 'Weight', 'Weighted']],
     body: catRows,
@@ -123,7 +115,7 @@ export function generateAuditPdf(result: FullAuditResult, websiteUrl: string): B
     headStyles: { fillColor: [...NAVY], textColor: [...WHITE], fontStyle: 'bold' },
     alternateRowStyles: { fillColor: [245, 243, 238] },
   });
-  y = doc.lastAutoTable.finalY + 10;
+  y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10;
 
   // Patterns summary
   checkPageBreak(60);
@@ -142,7 +134,7 @@ export function generateAuditPdf(result: FullAuditResult, websiteUrl: string): B
     ['Broken Links', String(result.brokenLinks?.length || 0)],
   ];
 
-  doc.autoTable({
+  autoTable(doc, {
     startY: y,
     head: [['Issue', 'Count']],
     body: patterns,
@@ -151,7 +143,7 @@ export function generateAuditPdf(result: FullAuditResult, websiteUrl: string): B
     headStyles: { fillColor: [...NAVY], textColor: [...WHITE] },
     columnStyles: { 1: { halign: 'center', fontStyle: 'bold' } },
   });
-  y = doc.lastAutoTable.finalY + 10;
+  y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10;
 
   // --- RECOMMENDATIONS ---
   addPage();
@@ -232,7 +224,7 @@ export function generateAuditPdf(result: FullAuditResult, websiteUrl: string): B
     ];
   });
 
-  doc.autoTable({
+  autoTable(doc, {
     startY: y,
     head: [['URL', 'Status', 'Speed', 'Words', 'Schema']],
     body: pageRows,
@@ -278,7 +270,7 @@ export function generateAuditPdf(result: FullAuditResult, websiteUrl: string): B
         q.position.toFixed(1),
       ]);
 
-      doc.autoTable({
+      autoTable(doc, {
         startY: y,
         head: [['Query', 'Clicks', 'Impressions', 'CTR', 'Position']],
         body: queryRows,
@@ -286,7 +278,7 @@ export function generateAuditPdf(result: FullAuditResult, websiteUrl: string): B
         styles: { fontSize: 7, cellPadding: 2 },
         headStyles: { fillColor: [...NAVY], textColor: [...WHITE] },
       });
-      y = doc.lastAutoTable.finalY + 10;
+      y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10;
     }
 
     if (result.googleData.ga4) {
@@ -318,7 +310,7 @@ export function generateAuditPdf(result: FullAuditResult, websiteUrl: string): B
       ].filter(Boolean);
 
       if (cwvRows.length > 0) {
-        doc.autoTable({
+        autoTable(doc, {
           startY: y,
           head: [['Metric', 'p75', 'Distribution', 'Status']],
           body: cwvRows,
