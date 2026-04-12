@@ -303,11 +303,10 @@ export function generateAuditPdf(result: FullAuditResult, websiteUrl: string): B
       doc.text('Core Web Vitals (Real Users)', margin, y);
       y += 8;
 
-      const cwvRows = [
-        crux.lcp ? ['LCP', `${crux.lcp.p75}ms`, `${crux.lcp.good}% good`, crux.lcp.p75 <= 2500 ? 'PASS' : 'FAIL'] : null,
-        crux.inp ? ['INP', `${crux.inp.p75}ms`, `${crux.inp.good}% good`, crux.inp.p75 <= 200 ? 'PASS' : 'FAIL'] : null,
-        crux.cls ? ['CLS', String(crux.cls.p75), `${crux.cls.good}% good`, crux.cls.p75 <= 0.1 ? 'PASS' : 'FAIL'] : null,
-      ].filter(Boolean);
+      const cwvRows: string[][] = [];
+      if (crux.lcp) cwvRows.push(['LCP', `${crux.lcp.p75}ms`, `${crux.lcp.good}% good`, crux.lcp.p75 <= 2500 ? 'PASS' : 'FAIL']);
+      if (crux.inp) cwvRows.push(['INP', `${crux.inp.p75}ms`, `${crux.inp.good}% good`, crux.inp.p75 <= 200 ? 'PASS' : 'FAIL']);
+      if (crux.cls) cwvRows.push(['CLS', String(crux.cls.p75), `${crux.cls.good}% good`, crux.cls.p75 <= 0.1 ? 'PASS' : 'FAIL']);
 
       if (cwvRows.length > 0) {
         autoTable(doc, {
