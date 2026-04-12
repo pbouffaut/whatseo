@@ -47,6 +47,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [confirmStep, setConfirmStep] = useState<ConfirmStep>('idle');
   const [error, setError] = useState('');
+  const [runningAudit, setRunningAudit] = useState<Record<string, unknown> | null>(null);
 
   const availableCredits = credits.filter((c) => c.status === 'available');
 
@@ -94,9 +95,14 @@ export default function DashboardPage() {
       if (newCredit) creds.push(newCredit as AuditCredit);
     }
 
+    // Check for running audits
+    const allAudits = auditRes.data || [];
+    const running = allAudits.find((a: Record<string, unknown>) => a.status === 'running');
+    setRunningAudit(running || null);
+
     setSubscription(sub);
     setOnboarding(onbRes.data as OnboardingData | null);
-    setAudits(auditRes.data || []);
+    setAudits(allAudits);
     setCredits(creds);
     setLoading(false);
   }
@@ -208,17 +214,37 @@ export default function DashboardPage() {
             </div>
           </div>
 
+          {/* Running audit banner */}
+          {runningAudit && (
+            <div className="bg-gold/10 border border-gold/20 rounded-xl p-4 mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <svg className="animate-spin h-5 w-5 text-gold" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                <div>
+                  <p className="text-warm-white text-sm font-medium">Audit in progress</p>
+                  <p className="text-warm-gray text-xs">{String(runningAudit.url)}</p>
+                </div>
+              </div>
+              <Link href={`/audit-progress/${runningAudit.id}`}
+                className="bg-gold text-dark px-5 py-2 rounded-full text-sm font-semibold hover:bg-gold-light transition-colors">
+                View Progress
+              </Link>
+            </div>
+          )}
+
           {onboarding ? (
             <>
-              {/* Confirmation Flow */}
-              {confirmStep === 'idle' && availableCredits.length > 0 && (
+              {/* Confirmation Flow — hide if audit is running */}
+              {!runningAudit && confirmStep === 'idle' && availableCredits.length > 0 && (
                 <button onClick={() => setConfirmStep('confirming')}
                   className="bg-gold text-dark px-8 py-3 rounded-full font-semibold hover:bg-gold-light transition-colors flex items-center gap-2">
                   <Zap className="w-4 h-4" /> Run Audit Now
                 </button>
               )}
 
-              {confirmStep === 'idle' && availableCredits.length === 0 && (
+              {!runningAudit && confirmStep === 'idle' && availableCredits.length === 0 && (
                 <div>
                   <p className="text-warm-gray text-sm mb-4">No credits remaining. Purchase more to run an audit.</p>
                   <div className="flex flex-wrap gap-3">
