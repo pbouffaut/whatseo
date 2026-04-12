@@ -7,9 +7,8 @@ import { Check, Plus, X, Info } from 'lucide-react';
 
 interface FormData {
   websiteUrl: string;
+  gscConnected: boolean;
   ga4PropertyId: string;
-  notificationChannel: 'email' | 'slack' | 'both';
-  slackWebhookUrl: string;
   competitorUrls: string[];
   priorityPages: string[];
 }
@@ -35,12 +34,24 @@ export default function OnboardingPage() {
   const [error, setError] = useState('');
   const [form, setForm] = useState<FormData>({
     websiteUrl: '',
+    gscConnected: false,
     ga4PropertyId: '',
-    notificationChannel: 'email',
-    slackWebhookUrl: '',
     competitorUrls: [''],
     priorityPages: [''],
   });
+
+  const handleConnectGSC = async () => {
+    // Initiate Google OAuth with Search Console scope
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback?redirect=/onboarding`,
+        scopes: 'https://www.googleapis.com/auth/webmasters.readonly',
+      },
+    });
+    if (error) setError(error.message);
+    else setForm({ ...form, gscConnected: true });
+  };
 
   useEffect(() => {
     // Pre-fill if onboarding data exists
@@ -50,9 +61,8 @@ export default function OnboardingPage() {
       if (data) {
         setForm({
           websiteUrl: data.website_url || '',
+          gscConnected: data.gsc_connected || false,
           ga4PropertyId: data.ga4_property_id || '',
-          notificationChannel: data.notification_channel || 'email',
-          slackWebhookUrl: data.slack_webhook_url || '',
           competitorUrls: data.competitor_urls?.length ? data.competitor_urls : [''],
           priorityPages: data.priority_pages?.length ? data.priority_pages : [''],
         });
@@ -86,9 +96,10 @@ export default function OnboardingPage() {
     const { error: dbError } = await supabase.from('onboarding_data').upsert({
       user_id: user.id,
       website_url: form.websiteUrl,
+      gsc_connected: form.gscConnected,
       ga4_property_id: form.ga4PropertyId || null,
-      notification_channel: form.notificationChannel,
-      slack_webhook_url: form.slackWebhookUrl || null,
+      notification_channel: 'email',
+      slack_webhook_url: null,
       competitor_urls: form.competitorUrls.filter(Boolean),
       priority_pages: form.priorityPages.filter(Boolean),
       completed_at: new Date().toISOString(),
@@ -134,14 +145,25 @@ export default function OnboardingPage() {
           <div>
             <FieldLabel
               label="Google Search Console"
-              description="Connects your real click, impression, and ranking data for accurate traffic analysis. We request read-only access via Google OAuth."
+              description="Connects your real click, impression, and ranking data for accurate traffic analysis. We request read-only access via Google OAuth. You can revoke access anytime from your Google account."
             />
-            <button
-              type="button"
-              className="px-6 py-3 rounded-xl bg-warm-white/5 border border-warm-white/10 text-warm-gray hover:text-warm-white hover:border-gold/30 transition-colors text-sm"
-            >
-              Connect Search Console (Coming Soon)
-            </button>
+            {form.gscConnected ? (
+              <div className="flex items-center gap-3 px-5 py-3 rounded-xl bg-[#4aab6a]/10 border border-[#4aab6a]/20">
+                <Check className="w-5 h-5 text-[#4aab6a]" />
+                <span className="text-[#4aab6a] text-sm font-medium">Search Console connected</span>
+                <button type="button" onClick={() => setForm({ ...form, gscConnected: false })}
+                  className="ml-auto text-xs text-warm-gray-light hover:text-warm-white">Disconnect</button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={handleConnectGSC}
+                className="flex items-center gap-3 px-6 py-3 rounded-xl bg-warm-white/5 border border-warm-white/10 text-warm-white hover:border-gold/30 transition-colors text-sm"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                Connect Google Search Console
+              </button>
+            )}
           </div>
 
           {/* GA4 Property ID */}
@@ -158,45 +180,12 @@ export default function OnboardingPage() {
             />
           </div>
 
-          {/* Notification Channel */}
-          <div>
-            <FieldLabel
-              label="Report Delivery"
-              description="Where should we send your audit reports and score alerts? You can change this anytime."
-            />
-            <div className="flex gap-3">
-              {(['email', 'slack', 'both'] as const).map((ch) => (
-                <button
-                  key={ch}
-                  type="button"
-                  onClick={() => setForm({ ...form, notificationChannel: ch })}
-                  className={`px-5 py-2.5 rounded-full text-sm font-medium transition-colors ${
-                    form.notificationChannel === ch
-                      ? 'bg-gold text-dark'
-                      : 'bg-warm-white/5 text-warm-gray hover:text-warm-white border border-warm-white/10'
-                  }`}
-                >
-                  {ch === 'both' ? 'Both' : ch.charAt(0).toUpperCase() + ch.slice(1)}
-                </button>
-              ))}
-            </div>
+          {/* Report info */}
+          <div className="bg-warm-white/5 rounded-xl p-5 border border-warm-white/8">
+            <p className="text-sm text-warm-gray leading-relaxed">
+              <span className="text-gold font-medium">Reports:</span> All audit reports will be emailed to your account email and available for download in your dashboard. Historical reports are kept so you can track progress over time.
+            </p>
           </div>
-
-          {/* Slack Webhook */}
-          {(form.notificationChannel === 'slack' || form.notificationChannel === 'both') && (
-            <div>
-              <FieldLabel
-                label="Slack Webhook URL"
-                description="Paste your Slack incoming webhook URL. We'll post report summaries and score alerts to this channel. Create one at api.slack.com/apps → Incoming Webhooks."
-              />
-              <input
-                type="url" value={form.slackWebhookUrl}
-                onChange={(e) => setForm({ ...form, slackWebhookUrl: e.target.value })}
-                placeholder="https://hooks.slack.com/services/T.../B.../xxx"
-                className="w-full px-5 py-3.5 rounded-xl bg-warm-white/5 border border-warm-white/10 text-warm-white placeholder-warm-gray-light focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold"
-              />
-            </div>
-          )}
 
           {/* Competitor URLs */}
           <div>
@@ -207,9 +196,9 @@ export default function OnboardingPage() {
             {form.competitorUrls.map((url, i) => (
               <div key={i} className="flex gap-2 mb-2">
                 <input
-                  type="url" value={url}
+                  type="text" value={url}
                   onChange={(e) => updateArrayField('competitorUrls', i, e.target.value)}
-                  placeholder={`https://competitor${i + 1}.com`}
+                  placeholder={`competitor${i + 1}.com`}
                   className="flex-1 px-5 py-3 rounded-xl bg-warm-white/5 border border-warm-white/10 text-warm-white placeholder-warm-gray-light focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold"
                 />
                 {form.competitorUrls.length > 1 && (
