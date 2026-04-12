@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase, generateId } from '@/lib/db';
-import { analyzeFullSite } from '@/lib/analyzer/full-audit';
 import { createClient } from '@/lib/supabase/server';
-
-export const maxDuration = 300;
+import { tasks } from '@trigger.dev/sdk';
+import type { fullAuditTask } from '@/trigger/full-audit';
 
 export async function POST(request: NextRequest) {
   try {
@@ -59,7 +58,7 @@ export async function POST(request: NextRequest) {
       user_id: user.id,
       status: 'running',
       audit_type: 'full',
-      phase: 'crawling',
+      phase: 'queued',
       pages_crawled: 0,
       pages_total: 0,
       createdAt: new Date().toISOString(),
@@ -74,65 +73,24 @@ export async function POST(request: NextRequest) {
       used_at: new Date().toISOString(),
     }).eq('id', creditId);
 
-    try {
-      const result = await analyzeFullSite({
-        url: normalizedUrl,
-        maxPages: 50,
-        priorityPages,
-        competitorUrls,
-        onPhaseChange: async (phase) => {
-          await supabase.from('Audit').update({
-            phase,
-            updatedAt: new Date().toISOString(),
-          }).eq('id', auditId);
-        },
-        onProgress: async (crawled, total) => {
-          await supabase.from('Audit').update({
-            pages_crawled: crawled,
-            pages_total: total,
-            updatedAt: new Date().toISOString(),
-          }).eq('id', auditId);
-        },
-      });
+    // Trigger the background task on Trigger.dev — returns immediately
+    await tasks.trigger<typeof fullAuditTask>('full-audit', {
+      auditId,
+      creditId,
+      url: normalizedUrl,
+      userId: user.id,
+      email: user.email || '',
+      priorityPages,
+      competitorUrls,
+    });
 
-      // Save results
-      await supabase.from('Audit').update({
-        status: 'complete',
-        score: result.score.overall,
-        results: JSON.stringify(result),
-        phase: 'complete',
-        pages_crawled: result.pagesCrawled,
-        pages_total: result.pagesTotal,
-        updatedAt: new Date().toISOString(),
-      }).eq('id', auditId);
-
-      return NextResponse.json({
-        id: auditId,
-        status: 'complete',
-        score: result.score.overall,
-        pagesCrawled: result.pagesCrawled,
-      });
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Audit failed';
-
-      // Mark audit as failed
-      await supabase.from('Audit').update({
-        status: 'failed',
-        error: errorMsg,
-        phase: 'failed',
-        updatedAt: new Date().toISOString(),
-      }).eq('id', auditId);
-
-      // Refund the credit
-      await supabase.from('audit_credits').update({
-        status: 'available',
-        audit_id: null,
-        used_at: null,
-      }).eq('id', creditId);
-
-      return NextResponse.json({ id: auditId, status: 'failed', error: errorMsg });
-    }
+    return NextResponse.json({
+      id: auditId,
+      status: 'running',
+      message: 'Audit started. This will run in the background for 1-3 minutes.',
+    });
   } catch (err) {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error('Full audit trigger error:', err);
+    return NextResponse.json({ error: 'Failed to start audit' }, { status: 500 });
   }
 }
