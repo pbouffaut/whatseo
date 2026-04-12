@@ -19,6 +19,40 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
   const { data: audit } = await supabase.from('Audit').select('*').eq('id', id).single();
 
   if (!audit) notFound();
+
+  // Handle non-complete audits
+  if (audit.status === 'failed') {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-6 pt-20">
+        <div className="text-center max-w-md">
+          <div className="w-16 h-16 rounded-full bg-[#e05555]/10 flex items-center justify-center mx-auto mb-6">
+            <span className="text-[#e05555] text-2xl">!</span>
+          </div>
+          <h2 className="font-serif text-2xl text-warm-white mb-3">Audit Failed</h2>
+          <p className="text-warm-gray text-sm mb-2">{audit.url}</p>
+          <p className="text-warm-gray-light text-xs mb-8">{audit.error || 'An unexpected error occurred during the audit.'}</p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/dashboard" className="px-8 py-3.5 bg-gold text-dark rounded-full font-semibold hover:bg-gold-light transition-colors">
+              Back to Dashboard
+            </Link>
+            <Link href="/" className="px-8 py-3.5 bg-warm-white/5 text-warm-gray rounded-full font-semibold hover:bg-warm-white/10 transition-colors">
+              Run Free Scan
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (audit.status === 'running') {
+    // Full audits go to progress page, free scans go to analyze page
+    if (audit.audit_type === 'full') {
+      redirect(`/audit-progress/${id}`);
+    } else {
+      redirect(`/analyze?id=${id}`);
+    }
+  }
+
   if (audit.status !== 'complete') redirect(`/analyze?id=${id}`);
 
   const results = JSON.parse(audit.results || '{}');
