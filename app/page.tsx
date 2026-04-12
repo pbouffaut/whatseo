@@ -27,7 +27,7 @@ const caseStudies = [
 
 const pricing = [
   {
-    name: 'One-Time Audit',
+    name: 'Professional Audit',
     price: '$499',
     period: 'one-time',
     features: ['47 checks across up to 500 pages', 'Real Google Search Console data', 'Professional PDF report', 'Prioritized action plan', 'Dev-ready schema components'],
