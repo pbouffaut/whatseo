@@ -163,25 +163,25 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
             </div>
 
             <div className="grid sm:grid-cols-3 gap-4 mb-6">
-              <div className="bg-dark/40 rounded-xl p-5 border border-warm-white/8 text-center">
+              <a href="/checkout/professional" className="bg-dark/40 rounded-xl p-5 border border-warm-white/8 text-center hover:border-gold/30 transition-colors block">
                 <h4 className="text-warm-white font-semibold mb-1">Professional Audit</h4>
                 <div className="text-2xl font-bold text-gold mb-1">$499</div>
                 <p className="text-xs text-warm-gray">one-time</p>
                 <p className="text-xs text-warm-gray-light mt-2">Full audit + PDF + action plan</p>
-              </div>
-              <div className="bg-dark/40 rounded-xl p-5 border-2 border-gold text-center relative">
+              </a>
+              <a href="/checkout/monthly" className="bg-dark/40 rounded-xl p-5 border-2 border-gold text-center relative hover:bg-dark/60 transition-colors block">
                 <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-gold text-dark text-[10px] font-bold px-2.5 py-0.5 rounded-full">Best Value</div>
                 <h4 className="text-warm-white font-semibold mb-1">Monthly Monitor</h4>
                 <div className="text-2xl font-bold text-gold mb-1">$299<span className="text-sm text-warm-gray">/mo</span></div>
                 <p className="text-xs text-warm-gray">12-month agreement</p>
                 <p className="text-xs text-warm-gray-light mt-2">Monthly reports + Slack alerts</p>
-              </div>
-              <div className="bg-dark/40 rounded-xl p-5 border border-warm-white/8 text-center">
+              </a>
+              <a href="/checkout/bimonthly" className="bg-dark/40 rounded-xl p-5 border border-warm-white/8 text-center hover:border-gold/30 transition-colors block">
                 <h4 className="text-warm-white font-semibold mb-1">Bi-Monthly</h4>
                 <div className="text-2xl font-bold text-gold mb-1">$399<span className="text-sm text-warm-gray">/2mo</span></div>
                 <p className="text-xs text-warm-gray">12-month agreement</p>
                 <p className="text-xs text-warm-gray-light mt-2">Report every 2 months</p>
-              </div>
+              </a>
             </div>
 
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -189,7 +189,7 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
                 <span className="line-through">$15,000+</span> at a traditional agency &mdash; 30-day money-back guarantee
               </p>
               <a
-                href={`mailto:hello@whatseo.ai?subject=SEO%20Audit%20Request&body=I%20ran%20a%20free%20scan%20on%20${encodeURIComponent(audit.url)}%20and%20scored%20${audit.score}%2F100.%20I%E2%80%99d%20like%20to%20discuss%20pricing%20options.`}
+                href="/checkout/professional"
                 className="bg-gold text-dark px-8 py-3.5 rounded-full font-semibold hover:bg-gold-light transition-colors text-center shrink-0"
               >
                 Get Started &rarr;

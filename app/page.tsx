@@ -29,6 +29,7 @@ const caseStudies = [
 const pricing = [
   {
     name: 'Professional Audit',
+    slug: 'professional',
     price: '$499',
     period: 'one-time',
     features: ['47 checks across up to 500 pages', 'Real Google Search Console data', 'Professional PDF report', 'Prioritized action plan', 'Dev-ready schema components'],
@@ -38,22 +39,24 @@ const pricing = [
   },
   {
     name: 'Monthly Monitor',
+    slug: 'monthly',
     price: '$299',
     period: '/month',
     commitment: '12-month agreement',
-    features: ['Everything in One-Time', 'Monthly trend tracking', 'Slack notifications', 'Score change alerts', 'Competitor tracking'],
-    cta: 'Coming Soon',
-    active: false,
+    features: ['Everything in Professional', 'Monthly trend tracking', 'Slack notifications', 'Score change alerts', 'Competitor tracking'],
+    cta: 'Subscribe Now',
+    active: true,
     highlighted: true,
   },
   {
     name: 'Bi-Monthly Monitor',
+    slug: 'bimonthly',
     price: '$399',
     period: '/2 months',
     commitment: '12-month agreement',
-    features: ['Everything in One-Time', 'Report every 2 months', 'Slack notifications', 'Score change alerts', 'Competitor tracking'],
-    cta: 'Coming Soon',
-    active: false,
+    features: ['Everything in Professional', 'Report every 2 months', 'Slack notifications', 'Score change alerts', 'Competitor tracking'],
+    cta: 'Subscribe Now',
+    active: true,
     highlighted: false,
   },
 ];
@@ -283,7 +286,7 @@ export default function Home() {
                   </li>
                 ))}
               </ul>
-              <a href="mailto:hello@whatseo.ai?subject=Full%20SEO%20Audit%20Request" className="block w-full py-3.5 rounded-full font-semibold text-center bg-gold text-dark hover:bg-gold-light transition-colors">
+              <a href="/checkout/professional" className="block w-full py-3.5 rounded-full font-semibold text-center bg-gold text-dark hover:bg-gold-light transition-colors">
                 Get Full Audit &rarr;
               </a>
               <p className="text-center text-xs text-warm-gray-light mt-3">
@@ -398,16 +401,12 @@ export default function Home() {
                     </li>
                   ))}
                 </ul>
-                <button
-                  disabled={!p.active}
-                  className={`w-full py-3.5 rounded-full font-semibold transition-colors ${
-                    p.active
-                      ? 'bg-gold text-dark hover:bg-gold-light'
-                      : 'bg-cream-dark text-warm-gray-light cursor-not-allowed'
-                  }`}
+                <a
+                  href={`/checkout/${p.slug}`}
+                  className="block w-full py-3.5 rounded-full font-semibold transition-colors text-center bg-gold text-dark hover:bg-gold-light"
                 >
                   {p.cta}
-                </button>
+                </a>
               </div>
             ))}
           </div>

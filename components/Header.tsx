@@ -2,11 +2,17 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Menu, X } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Menu, X, User } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const supabase = createClient();
+  const router = useRouter();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -14,12 +20,33 @@ export default function Header() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  const navLinks = [
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => setUser(user));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+    return () => subscription.unsubscribe();
+  }, [supabase]);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    router.push('/');
+    router.refresh();
+  };
+
+  const publicLinks = [
     { href: '#features', label: 'Services' },
     { href: '#how-it-works', label: 'How It Works' },
     { href: '#results', label: 'Results' },
     { href: '#pricing', label: 'Pricing' },
   ];
+
+  const authLinks = [
+    { href: '/dashboard', label: 'Dashboard' },
+    { href: '/onboarding', label: 'Settings' },
+  ];
+
+  const navLinks = user ? authLinks : publicLinks;
 
   return (
     <header
@@ -33,7 +60,6 @@ export default function Header() {
           <span className="text-warm-gray text-sm">.ai</span>
         </Link>
 
-        {/* Desktop nav */}
         <div className="hidden md:flex items-center gap-8">
           {navLinks.map((link) => (
             <a
@@ -46,14 +72,33 @@ export default function Header() {
           ))}
         </div>
 
-        <a
-          href="#audit-form"
-          className="hidden md:block bg-gold text-dark rounded-full px-6 py-2.5 text-sm font-semibold hover:bg-gold-light transition-colors"
-        >
-          Free Scan
-        </a>
+        {user ? (
+          <div className="hidden md:flex items-center gap-4">
+            <Link href="/dashboard" className="flex items-center gap-2 text-sm text-warm-gray hover:text-warm-white transition-colors">
+              <User className="w-4 h-4" />
+              {user.email?.split('@')[0]}
+            </Link>
+            <button
+              onClick={handleSignOut}
+              className="text-sm text-warm-gray-light hover:text-warm-white transition-colors"
+            >
+              Sign Out
+            </button>
+          </div>
+        ) : (
+          <div className="hidden md:flex items-center gap-4">
+            <Link href="/auth/login" className="text-sm text-warm-gray hover:text-warm-white transition-colors">
+              Sign In
+            </Link>
+            <a
+              href="#audit-form"
+              className="bg-gold text-dark rounded-full px-6 py-2.5 text-sm font-semibold hover:bg-gold-light transition-colors"
+            >
+              Free Scan
+            </a>
+          </div>
+        )}
 
-        {/* Mobile toggle */}
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
           className="md:hidden text-warm-gray hover:text-warm-white"
@@ -62,7 +107,6 @@ export default function Header() {
         </button>
       </nav>
 
-      {/* Mobile menu */}
       {mobileOpen && (
         <div className="md:hidden bg-dark border-t border-warm-white/8 px-6 py-6">
           <div className="flex flex-col gap-4">
@@ -76,13 +120,23 @@ export default function Header() {
                 {link.label}
               </a>
             ))}
-            <a
-              href="#audit-form"
-              onClick={() => setMobileOpen(false)}
-              className="bg-gold text-dark rounded-full px-6 py-3 text-center font-semibold mt-2"
-            >
-              Free Scan
-            </a>
+            {user ? (
+              <button
+                onClick={() => { handleSignOut(); setMobileOpen(false); }}
+                className="text-warm-gray hover:text-warm-white text-left py-2"
+              >
+                Sign Out
+              </button>
+            ) : (
+              <>
+                <Link href="/auth/login" onClick={() => setMobileOpen(false)}
+                  className="text-warm-gray hover:text-warm-white py-2">Sign In</Link>
+                <a href="#audit-form" onClick={() => setMobileOpen(false)}
+                  className="bg-gold text-dark rounded-full px-6 py-3 text-center font-semibold mt-2">
+                  Free Scan
+                </a>
+              </>
+            )}
           </div>
         </div>
       )}
