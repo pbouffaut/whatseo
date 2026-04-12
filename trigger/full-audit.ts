@@ -35,9 +35,28 @@ export const fullAuditTask = task({
       .eq('user_id', userId)
       .single();
 
-    const googleAccessToken = onboarding?.google_access_token || null;
+    let googleAccessToken = onboarding?.google_access_token || null;
+    const googleRefreshToken = onboarding?.google_refresh_token || null;
     const ga4PropertyId = onboarding?.ga4_property_id || null;
     const apiKey = process.env.PAGESPEED_API_KEY || undefined;
+
+    // Refresh expired Google token if we have a refresh token
+    if (googleRefreshToken && process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+      try {
+        const { refreshGoogleToken } = await import("../lib/google/refresh-token");
+        const refreshed = await refreshGoogleToken(googleRefreshToken);
+        if (refreshed) {
+          googleAccessToken = refreshed.accessToken;
+          // Update token in DB for next time
+          await supabase.from('onboarding_data').update({
+            google_access_token: refreshed.accessToken,
+            google_token_expires_at: refreshed.expiresAt,
+          }).eq('user_id', userId);
+        }
+      } catch {
+        // Continue without fresh token — will use existing or skip Google APIs
+      }
+    }
 
     try {
       // Update status: running
@@ -77,6 +96,51 @@ export const fullAuditTask = task({
         },
       });
 
+      // Generate PDF report
+      metadata.set("phase", "generating_pdf");
+      let pdfUrl: string | undefined;
+      try {
+        const { generateAuditPdf } = await import("../lib/report/pdf");
+        const pdfBuffer = generateAuditPdf(result, url);
+
+        // Upload to Supabase Storage
+        const fileName = `audit-${auditId}.pdf`;
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('audit-reports')
+          .upload(fileName, pdfBuffer, { contentType: 'application/pdf', upsert: true });
+
+        if (!uploadError && uploadData) {
+          const { data: urlData } = supabase.storage.from('audit-reports').getPublicUrl(fileName);
+          pdfUrl = urlData.publicUrl;
+        }
+      } catch (pdfErr) {
+        console.error("PDF generation failed:", pdfErr);
+        // Continue without PDF — don't fail the whole audit
+      }
+
+      // Send email report
+      try {
+        if (payload.email && process.env.RESEND_API_KEY) {
+          const { sendAuditReport } = await import("../lib/report/email");
+          const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://whatseo.vercel.app";
+          await sendAuditReport({
+            to: payload.email,
+            websiteUrl: url,
+            score: result.score.overall,
+            pagesCrawled: result.pagesCrawled,
+            recommendations: result.recommendations.length,
+            resultsUrl: `${appUrl}/results/${auditId}`,
+            pdfUrl,
+          });
+          await supabase.from("Audit").update({
+            report_emailed_at: new Date().toISOString(),
+          }).eq("id", auditId);
+        }
+      } catch (emailErr) {
+        console.error("Email delivery failed:", emailErr);
+        // Continue without email — don't fail the whole audit
+      }
+
       // Save results
       metadata.set("phase", "complete");
       await supabase.from("Audit").update({
@@ -86,6 +150,7 @@ export const fullAuditTask = task({
         phase: "complete",
         pages_crawled: result.pagesCrawled,
         pages_total: result.pagesTotal,
+        pdf_url: pdfUrl || null,
         updatedAt: new Date().toISOString(),
       }).eq("id", auditId);
 
@@ -94,6 +159,7 @@ export const fullAuditTask = task({
         score: result.score.overall,
         pagesCrawled: result.pagesCrawled,
         recommendations: result.recommendations.length,
+        pdfUrl,
       };
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : "Audit failed";
