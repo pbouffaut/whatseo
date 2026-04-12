@@ -67,7 +67,7 @@ async function fetchSitemapUrls(origin: string): Promise<string[]> {
   return urls;
 }
 
-function extractInternalLinks(html: string, pageUrl: string, originHostname: string): string[] {
+function extractInternalLinks(html: string, pageUrl: string, acceptedHostnames: Set<string>): string[] {
   const $ = cheerio.load(html);
   const links: string[] = [];
 
@@ -78,7 +78,7 @@ function extractInternalLinks(html: string, pageUrl: string, originHostname: str
     if (!normalized) return;
     try {
       const parsed = new URL(normalized);
-      if (parsed.hostname === originHostname) {
+      if (acceptedHostnames.has(parsed.hostname)) {
         // Skip non-page resources
         if (/\.(jpg|jpeg|png|gif|svg|webp|pdf|zip|css|js|xml|txt)$/i.test(parsed.pathname)) return;
         links.push(normalized);
@@ -107,8 +107,25 @@ export async function crawlSite(rootUrl: string, options: CrawlOptions): Promise
 
   let normalizedRoot = rootUrl.trim();
   if (!/^https?:\/\//i.test(normalizedRoot)) normalizedRoot = `https://${normalizedRoot}`;
-  const origin = new URL(normalizedRoot).origin;
-  const hostname = new URL(normalizedRoot).hostname;
+
+  // Follow redirects to get the real origin (e.g., industriousoffice.com → www.industriousoffice.com)
+  let realOrigin: string;
+  let realHostname: string;
+  try {
+    const probe = await fetch(normalizedRoot, { redirect: 'follow', signal: AbortSignal.timeout(10000), headers: { 'User-Agent': 'WhatSEO/1.0' } });
+    const finalUrl = probe.url;
+    realOrigin = new URL(finalUrl).origin;
+    realHostname = new URL(finalUrl).hostname;
+  } catch {
+    realOrigin = new URL(normalizedRoot).origin;
+    realHostname = new URL(normalizedRoot).hostname;
+  }
+
+  // Accept both the original and final hostname (handles www vs non-www)
+  const originalHostname = new URL(normalizedRoot).hostname;
+  const acceptedHostnames = new Set([originalHostname, realHostname]);
+  const origin = realOrigin;
+  const hostname = realHostname;
 
   // Collect URLs from sitemap
   const sitemapUrls = await fetchSitemapUrls(origin);
@@ -121,7 +138,7 @@ export async function crawlSite(rootUrl: string, options: CrawlOptions): Promise
     const normalized = normalizeUrl(url, origin);
     if (!normalized || seen.has(normalized)) return;
     try {
-      if (new URL(normalized).hostname !== hostname) return;
+      if (!acceptedHostnames.has(new URL(normalized).hostname)) return;
     } catch { return; }
     seen.add(normalized);
     queue.push({ url: normalized, depth, source });
@@ -170,7 +187,7 @@ export async function crawlSite(rootUrl: string, options: CrawlOptions): Promise
 
       // Discover internal links from this page
       if (page.html && item.depth < 2) {
-        const internalLinks = extractInternalLinks(page.html, page.finalUrl, hostname);
+        const internalLinks = extractInternalLinks(page.html, page.finalUrl, acceptedHostnames);
         for (const link of internalLinks) {
           enqueue(link, item.depth + 1, 'internal_link');
         }
