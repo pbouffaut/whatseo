@@ -80,8 +80,8 @@ export default function Footer() {
         <div className="border-t border-warm-white/8 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-warm-gray-light text-xs">&copy; 2026 WhatSEO.ai. All rights reserved.</p>
           <div className="flex gap-6">
-            <span className="text-warm-gray-light text-xs hover:text-warm-gray cursor-pointer">Privacy Policy</span>
-            <span className="text-warm-gray-light text-xs hover:text-warm-gray cursor-pointer">Terms of Service</span>
+            <Link href="/privacy" className="text-warm-gray-light text-xs hover:text-warm-gray">Privacy Policy</Link>
+            <Link href="/terms" className="text-warm-gray-light text-xs hover:text-warm-gray">Terms of Service</Link>
           </div>
         </div>
       </div>
