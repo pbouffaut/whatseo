@@ -52,7 +52,7 @@ export default function UrlForm({ compact = false }: { compact?: boolean }) {
               Analyzing...
             </>
           ) : (
-            'Start Your Audit'
+            'Start Your Free Scan'
           )}
         </button>
       </div>

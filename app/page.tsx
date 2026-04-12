@@ -115,7 +115,7 @@ export default function Home() {
             href="#audit-form"
             className="inline-block bg-gold text-dark rounded-full px-10 py-4 text-lg font-semibold hover:bg-gold-light transition-colors"
           >
-            Start Your Free Audit
+            Start Your Free Scan
           </motion.a>
           <motion.p
             initial={{ opacity: 0 }}
@@ -427,7 +427,7 @@ export default function Home() {
             href="#audit-form"
             className="inline-block bg-gold text-dark rounded-full px-10 py-4 text-lg font-semibold hover:bg-gold-light transition-colors"
           >
-            Start Your Free Audit
+            Start Your Free Scan
           </a>
         </div>
       </section>

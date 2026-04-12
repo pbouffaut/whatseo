@@ -50,7 +50,7 @@ export default function Header() {
           href="#audit-form"
           className="hidden md:block bg-gold text-dark rounded-full px-6 py-2.5 text-sm font-semibold hover:bg-gold-light transition-colors"
         >
-          Start Your Audit
+          Free Scan
         </a>
 
         {/* Mobile toggle */}
@@ -81,7 +81,7 @@ export default function Header() {
               onClick={() => setMobileOpen(false)}
               className="bg-gold text-dark rounded-full px-6 py-3 text-center font-semibold mt-2"
             >
-              Start Your Audit
+              Free Scan
             </a>
           </div>
         </div>

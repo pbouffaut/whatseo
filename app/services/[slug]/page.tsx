@@ -97,7 +97,7 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
               href="/#audit-form"
               className="bg-gold text-dark rounded-full px-10 py-4 text-lg font-semibold hover:bg-gold-light transition-colors"
             >
-              Start Your Free Audit
+              Start Your Free Scan
             </Link>
             <Link
               href="/#pricing"
