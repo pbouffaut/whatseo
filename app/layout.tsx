@@ -10,7 +10,7 @@ const dmSerif = DM_Serif_Display({ weight: "400", subsets: ["latin"], variable: 
 export const metadata: Metadata = {
   title: "WhatSEO.ai — Expert-Level SEO Insights in Minutes",
   description:
-    "Professional SEO analysis your team can act on. 47 criteria across 7 categories, delivered as a comprehensive report with prioritized recommendations.",
+    "Professional SEO analysis your team can act on. 47 checks on your homepage for free, or a full audit across up to 500 pages with real Google data.",
   openGraph: {
     title: "WhatSEO.ai — Expert-Level SEO Insights in Minutes",
     description: "Professional SEO analysis your team can act on. No agency needed.",

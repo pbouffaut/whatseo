@@ -15,7 +15,7 @@ const features = [
 
 const steps = [
   { num: '01', title: 'Share Your Website', desc: 'Enter your URL and tell us where to send the report.' },
-  { num: '02', title: 'We Analyze Everything', desc: 'Our AI examines your site across 47 criteria in seconds.' },
+  { num: '02', title: 'We Analyze Everything', desc: 'Our AI runs 47 checks on your homepage in seconds.' },
   { num: '03', title: 'Receive Your Report', desc: 'A professional PDF with scores, insights, and a prioritized action plan.' },
 ];
 
@@ -30,7 +30,7 @@ const pricing = [
     name: 'Instant Audit',
     price: '$299',
     period: 'one-time',
-    features: ['Full site analysis', 'Professional PDF report', 'Prioritized action plan', '47-criteria scoring', 'Schema recommendations'],
+    features: ['47 checks across up to 500 pages', 'Real Google Search Console data', 'Professional PDF report', 'Prioritized action plan', 'Dev-ready schema components'],
     cta: 'Get Your Audit',
     active: true,
     highlighted: true,
@@ -103,7 +103,7 @@ export default function Home() {
             transition={{ delay: 0.2 }}
             className="text-lg text-warm-gray max-w-2xl mx-auto mb-10 leading-relaxed"
           >
-            We analyze your website across 47 SEO criteria and deliver the insights
+            We run 47 checks on your homepage and deliver the insights
             your team needs to rank, convert, and grow.
           </motion.p>
           <motion.a
