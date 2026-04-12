@@ -8,7 +8,7 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const dmSerif = DM_Serif_Display({ weight: "400", subsets: ["latin"], variable: "--font-dm-serif" });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://whatseo.vercel.app"),
+  metadataBase: new URL("https://whatseo.ai"),
   title: {
     default: "WhatSEO.ai — Expert-Level SEO Insights in Minutes",
     template: "%s | WhatSEO.ai",
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "WhatSEO.ai — Expert-Level SEO Insights in Minutes",
     description: "AI-powered SEO analysis across 47 criteria. Professional reports with prioritized action plans. No agency needed.",
-    url: "https://whatseo.vercel.app",
+    url: "https://whatseo.ai",
     siteName: "WhatSEO.ai",
     type: "website",
     images: [
