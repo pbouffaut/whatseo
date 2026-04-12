@@ -27,7 +27,7 @@ export async function fetchPageSpeed(url: string, apiKey?: string): Promise<Page
 
     const res = await fetch(
       `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?${params}`,
-      { signal: AbortSignal.timeout(20000) }
+      { signal: AbortSignal.timeout(45000) }
     );
 
     if (!res.ok) return null;
