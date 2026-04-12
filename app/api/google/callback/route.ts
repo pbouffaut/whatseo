@@ -43,8 +43,10 @@ export async function GET(request: NextRequest) {
 
   if (!tokenResponse.ok) {
     const err = await tokenResponse.text();
-    console.error('Google token exchange failed:', err);
-    return NextResponse.redirect(`${appUrl}/onboarding?google_error=token_exchange_failed`);
+    console.error('Google token exchange failed:', tokenResponse.status, err);
+    console.error('Redirect URI used:', redirectUri);
+    console.error('Client ID length:', GOOGLE_CLIENT_ID?.length, 'Secret length:', GOOGLE_CLIENT_SECRET?.length);
+    return NextResponse.redirect(`${appUrl}/onboarding?google_error=token_exchange_failed_${tokenResponse.status}`);
   }
 
   const tokens = await tokenResponse.json();
