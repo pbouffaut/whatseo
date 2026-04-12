@@ -476,16 +476,10 @@ export default function FullAuditResults({ audit, results }: FullAuditResultsPro
 
       {/* Actions */}
       <div className="flex justify-center gap-4 mt-12">
-        {audit.pdf_url ? (
-          <a href={String(audit.pdf_url)} target="_blank" rel="noopener noreferrer"
-            className="px-8 py-3.5 bg-gold text-dark rounded-full font-semibold hover:bg-gold-light transition-colors">
-            Download PDF Report
-          </a>
-        ) : (
-          <span className="px-8 py-3.5 bg-warm-white/5 text-warm-gray-light rounded-full font-semibold cursor-not-allowed">
-            PDF Report (Coming Soon)
-          </span>
-        )}
+        <a href={`/api/report/${String(audit.id)}`} target="_blank" rel="noopener noreferrer"
+          className="px-8 py-3.5 bg-gold text-dark rounded-full font-semibold hover:bg-gold-light transition-colors">
+          Download PDF Report
+        </a>
         <Link href="/dashboard" className="px-8 py-3.5 bg-warm-white/5 text-warm-gray rounded-full font-semibold hover:bg-warm-white/10 transition-colors">
           Back to Dashboard
         </Link>

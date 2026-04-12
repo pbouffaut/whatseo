@@ -96,41 +96,18 @@ export const fullAuditTask = task({
         },
       });
 
-      // Generate PDF report
-      metadata.set("phase", "generating_pdf");
-      let pdfUrl: string | undefined;
-      try {
-        const { generateAuditPdf } = await import("../lib/report/pdf");
-        const pdfBuffer = generateAuditPdf(result, url);
-
-        // Upload to Supabase Storage
-        const fileName = `audit-${auditId}.pdf`;
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('audit-reports')
-          .upload(fileName, pdfBuffer, { contentType: 'application/pdf', upsert: true });
-
-        if (!uploadError && uploadData) {
-          const { data: urlData } = supabase.storage.from('audit-reports').getPublicUrl(fileName);
-          pdfUrl = urlData.publicUrl;
-        }
-      } catch (pdfErr) {
-        console.error("PDF generation failed:", pdfErr);
-        // Continue without PDF — don't fail the whole audit
-      }
-
-      // Send email report
+      // Send email report (PDF generated on-demand via /api/report/[id])
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://whatseo.vercel.app";
       try {
         if (payload.email && process.env.RESEND_API_KEY) {
-          const { sendAuditReport } = await import("../lib/report/email");
-          const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://whatseo.vercel.app";
-          await sendAuditReport({
+          const resend = await import("resend");
+          const client = new resend.Resend(process.env.RESEND_API_KEY);
+          const scoreColor = result.score.overall >= 70 ? '#4aab6a' : result.score.overall >= 40 ? '#d4952b' : '#e05555';
+          await client.emails.send({
+            from: `WhatSEO.ai <${process.env.RESEND_FROM_EMAIL || 'reports@whatseo.ai'}>`,
             to: payload.email,
-            websiteUrl: url,
-            score: result.score.overall,
-            pagesCrawled: result.pagesCrawled,
-            recommendations: result.recommendations.length,
-            resultsUrl: `${appUrl}/results/${auditId}`,
-            pdfUrl,
+            subject: `Your SEO Audit is Ready — Score: ${result.score.overall}/100`,
+            html: `<div style="max-width:600px;margin:0 auto;padding:40px 24px;background:#1a1a1a;font-family:system-ui,sans-serif;"><div style="text-align:center;margin-bottom:32px;"><span style="font-size:20px;font-weight:bold;color:#f5f0e8;">What</span><span style="font-size:20px;font-weight:bold;color:#c9a85c;">SEO</span><span style="font-size:14px;color:#a09888;">.ai</span></div><div style="background:#232323;border-radius:16px;padding:32px;text-align:center;margin-bottom:24px;"><p style="color:#c9a85c;font-size:12px;text-transform:uppercase;letter-spacing:2px;margin:0 0 16px;">Audit Complete</p><div style="font-size:64px;font-weight:bold;color:${scoreColor};">${result.score.overall}</div><p style="color:#a09888;font-size:14px;margin:4px 0;">/ 100 SEO Health Score</p><p style="color:#a09888;font-size:12px;margin:8px 0 0;">${result.pagesCrawled} pages · ${result.recommendations.length} recommendations</p></div><div style="text-align:center;margin-bottom:24px;"><a href="${appUrl}/results/${auditId}" style="display:inline-block;background:#c9a85c;color:#1a1a1a;padding:14px 32px;border-radius:50px;text-decoration:none;font-weight:600;font-size:16px;">View Full Results</a></div><div style="text-align:center;"><a href="${appUrl}/api/report/${auditId}" style="color:#c9a85c;font-size:13px;text-decoration:none;">Download PDF Report →</a></div></div>`,
           });
           await supabase.from("Audit").update({
             report_emailed_at: new Date().toISOString(),
@@ -138,7 +115,6 @@ export const fullAuditTask = task({
         }
       } catch (emailErr) {
         console.error("Email delivery failed:", emailErr);
-        // Continue without email — don't fail the whole audit
       }
 
       // Save results
@@ -150,7 +126,6 @@ export const fullAuditTask = task({
         phase: "complete",
         pages_crawled: result.pagesCrawled,
         pages_total: result.pagesTotal,
-        pdf_url: pdfUrl || null,
         updatedAt: new Date().toISOString(),
       }).eq("id", auditId);
 
@@ -159,7 +134,6 @@ export const fullAuditTask = task({
         score: result.score.overall,
         pagesCrawled: result.pagesCrawled,
         recommendations: result.recommendations.length,
-        pdfUrl,
       };
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : "Audit failed";
