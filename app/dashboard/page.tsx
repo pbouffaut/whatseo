@@ -76,10 +76,24 @@ export default function DashboardPage() {
       supabase.from('audit_credits').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
     ]);
 
-    setSubscription(subRes.data as Subscription | null);
+    const sub = subRes.data as Subscription | null;
+    const creds = (creditRes.data as AuditCredit[]) || [];
+
+    // Auto-fix: if user has active subscription but zero credits (created before credits table existed)
+    if (sub && sub.status === 'active' && creds.length === 0) {
+      const { data: newCredit } = await supabase.from('audit_credits').insert({
+        user_id: user.id,
+        credit_type: sub.plan === 'professional' ? 'one_time' : 'subscription',
+        status: 'available',
+        amount_cents: PLANS[sub.plan as keyof typeof PLANS]?.price || 499_00,
+      }).select().single();
+      if (newCredit) creds.push(newCredit as AuditCredit);
+    }
+
+    setSubscription(sub);
     setOnboarding(onbRes.data as OnboardingData | null);
     setAudits(auditRes.data || []);
-    setCredits((creditRes.data as AuditCredit[]) || []);
+    setCredits(creds);
     setLoading(false);
   }
 
