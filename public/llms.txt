@@ -1,0 +1,36 @@
+# WhatSEO.ai
+
+> AI-powered SEO analysis delivering professional-grade audits in minutes.
+
+WhatSEO.ai is an AI-powered SEO audit platform that analyzes websites across 47 criteria in 7 categories. It provides instant homepage scans for free and comprehensive multi-page audits for businesses that need the full picture.
+
+## Services
+
+- **Free Scan**: Instant homepage analysis across 47 SEO criteria with score and top issues.
+- **Professional Audit ($499)**: Full site crawl of up to 500 pages with real Google Search Console data, GA4 integration, professional PDF report, prioritized action plan, and dev-ready code components.
+- **Monthly Monitor ($299/mo)**: Recurring audits with trend tracking, Slack notifications, and competitor monitoring.
+
+## Analysis Categories
+
+1. Technical SEO (crawlability, indexability, security, redirects)
+2. On-Page SEO (title tags, meta descriptions, headings, internal links)
+3. Schema Markup (JSON-LD detection, validation, generation)
+4. Performance (Core Web Vitals, PageSpeed Insights, load optimization)
+5. Content Quality (E-E-A-T signals, readability, authority indicators)
+6. AI Search Readiness (llms.txt, AI crawler access, citability)
+7. Images (alt text, formats, responsive images, lazy loading)
+
+## Key URLs
+
+- Homepage: https://whatseo.vercel.app
+- SEO Audit Service: https://whatseo.vercel.app/services/seo-audit
+- Technical Analysis: https://whatseo.vercel.app/services/technical-analysis
+- Content Review: https://whatseo.vercel.app/services/content-review
+- Schema Markup: https://whatseo.vercel.app/services/schema-markup
+- Performance: https://whatseo.vercel.app/services/performance
+- AI Readiness: https://whatseo.vercel.app/services/ai-readiness
+
+## Contact
+
+- Email: hello@whatseo.ai
+- Website: https://whatseo.vercel.app

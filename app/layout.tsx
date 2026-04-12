@@ -8,15 +8,47 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const dmSerif = DM_Serif_Display({ weight: "400", subsets: ["latin"], variable: "--font-dm-serif" });
 
 export const metadata: Metadata = {
-  title: "WhatSEO.ai — Expert-Level SEO Insights in Minutes",
+  metadataBase: new URL("https://whatseo.vercel.app"),
+  title: {
+    default: "WhatSEO.ai — Expert-Level SEO Insights in Minutes",
+    template: "%s | WhatSEO.ai",
+  },
   description:
     "Professional SEO analysis your team can act on. 47 checks on your homepage for free, or a full audit across up to 500 pages with real Google data.",
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
     title: "WhatSEO.ai — Expert-Level SEO Insights in Minutes",
-    description: "Professional SEO analysis your team can act on. No agency needed.",
-    url: "https://whatseo.ai",
+    description: "AI-powered SEO analysis across 47 criteria. Professional reports with prioritized action plans. No agency needed.",
+    url: "https://whatseo.vercel.app",
     siteName: "WhatSEO.ai",
     type: "website",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "WhatSEO.ai — AI-Powered SEO Analysis",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "WhatSEO.ai — Expert-Level SEO Insights in Minutes",
+    description: "AI-powered SEO analysis across 47 criteria. No agency needed.",
+    images: ["/og-image.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
 };
 

@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { Shield, FileText, Code, Zap, BookOpen, Bot, Check } from 'lucide-react';
 import UrlForm from '@/components/UrlForm';
+import JsonLdSchema from './schema';
 
 const features = [
   { icon: Shield, title: 'Technical Foundation', desc: 'We audit your site\'s crawlability, security headers, and infrastructure so search engines can find and trust every page.' },
@@ -75,6 +76,8 @@ function ScoreCircle({ score, size = 56 }: { score: number; size?: number }) {
 export default function Home() {
   return (
     <>
+      <JsonLdSchema />
+
       {/* Hero */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-dark-warm via-dark to-[#1a2520]" />
