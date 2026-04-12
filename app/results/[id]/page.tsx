@@ -162,26 +162,39 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center gap-6">
-              <div>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-bold text-warm-white">$499</span>
-                  <span className="text-warm-gray">one-time</span>
-                </div>
-                <p className="text-xs text-warm-gray-light mt-1">
-                  <span className="line-through">$15,000+</span> at a traditional agency
-                </p>
+            <div className="grid sm:grid-cols-3 gap-4 mb-6">
+              <div className="bg-dark/40 rounded-xl p-5 border border-warm-white/8 text-center">
+                <h4 className="text-warm-white font-semibold mb-1">Professional Audit</h4>
+                <div className="text-2xl font-bold text-gold mb-1">$499</div>
+                <p className="text-xs text-warm-gray">one-time</p>
+                <p className="text-xs text-warm-gray-light mt-2">Full audit + PDF + action plan</p>
               </div>
+              <div className="bg-dark/40 rounded-xl p-5 border-2 border-gold text-center relative">
+                <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-gold text-dark text-[10px] font-bold px-2.5 py-0.5 rounded-full">Best Value</div>
+                <h4 className="text-warm-white font-semibold mb-1">Monthly Monitor</h4>
+                <div className="text-2xl font-bold text-gold mb-1">$299<span className="text-sm text-warm-gray">/mo</span></div>
+                <p className="text-xs text-warm-gray">12-month agreement</p>
+                <p className="text-xs text-warm-gray-light mt-2">Monthly reports + Slack alerts</p>
+              </div>
+              <div className="bg-dark/40 rounded-xl p-5 border border-warm-white/8 text-center">
+                <h4 className="text-warm-white font-semibold mb-1">Bi-Monthly</h4>
+                <div className="text-2xl font-bold text-gold mb-1">$399<span className="text-sm text-warm-gray">/2mo</span></div>
+                <p className="text-xs text-warm-gray">12-month agreement</p>
+                <p className="text-xs text-warm-gray-light mt-2">Report every 2 months</p>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <p className="text-xs text-warm-gray-light">
+                <span className="line-through">$15,000+</span> at a traditional agency &mdash; 30-day money-back guarantee
+              </p>
               <a
-                href={`mailto:hello@whatseo.ai?subject=Full%20SEO%20Audit%20Request&body=I%20ran%20a%20free%20audit%20on%20${encodeURIComponent(audit.url)}%20and%20scored%20${audit.score}%2F100.%20I%E2%80%99d%20like%20a%20full%20audit.`}
-                className="bg-gold text-dark px-10 py-4 rounded-full font-semibold text-lg hover:bg-gold-light transition-colors text-center"
+                href={`mailto:hello@whatseo.ai?subject=SEO%20Audit%20Request&body=I%20ran%20a%20free%20scan%20on%20${encodeURIComponent(audit.url)}%20and%20scored%20${audit.score}%2F100.%20I%E2%80%99d%20like%20to%20discuss%20pricing%20options.`}
+                className="bg-gold text-dark px-8 py-3.5 rounded-full font-semibold hover:bg-gold-light transition-colors text-center shrink-0"
               >
-                Get Your Full Audit &rarr;
+                Get Started &rarr;
               </a>
             </div>
-            <p className="text-xs text-warm-gray-light mt-4">
-              30-day money-back guarantee. Report delivered within 24 hours.
-            </p>
           </div>
         </div>
 
