@@ -318,13 +318,17 @@ export async function analyzeFullSite(options: FullAuditOptions): Promise<FullAu
   const [performance, aiReadiness, pageSpeedData, cruxData, gscData, ga4Data] = await Promise.all([
     analyzePerformance(homepageFinalUrl),
     analyzeAIReadiness(homepageHtml, homepageFinalUrl),
-    fetchPageSpeed(homepageFinalUrl, apiKey).catch(() => null as PageSpeedData | null),
+    fetchPageSpeed(homepageFinalUrl, apiKey).catch((e) => { console.error('PageSpeed failed:', e); return null as PageSpeedData | null; }),
     fetchCruxData(homepageOrigin, apiKey).catch(() => null as CruxData | null),
     googleAccessToken
-      ? fetchGscData(gscSiteUrl, googleAccessToken).catch(() => null as GscData | null)
+      ? fetchGscData(gscSiteUrl, googleAccessToken)
+          .then(data => data ? data : fetchGscData(`https://www.${hostname}/`, googleAccessToken)) // Fallback to URL prefix
+          .then(data => data ? data : fetchGscData(`https://${hostname}/`, googleAccessToken)) // Try without www
+          .catch((e) => { console.error('GSC failed:', e); return null as GscData | null; })
       : Promise.resolve(null as GscData | null),
     googleAccessToken && ga4PropertyId
-      ? fetchGa4Data(ga4PropertyId, googleAccessToken).catch(() => null as Ga4Data | null)
+      ? fetchGa4Data(ga4PropertyId, googleAccessToken)
+          .catch((e) => { console.error('GA4 failed:', e); return null as Ga4Data | null; })
       : Promise.resolve(null as Ga4Data | null),
   ]);
 

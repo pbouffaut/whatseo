@@ -70,7 +70,16 @@ export async function fetchGscData(siteUrl: string, accessToken: string): Promis
       }
     );
 
-    if (!queryRes.ok || !pageRes.ok) return null;
+    if (!queryRes.ok) {
+      const err = await queryRes.text();
+      console.error('GSC query API failed:', queryRes.status, err, 'Site:', siteUrl);
+      return null;
+    }
+    if (!pageRes.ok) {
+      const err = await pageRes.text();
+      console.error('GSC page API failed:', pageRes.status, err);
+      return null;
+    }
 
     const queryData = await queryRes.json();
     const pageData = await pageRes.json();

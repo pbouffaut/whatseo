@@ -66,7 +66,11 @@ export async function fetchGa4Data(propertyId: string, accessToken: string): Pro
       }
     );
 
-    if (!channelRes.ok) return null;
+    if (!channelRes.ok) {
+      const err = await channelRes.text();
+      console.error('GA4 channel API failed:', channelRes.status, err, 'Property:', propertyId);
+      return null;
+    }
     const channelData = await channelRes.json();
 
     let organicSessions = 0;
