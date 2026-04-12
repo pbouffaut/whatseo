@@ -23,8 +23,18 @@ export default function AuditProgressPage() {
   const [pagesTotal, setPagesTotal] = useState(0);
   const [score, setScore] = useState<number | null>(null);
   const [error, setError] = useState('');
+  const [elapsed, setElapsed] = useState(0);
   const startTime = useRef(Date.now());
 
+  // Tick elapsed timer every second
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setElapsed(Math.round((Date.now() - startTime.current) / 1000));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Poll audit status
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
@@ -54,7 +64,6 @@ export default function AuditProgressPage() {
   }, [id, router]);
 
   const currentPhaseIndex = PHASES.findIndex((p) => p.key === phase);
-  const elapsed = Math.round((Date.now() - startTime.current) / 1000);
 
   if (error) {
     return (
