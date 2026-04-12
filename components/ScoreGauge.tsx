@@ -12,7 +12,7 @@ function getColor(score: number) {
 export default function ScoreGauge({ score }: { score: number }) {
   const [displayed, setDisplayed] = useState(0);
   const mv = useMotionValue(0);
-  const strokeDashoffset = useTransform(mv, [0, 100], [440, 440 - 440 * (score / 100)]);
+  const strokeDashoffset = useTransform(mv, [0, 100], [440, 0]);
   const color = getColor(score);
 
   useEffect(() => {
