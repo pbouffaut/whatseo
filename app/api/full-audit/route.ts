@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, generateId } from '@/lib/db';
+import { generateId } from '@/lib/db';
 import { createClient } from '@/lib/supabase/server';
 import { analyzeFullSite } from '@/lib/analyzer/full-audit';
 
@@ -8,10 +8,10 @@ export const maxDuration = 300;
 export async function POST(request: NextRequest) {
   let auditId: string | null = null;
   let creditId: string | null = null;
+  const db = await createClient(); // Authenticated Supabase client (respects RLS)
 
   try {
-    const serverSupabase = await createClient();
-    const { data: { user } } = await serverSupabase.auth.getUser();
+    const { data: { user } } = await db.auth.getUser();
 
     if (!user) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
@@ -26,20 +26,25 @@ export async function POST(request: NextRequest) {
 
     if (!url) return NextResponse.json({ error: 'URL is required' }, { status: 400 });
 
-    // Check for available credits
-    const { data: credits } = await supabase
+    // Check for available credits (uses authenticated client — RLS allows user to see own credits)
+    const { data: credits, error: credErr } = await db
       .from('audit_credits')
       .select('id')
       .eq('user_id', user.id)
       .eq('status', 'available')
       .limit(1);
 
+    if (credErr) {
+      console.error('Credit check error:', credErr);
+      return NextResponse.json({ error: 'Failed to check credits: ' + credErr.message }, { status: 500 });
+    }
+
     if (!credits || credits.length === 0) {
       return NextResponse.json({ error: 'No audit credits available' }, { status: 403 });
     }
 
     // Check no other audit is running
-    const { data: running } = await supabase
+    const { data: running } = await db
       .from('Audit')
       .select('id')
       .eq('user_id', user.id)
@@ -56,7 +61,7 @@ export async function POST(request: NextRequest) {
     if (!/^https?:\/\//i.test(normalizedUrl)) normalizedUrl = `https://${normalizedUrl}`;
 
     // Create audit record
-    await supabase.from('Audit').insert({
+    await db.from('Audit').insert({
       id: auditId,
       url: normalizedUrl,
       email: user.email,
@@ -71,7 +76,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Consume the credit
-    await supabase.from('audit_credits').update({
+    await db.from('audit_credits').update({
       status: 'used',
       audit_id: auditId,
       used_at: new Date().toISOString(),
@@ -96,7 +101,6 @@ export async function POST(request: NextRequest) {
     }
 
     if (triggered) {
-      // Trigger.dev will handle the rest in the background
       return NextResponse.json({
         id: auditId,
         status: 'running',
@@ -104,21 +108,21 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Fallback: run inline (limited by Vercel timeout but better than nothing)
+    // Fallback: run inline (limited by Vercel timeout)
     try {
       const result = await analyzeFullSite({
         url: normalizedUrl,
-        maxPages: 30, // Reduced for inline execution
+        maxPages: 30,
         priorityPages,
         competitorUrls,
         onPhaseChange: async (phase) => {
-          await supabase.from('Audit').update({
+          await db.from('Audit').update({
             phase,
             updatedAt: new Date().toISOString(),
           }).eq('id', auditId);
         },
         onProgress: async (crawled, total) => {
-          await supabase.from('Audit').update({
+          await db.from('Audit').update({
             pages_crawled: crawled,
             pages_total: total,
             updatedAt: new Date().toISOString(),
@@ -126,7 +130,7 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      await supabase.from('Audit').update({
+      await db.from('Audit').update({
         status: 'complete',
         score: result.score.overall,
         results: JSON.stringify(result),
@@ -145,7 +149,7 @@ export async function POST(request: NextRequest) {
     } catch (auditErr) {
       const errorMsg = auditErr instanceof Error ? auditErr.message : 'Audit failed';
 
-      await supabase.from('Audit').update({
+      await db.from('Audit').update({
         status: 'failed',
         error: errorMsg,
         phase: 'failed',
@@ -153,7 +157,7 @@ export async function POST(request: NextRequest) {
       }).eq('id', auditId);
 
       // Refund credit
-      await supabase.from('audit_credits').update({
+      await db.from('audit_credits').update({
         status: 'available',
         audit_id: null,
         used_at: null,
@@ -166,16 +170,15 @@ export async function POST(request: NextRequest) {
 
     // Refund credit if we consumed one
     if (creditId) {
-      await supabase.from('audit_credits').update({
+      await db.from('audit_credits').update({
         status: 'available',
         audit_id: null,
         used_at: null,
       }).eq('id', creditId);
     }
 
-    // Clean up audit record if created
     if (auditId) {
-      await supabase.from('Audit').update({
+      await db.from('Audit').update({
         status: 'failed',
         error: err instanceof Error ? err.message : 'Failed to start audit',
         updatedAt: new Date().toISOString(),
