@@ -80,6 +80,15 @@ export default function CheckoutPage() {
       });
       if (subError) throw subError;
 
+      // Grant audit credit(s)
+      const { error: creditError } = await supabase.from('audit_credits').insert({
+        user_id: user.id,
+        credit_type: plan.intervalMonths ? 'subscription' : 'one_time',
+        status: 'available',
+        amount_cents: plan.price,
+      });
+      if (creditError) throw creditError;
+
       setStep('success');
       setTimeout(() => router.push('/onboarding'), 2000);
     } catch (err) {

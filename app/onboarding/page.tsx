@@ -107,24 +107,6 @@ export default function OnboardingPage() {
     }, { onConflict: 'user_id' });
 
     if (dbError) { setError(dbError.message); setLoading(false); return; }
-
-    // Auto-trigger the first audit
-    if (form.websiteUrl) {
-      try {
-        const res = await fetch('/api/analyze', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url: form.websiteUrl, email: user.email, userId: user.id }),
-        });
-        const data = await res.json();
-        if (data.id) {
-          // Audit started — redirect to dashboard where they can see it
-          router.push('/dashboard');
-          return;
-        }
-      } catch { /* continue to dashboard even if audit trigger fails */ }
-    }
-
     router.push('/dashboard');
   };
 
