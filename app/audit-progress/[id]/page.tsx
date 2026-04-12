@@ -24,12 +24,14 @@ export default function AuditProgressPage() {
   const [score, setScore] = useState<number | null>(null);
   const [error, setError] = useState('');
   const [elapsed, setElapsed] = useState(0);
-  const startTime = useRef(Date.now());
+  const auditStartTime = useRef<number | null>(null);
 
-  // Tick elapsed timer every second
+  // Tick elapsed timer every second (based on actual audit createdAt)
   useEffect(() => {
     const timer = setInterval(() => {
-      setElapsed(Math.round((Date.now() - startTime.current) / 1000));
+      if (auditStartTime.current) {
+        setElapsed(Math.round((Date.now() - auditStartTime.current) / 1000));
+      }
     }, 1000);
     return () => clearInterval(timer);
   }, []);
@@ -40,6 +42,12 @@ export default function AuditProgressPage() {
       try {
         const res = await fetch(`/api/status/${id}`);
         const data = await res.json();
+
+        // Set the real start time from the audit record
+        if (data.createdAt && !auditStartTime.current) {
+          auditStartTime.current = new Date(data.createdAt).getTime();
+          setElapsed(Math.round((Date.now() - auditStartTime.current) / 1000));
+        }
 
         setStatus(data.status);
         setPhase(data.phase || 'crawling');
