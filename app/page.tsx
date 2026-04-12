@@ -15,7 +15,7 @@ const features = [
 
 const steps = [
   { num: '01', title: 'Share Your Website', desc: 'Enter your URL and tell us where to send the report.' },
-  { num: '02', title: 'We Analyze Everything', desc: 'Our AI examines your site across 47 criteria in under 10 minutes.' },
+  { num: '02', title: 'We Analyze Everything', desc: 'Our AI examines your site across 47 criteria in seconds.' },
   { num: '03', title: 'Receive Your Report', desc: 'A professional PDF with scores, insights, and a prioritized action plan.' },
 ];
 
@@ -235,7 +235,7 @@ export default function Home() {
             <UrlForm />
           </div>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6 text-warm-gray text-sm">
-            {['Free homepage analysis', 'Results in 10 minutes', 'No credit card required'].map((text) => (
+            {['Free homepage analysis', 'Results in seconds', 'No credit card required'].map((text) => (
               <span key={text} className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-gold" />
                 {text}
