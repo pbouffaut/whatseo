@@ -102,3 +102,83 @@ export interface AuditResult {
   analyzedAt: string;
   duration: number;
 }
+
+// --- Full Audit Types ---
+
+export interface CrawledPage {
+  url: string;
+  finalUrl: string;
+  html: string;
+  statusCode: number;
+  headers: Record<string, string>;
+  redirectChain: string[];
+  responseTime: number;
+  depth: number;
+  source: 'sitemap' | 'internal_link' | 'priority' | 'homepage';
+  error?: string;
+}
+
+export interface CrawlResult {
+  pages: CrawledPage[];
+  sitemapUrls: string[];
+  skippedUrls: string[];
+  duration: number;
+}
+
+export interface PageAuditResult {
+  url: string;
+  statusCode: number;
+  responseTime: number;
+  technical: TechnicalResult;
+  onPage: OnPageResult;
+  schema: SchemaResult;
+  images: ImageResult;
+  content: ContentResult;
+}
+
+export interface Recommendation {
+  title: string;
+  description: string;
+  impact: 'high' | 'medium' | 'low';
+  effort: 'high' | 'medium' | 'low';
+  category: string;
+  affectedUrls: string[];
+}
+
+export interface FullAuditResult {
+  url: string;
+  finalUrl: string;
+  auditType: 'full';
+  score: AuditScore;
+  pagesCrawled: number;
+  pagesTotal: number;
+  crawlDuration: number;
+
+  // Aggregated scores (averages across all pages)
+  technical: TechnicalResult;
+  onPage: OnPageResult;
+  schema: SchemaResult;
+  images: ImageResult;
+  content: ContentResult;
+  performance: PerformanceResult;
+  aiReadiness: AIReadinessResult;
+
+  // Per-page results
+  pages: PageAuditResult[];
+
+  // Pattern detection
+  thinContentPages: string[];
+  missingTitlePages: string[];
+  missingMetaDescPages: string[];
+  duplicateTitles: { title: string; urls: string[] }[];
+  duplicateDescriptions: { description: string; urls: string[] }[];
+  missingSchemaPages: string[];
+  brokenLinks: { url: string; statusCode: number; foundOn: string }[];
+  slowPages: string[];
+
+  // Recommendations
+  recommendations: Recommendation[];
+
+  analyzedAt: string;
+  duration: number;
+}

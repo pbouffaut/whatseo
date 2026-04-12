@@ -20,6 +20,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     score: audit.score,
     createdAt: audit.createdAt,
     updatedAt: audit.updatedAt,
+    // Full audit fields
+    audit_type: audit.audit_type || 'free',
+    phase: audit.phase,
+    pages_crawled: audit.pages_crawled || 0,
+    pages_total: audit.pages_total || 0,
+    pdf_url: audit.pdf_url,
   };
 
   if (audit.status === 'complete' && audit.results) {

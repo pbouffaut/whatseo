@@ -9,7 +9,8 @@ import { analyzeContent } from './content';
 import { analyzeAIReadiness } from './ai-readiness';
 import { calculateScore } from './scorer';
 
-export type { AuditResult } from './types';
+export type { AuditResult, FullAuditResult } from './types';
+export { analyzeFullSite } from './full-audit';
 
 // Wrap an async call with a timeout — returns fallback on timeout instead of throwing
 async function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {

@@ -106,30 +106,24 @@ export default function DashboardPage() {
       // Consume the oldest available credit
       const credit = availableCredits[0];
 
-      // Start the audit
-      const res = await fetch('/api/analyze', {
+      // Call the full audit API — it handles credit consumption, crawling, analysis
+      const res = await fetch('/api/full-audit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: onboarding.website_url, email: user.email, userId: user.id }),
+        body: JSON.stringify({
+          url: onboarding.website_url,
+          priorityPages: onboarding.priority_pages || [],
+          competitorUrls: onboarding.competitor_urls || [],
+        }),
       });
       const data = await res.json();
 
-      if (data.status === 'complete' || data.id) {
-        // Mark credit as used
-        await supabase.from('audit_credits').update({
-          status: 'used',
-          audit_id: data.id,
-          used_at: new Date().toISOString(),
-        }).eq('id', credit.id);
-
-        if (data.status === 'complete') {
-          router.push(`/results/${data.id}`);
-        } else {
-          router.push(`/analyze?url=${encodeURIComponent(onboarding.website_url)}&email=${encodeURIComponent(user.email || '')}`);
-        }
-      } else {
+      if (!res.ok) {
         throw new Error(data.error || 'Failed to start audit');
       }
+
+      // Redirect to progress page
+      router.push(`/audit-progress/${data.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Audit failed');
       setConfirmStep('idle');
