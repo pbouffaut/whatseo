@@ -8,7 +8,7 @@ export const maxDuration = 60;
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    let { url, email } = body as { url?: string; email?: string };
+    let { url, email, userId } = body as { url?: string; email?: string; userId?: string };
 
     if (!url) return NextResponse.json({ error: 'URL is required' }, { status: 400 });
     if (!email || !email.includes('@')) return NextResponse.json({ error: 'Valid email is required' }, { status: 400 });
@@ -21,6 +21,7 @@ export async function POST(request: NextRequest) {
       id,
       url,
       email,
+      user_id: userId || null,
       status: 'running',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
