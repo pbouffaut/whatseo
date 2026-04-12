@@ -12,6 +12,8 @@ interface OnboardingData {
   website_url: string;
   gsc_connected: boolean;
   ga4_property_id: string | null;
+  google_access_token: string | null;
+  google_refresh_token: string | null;
   competitor_urls: string[];
   priority_pages: string[];
   [key: string]: unknown;
@@ -304,10 +306,40 @@ export default function DashboardPage() {
                     </div>
                   </div>
 
+                  {/* Warnings for missing integrations */}
+                  {(!onboarding.gsc_connected || !onboarding.ga4_property_id || (onboarding.gsc_connected && !onboarding.google_access_token)) && (
+                    <div className="bg-[#d4952b]/10 border border-[#d4952b]/20 rounded-lg p-4 mb-4">
+                      <div className="flex items-start gap-2 mb-2">
+                        <AlertCircle className="w-4 h-4 text-[#d4952b] shrink-0 mt-0.5" />
+                        <p className="text-[#d4952b] text-sm font-medium">Missing data sources</p>
+                      </div>
+                      <div className="space-y-1 ml-6">
+                        {!onboarding.gsc_connected && (
+                          <p className="text-warm-gray text-xs">
+                            <strong>Google Search Console</strong> not connected — audit will not include real search queries, clicks, impressions, or ranking data.
+                          </p>
+                        )}
+                        {onboarding.gsc_connected && !onboarding.google_access_token && (
+                          <p className="text-warm-gray text-xs">
+                            <strong>Google tokens expired</strong> — please reconnect Google in Settings to refresh your access tokens.
+                          </p>
+                        )}
+                        {!onboarding.ga4_property_id && (
+                          <p className="text-warm-gray text-xs">
+                            <strong>GA4 Property ID</strong> not configured — audit will not include organic traffic, engagement rates, or conversion data.
+                          </p>
+                        )}
+                      </div>
+                      <Link href="/onboarding" className="text-[#d4952b] text-xs hover:text-[#e5a63b] mt-2 inline-block">
+                        Connect now in Settings →
+                      </Link>
+                    </div>
+                  )}
+
                   <div className="flex gap-3">
                     <button onClick={handleRunAudit}
                       className="bg-gold text-dark px-6 py-3 rounded-full font-semibold hover:bg-gold-light transition-colors flex items-center gap-2">
-                      <Check className="w-4 h-4" /> Confirm &amp; Run Audit
+                      <Check className="w-4 h-4" /> {(!onboarding.gsc_connected || !onboarding.ga4_property_id) ? 'Run Anyway' : 'Confirm & Run Audit'}
                     </button>
                     <button onClick={() => setConfirmStep('idle')}
                       className="px-6 py-3 rounded-full text-warm-gray hover:text-warm-white transition-colors">
