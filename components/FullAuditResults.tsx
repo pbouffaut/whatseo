@@ -28,6 +28,7 @@ export default function FullAuditResults({ audit, results }: FullAuditResultsPro
   const score = results.score as { overall: number; categories: Record<string, { score: number; weight: number }> };
   const pages = (results.pages || []) as Record<string, unknown>[];
   const recommendations = (results.recommendations || []) as Record<string, unknown>[];
+  const insights = results.insights as Record<string, string> | undefined;
   const googleData = results.googleData as Record<string, unknown> | undefined;
   const gsc = googleData?.gsc as Record<string, unknown> | undefined;
   const ga4 = googleData?.ga4 as Record<string, unknown> | undefined;
@@ -108,6 +109,29 @@ export default function FullAuditResults({ audit, results }: FullAuditResultsPro
         {/* OVERVIEW TAB */}
         {activeTab === 'overview' && (
           <div className="space-y-6">
+
+            {/* Top Priority — the single most important action */}
+            {insights?.topPriority && (
+              <div className="bg-gradient-to-r from-gold/10 to-gold/5 border border-gold/20 rounded-2xl p-6">
+                <div className="flex items-start gap-3">
+                  <span className="bg-gold text-dark text-xs font-bold px-2.5 py-1 rounded-full shrink-0 mt-0.5">#1 Priority</span>
+                  <p className="text-warm-white text-sm leading-relaxed">{insights.topPriority}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Executive Summary */}
+            {insights?.executive && (
+              <div className="bg-dark-card rounded-2xl border border-warm-white/8 p-6">
+                <h3 className="text-lg font-semibold text-warm-white mb-4">Executive Summary</h3>
+                <div className="text-warm-gray text-sm leading-relaxed space-y-3">
+                  {insights.executive.split('\n\n').map((p, i) => (
+                    <p key={i}>{p}</p>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Stats row */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
@@ -138,6 +162,25 @@ export default function FullAuditResults({ audit, results }: FullAuditResultsPro
                     </li>
                   ))}
                 </ul>
+              </div>
+            )}
+
+            {/* Category Insights */}
+            {insights && (
+              <div className="grid md:grid-cols-2 gap-4">
+                {[
+                  { key: 'technical', label: 'Technical SEO' },
+                  { key: 'onPage', label: 'On-Page SEO' },
+                  { key: 'content', label: 'Content Quality' },
+                  { key: 'schema', label: 'Structured Data' },
+                  { key: 'performance', label: 'Performance' },
+                  { key: 'aiReadiness', label: 'AI Readiness' },
+                ].map(({ key, label }) => insights[key] ? (
+                  <div key={key} className="bg-dark-card rounded-xl border border-warm-white/8 p-5">
+                    <h4 className="text-sm font-semibold text-gold mb-2">{label}</h4>
+                    <p className="text-warm-gray text-xs leading-relaxed">{insights[key].split('\n\n')[0]}</p>
+                  </div>
+                ) : null)}
               </div>
             )}
 
@@ -250,6 +293,12 @@ export default function FullAuditResults({ audit, results }: FullAuditResultsPro
         {/* RECOMMENDATIONS TAB */}
         {activeTab === 'recommendations' && (
           <div className="space-y-4">
+            {insights?.topPriority && (
+              <div className="bg-gradient-to-r from-gold/10 to-gold/5 border border-gold/20 rounded-xl p-5 mb-2">
+                <p className="text-gold text-xs font-semibold uppercase tracking-wider mb-2">Start Here</p>
+                <p className="text-warm-white text-sm leading-relaxed">{insights.topPriority}</p>
+              </div>
+            )}
             {recommendations.map((rec, i) => (
               <div key={i} className="bg-dark-card rounded-xl border border-warm-white/8 p-6">
                 <div className="flex items-start justify-between mb-3">
@@ -290,6 +339,16 @@ export default function FullAuditResults({ audit, results }: FullAuditResultsPro
         {/* GOOGLE DATA TAB */}
         {activeTab === 'google' && (
           <div className="space-y-6">
+            {insights?.googleData && (
+              <div className="bg-dark-card rounded-xl border border-warm-white/8 p-6">
+                <h3 className="text-lg font-semibold text-warm-white mb-3">What Your Google Data Tells Us</h3>
+                <div className="text-warm-gray text-sm leading-relaxed space-y-3">
+                  {insights.googleData.split('\n\n').map((p, i) => (
+                    <p key={i}>{p}</p>
+                  ))}
+                </div>
+              </div>
+            )}
             {gsc && (
               <div className="bg-dark-card rounded-xl border border-warm-white/8 p-6">
                 <h3 className="text-lg font-semibold text-warm-white mb-1">Search Console (90 days)</h3>
@@ -415,6 +474,16 @@ export default function FullAuditResults({ audit, results }: FullAuditResultsPro
         {/* PERFORMANCE TAB */}
         {activeTab === 'performance' && (
           <div className="space-y-6">
+            {insights?.performance && (
+              <div className="bg-dark-card rounded-xl border border-warm-white/8 p-6">
+                <h3 className="text-lg font-semibold text-warm-white mb-3">What This Means for Your Visitors</h3>
+                <div className="text-warm-gray text-sm leading-relaxed space-y-3">
+                  {insights.performance.split('\n\n').map((p, i) => (
+                    <p key={i}>{p}</p>
+                  ))}
+                </div>
+              </div>
+            )}
             {psi && (
               <div className="bg-dark-card rounded-xl border border-warm-white/8 p-6">
                 <h3 className="text-lg font-semibold text-warm-white mb-4">Lighthouse Scores (Mobile)</h3>

@@ -10,6 +10,7 @@ const PHASES = [
   { key: 'analyzing', label: 'Analyzing pages', description: 'Running 47 checks on each page' },
   { key: 'google_data', label: 'Fetching performance data', description: 'PageSpeed Insights, Core Web Vitals' },
   { key: 'generating_report', label: 'Generating report', description: 'Aggregating results and creating recommendations' },
+  { key: 'generating_insights', label: 'Writing expert analysis', description: 'AI consultant generating personalized insights' },
   { key: 'complete', label: 'Audit complete', description: '' },
 ];
 

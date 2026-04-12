@@ -179,6 +179,20 @@ export interface FullAuditResult {
   // Recommendations
   recommendations: Recommendation[];
 
+  // AI-generated expert insights (optional)
+  insights?: {
+    executive: string;
+    technical: string;
+    content: string;
+    onPage: string;
+    schema: string;
+    performance: string;
+    aiReadiness: string;
+    images: string;
+    topPriority: string;
+    googleData?: string;
+  };
+
   // Google API data (optional — only if connected)
   googleData?: {
     pageSpeed?: import('../google/pagespeed').PageSpeedData;
