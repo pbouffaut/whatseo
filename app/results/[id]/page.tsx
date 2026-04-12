@@ -165,7 +165,7 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
             <div className="flex flex-col sm:flex-row items-center gap-6">
               <div>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-bold text-warm-white">$299</span>
+                  <span className="text-4xl font-bold text-warm-white">$499</span>
                   <span className="text-warm-gray">one-time</span>
                 </div>
                 <p className="text-xs text-warm-gray-light mt-1">

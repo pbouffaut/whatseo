@@ -27,28 +27,30 @@ const caseStudies = [
 
 const pricing = [
   {
-    name: 'Instant Audit',
-    price: '$299',
+    name: 'One-Time Audit',
+    price: '$499',
     period: 'one-time',
     features: ['47 checks across up to 500 pages', 'Real Google Search Console data', 'Professional PDF report', 'Prioritized action plan', 'Dev-ready schema components'],
     cta: 'Get Your Audit',
     active: true,
-    highlighted: true,
-  },
-  {
-    name: 'Monthly Monitor',
-    price: '$499',
-    period: '/month',
-    features: ['Everything in Instant', 'Monthly trend tracking', 'Slack notifications', 'Score change alerts', 'Competitor tracking'],
-    cta: 'Coming Soon',
-    active: false,
     highlighted: false,
   },
   {
-    name: 'Full Service',
-    price: '$2,500',
-    period: '/quarter',
-    features: ['Everything in Monthly', 'Dev-ready code components', 'Sprint-ready tickets', 'Implementation support', 'Priority channel'],
+    name: 'Monthly Monitor',
+    price: '$299',
+    period: '/month',
+    commitment: '12-month agreement',
+    features: ['Everything in One-Time', 'Monthly trend tracking', 'Slack notifications', 'Score change alerts', 'Competitor tracking'],
+    cta: 'Coming Soon',
+    active: false,
+    highlighted: true,
+  },
+  {
+    name: 'Bi-Monthly Monitor',
+    price: '$399',
+    period: '/2 months',
+    commitment: '12-month agreement',
+    features: ['Everything in One-Time', 'Report every 2 months', 'Slack notifications', 'Score change alerts', 'Competitor tracking'],
     cta: 'Coming Soon',
     active: false,
     highlighted: false,
@@ -271,10 +273,14 @@ export default function Home() {
                   </div>
                 )}
                 <h3 className="text-lg font-semibold text-dark mb-2">{p.name}</h3>
-                <div className="mb-6">
+                <div className="mb-2">
                   <span className="text-4xl font-bold text-dark">{p.price}</span>
                   <span className="text-dark/40 ml-1">{p.period}</span>
                 </div>
+                {'commitment' in p && p.commitment && (
+                  <p className="text-xs text-gold font-medium mb-4">{p.commitment}</p>
+                )}
+                {!('commitment' in p && p.commitment) && <div className="mb-4" />}
                 <ul className="space-y-3 mb-8 flex-1">
                   {p.features.map((f) => (
                     <li key={f} className="flex items-start gap-2 text-sm text-dark/70">
