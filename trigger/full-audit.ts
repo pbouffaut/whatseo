@@ -23,6 +23,7 @@ interface FullAuditPayload {
 export const fullAuditTask = task({
   id: "full-audit",
   maxDuration: 600, // 10 minutes
+  machine: { preset: "medium-1x" }, // More RAM for large crawls (500 pages)
 
   run: async (payload: FullAuditPayload) => {
     const supabase = getSupabase();

@@ -227,43 +227,98 @@ function generateRecommendations(
 
 export async function analyzeFullSite(options: FullAuditOptions): Promise<FullAuditResult> {
   const {
-    url, maxPages = 50, priorityPages = [],
+    url, maxPages = 500, priorityPages = [],
     apiKey, googleAccessToken, ga4PropertyId,
     onPhaseChange, onProgress,
   } = options;
   const start = Date.now();
 
-  // Phase 1: Crawl
+  // Phase 1+2: Crawl AND analyze in one pass (memory efficient — HTML discarded after analysis)
   onPhaseChange?.('crawling');
+  const pageResults: PageAuditResult[] = [];
+  let homepageHtml = '';
+  let homepageFinalUrl = '';
+  let homepageHeaders: Record<string, string> = {};
+  let homepageRedirects: string[] = [];
+  let homepageResponseTime = 0;
+  let crawlDuration = 0;
+  let sitemapUrls: string[] = [];
+
   const crawlResult = await crawlSite(url, {
     maxPages,
     priorityPages,
     concurrency: 5,
-    onProgress,
+    onProgress: (crawled, total) => {
+      onProgress?.(crawled, total);
+    },
   });
+
+  crawlDuration = crawlResult.duration;
+  sitemapUrls = crawlResult.sitemapUrls;
+
+  // Capture broken links before we discard HTML
+  const brokenLinks = crawlResult.pages
+    .filter((p) => p.statusCode >= 400)
+    .map((p) => ({ url: p.url, statusCode: p.statusCode, foundOn: '' }));
 
   if (crawlResult.pages.length === 0) {
     throw new Error('Could not crawl any pages. The site may be blocking our crawler or the URL is invalid.');
   }
 
-  // Phase 2: Analyze all pages
+  // Phase 2: Analyze pages — process and discard HTML immediately
   onPhaseChange?.('analyzing');
-  const pageResults = await analyzePages(crawlResult.pages, onProgress);
+  for (let i = 0; i < crawlResult.pages.length; i++) {
+    const page = crawlResult.pages[i];
+    if (!page.html || page.statusCode >= 400) continue;
+
+    // Save homepage data for later phases
+    if (i === 0) {
+      homepageHtml = page.html;
+      homepageFinalUrl = page.finalUrl;
+      homepageHeaders = page.headers;
+      homepageRedirects = page.redirectChain;
+      homepageResponseTime = page.responseTime;
+    }
+
+    try {
+      const [onPage, schema, images, content] = [
+        analyzeOnPage(page.html, page.finalUrl),
+        analyzeSchema(page.html),
+        analyzeImages(page.html),
+        analyzeContent(page.html),
+      ];
+
+      const technical = i === 0
+        ? await analyzeTechnical(page.html, page.finalUrl, page.headers, page.redirectChain, page.responseTime)
+        : { score: onPage.score, checks: [] };
+
+      pageResults.push({
+        url: page.finalUrl,
+        statusCode: page.statusCode,
+        responseTime: page.responseTime,
+        technical, onPage, schema, images, content,
+      });
+    } catch { /* skip failed page */ }
+
+    // Discard HTML immediately to free memory
+    page.html = '';
+
+    if (i % 50 === 0) onProgress?.(i, crawlResult.pages.length);
+  }
 
   // Phase 3: Performance + AI readiness + Google APIs on homepage
   onPhaseChange?.('google_data');
-  const homepagePage = crawlResult.pages[0];
-  const homepageOrigin = new URL(homepagePage.finalUrl).origin;
+  const homepageOrigin = new URL(homepageFinalUrl).origin;
 
   // Build the site URL for GSC (try sc-domain first, then URL prefix)
-  const hostname = new URL(homepagePage.finalUrl).hostname.replace(/^www\./, '');
+  const hostname = new URL(homepageFinalUrl).hostname.replace(/^www\./, '');
   const gscSiteUrl = `sc-domain:${hostname}`;
 
   // Run all Google API calls in parallel
   const [performance, aiReadiness, pageSpeedData, cruxData, gscData, ga4Data] = await Promise.all([
-    analyzePerformance(homepagePage.finalUrl),
-    analyzeAIReadiness(homepagePage.html, homepagePage.finalUrl),
-    fetchPageSpeed(homepagePage.finalUrl, apiKey).catch(() => null as PageSpeedData | null),
+    analyzePerformance(homepageFinalUrl),
+    analyzeAIReadiness(homepageHtml, homepageFinalUrl),
+    fetchPageSpeed(homepageFinalUrl, apiKey).catch(() => null as PageSpeedData | null),
     fetchCruxData(homepageOrigin, apiKey).catch(() => null as CruxData | null),
     googleAccessToken
       ? fetchGscData(gscSiteUrl, googleAccessToken).catch(() => null as GscData | null)
@@ -326,12 +381,12 @@ export async function analyzeFullSite(options: FullAuditOptions): Promise<FullAu
 
   return {
     url,
-    finalUrl: homepagePage.finalUrl,
+    finalUrl: homepageFinalUrl,
     auditType: 'full',
     score,
     pagesCrawled: pageResults.length,
     pagesTotal: crawlResult.pages.length,
-    crawlDuration: crawlResult.duration,
+    crawlDuration,
     technical: aggTechnical,
     onPage: aggOnPage,
     schema: aggSchema,
@@ -341,9 +396,7 @@ export async function analyzeFullSite(options: FullAuditOptions): Promise<FullAu
     aiReadiness,
     pages: pageResults,
     ...patterns,
-    brokenLinks: crawlResult.pages
-      .filter((p) => p.statusCode >= 400)
-      .map((p) => ({ url: p.url, statusCode: p.statusCode, foundOn: '' })),
+    brokenLinks,
     recommendations,
     googleData: (pageSpeedData || cruxData || gscData || ga4Data) ? {
       pageSpeed: pageSpeedData || undefined,
