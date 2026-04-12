@@ -140,8 +140,8 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
           </div>
         )}
 
-        {/* Upsell */}
-        <div className="relative bg-gradient-to-br from-dark-card to-dark-warm rounded-2xl border border-gold/20 p-8 md:p-10 mb-12 overflow-hidden">
+        {/* Upsell — only show for free scans, not paid full audits */}
+        {(!audit.audit_type || audit.audit_type === 'free') && <div className="relative bg-gradient-to-br from-dark-card to-dark-warm rounded-2xl border border-gold/20 p-8 md:p-10 mb-12 overflow-hidden">
           <div className="absolute -top-20 -right-20 w-60 h-60 bg-gold/5 rounded-full blur-3xl" />
           <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-gold/5 rounded-full blur-3xl" />
 
@@ -230,11 +230,16 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
               </a>
             </div>
           </div>
-        </div>
+        </div>}
 
-        <div className="flex justify-center">
+        <div className="flex justify-center gap-4">
+          {audit.audit_type === 'full' && (
+            <Link href="/dashboard" className="px-8 py-3.5 bg-gold text-dark rounded-full font-semibold text-center hover:bg-gold-light transition-colors">
+              Back to Dashboard
+            </Link>
+          )}
           <Link href="/" className="px-8 py-3.5 bg-warm-white/5 text-warm-gray rounded-full font-semibold text-center hover:bg-warm-white/10 transition-colors">
-            Run Another Free Audit
+            {audit.audit_type === 'full' ? 'Run Another Scan' : 'Run Another Free Audit'}
           </Link>
         </div>
       </div>

@@ -82,8 +82,7 @@ export async function POST(request: NextRequest) {
       used_at: new Date().toISOString(),
     }).eq('id', creditId);
 
-    // Try Trigger.dev first, fallback to inline execution
-    let triggered = false;
+    // Trigger background task on Trigger.dev — no fallback
     try {
       const triggerSdk = await import('@trigger.dev/sdk');
       await triggerSdk.tasks.trigger('full-audit', {
@@ -95,75 +94,34 @@ export async function POST(request: NextRequest) {
         priorityPages,
         competitorUrls,
       });
-      triggered = true;
-    } catch (triggerErr) {
-      console.warn('Trigger.dev unavailable, running inline:', triggerErr);
-    }
 
-    if (triggered) {
       return NextResponse.json({
         id: auditId,
         status: 'running',
         message: 'Audit started in background. This will take 1-3 minutes.',
       });
-    }
+    } catch (triggerErr) {
+      console.error('Trigger.dev failed:', triggerErr);
 
-    // Fallback: run inline (limited by Vercel timeout)
-    try {
-      const result = await analyzeFullSite({
-        url: normalizedUrl,
-        maxPages: 30,
-        priorityPages,
-        competitorUrls,
-        onPhaseChange: async (phase) => {
-          await db.from('Audit').update({
-            phase,
-            updatedAt: new Date().toISOString(),
-          }).eq('id', auditId);
-        },
-        onProgress: async (crawled, total) => {
-          await db.from('Audit').update({
-            pages_crawled: crawled,
-            pages_total: total,
-            updatedAt: new Date().toISOString(),
-          }).eq('id', auditId);
-        },
-      });
-
-      await db.from('Audit').update({
-        status: 'complete',
-        score: result.score.overall,
-        results: JSON.stringify(result),
-        phase: 'complete',
-        pages_crawled: result.pagesCrawled,
-        pages_total: result.pagesTotal,
-        updatedAt: new Date().toISOString(),
-      }).eq('id', auditId);
-
-      return NextResponse.json({
-        id: auditId,
-        status: 'complete',
-        score: result.score.overall,
-        pagesCrawled: result.pagesCrawled,
-      });
-    } catch (auditErr) {
-      const errorMsg = auditErr instanceof Error ? auditErr.message : 'Audit failed';
-
-      await db.from('Audit').update({
-        status: 'failed',
-        error: errorMsg,
-        phase: 'failed',
-        updatedAt: new Date().toISOString(),
-      }).eq('id', auditId);
-
-      // Refund credit
+      // Refund credit — don't run a degraded audit
       await db.from('audit_credits').update({
         status: 'available',
         audit_id: null,
         used_at: null,
       }).eq('id', creditId);
 
-      return NextResponse.json({ id: auditId, status: 'failed', error: errorMsg });
+      await db.from('Audit').update({
+        status: 'failed',
+        error: 'Background processing service unavailable. Your credit has been refunded. Please try again in a few minutes.',
+        phase: 'failed',
+        updatedAt: new Date().toISOString(),
+      }).eq('id', auditId);
+
+      return NextResponse.json({
+        id: auditId,
+        status: 'failed',
+        error: 'Background processing service temporarily unavailable. Your credit has been refunded.',
+      }, { status: 503 });
     }
   } catch (err) {
     console.error('Full audit error:', err);
