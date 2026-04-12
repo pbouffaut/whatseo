@@ -27,6 +27,19 @@ export default function JsonLdSchema() {
     },
   };
 
+  const breadcrumb = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: "https://whatseo.vercel.app",
+      },
+    ],
+  };
+
   const service = {
     "@context": "https://schema.org",
     "@type": "Service",
@@ -61,6 +74,10 @@ export default function JsonLdSchema() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(website).replace(/</g, "\\u003c") }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb).replace(/</g, "\\u003c") }}
       />
       <script
         type="application/ld+json"

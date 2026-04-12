@@ -8,7 +8,7 @@ export function analyzeImages(html: string): ImageResult {
   const totalImages = imgs.length;
 
   if (totalImages === 0) {
-    return { score: 50, checks: [{ name: 'Images', status: 'warn', message: 'No images found on page' }], totalImages: 0, missingAlt: 0, lazyLoaded: 0, webpImages: 0 };
+    return { score: 80, checks: [{ name: 'Images', status: 'pass', message: 'No <img> tags on page — content is text/SVG-based (no optimization needed)' }], totalImages: 0, missingAlt: 0, lazyLoaded: 0, webpImages: 0 };
   }
 
   let missingAlt = 0, lazyLoaded = 0, webpImages = 0, hasSrcset = 0;

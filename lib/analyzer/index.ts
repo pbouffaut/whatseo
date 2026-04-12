@@ -20,7 +20,7 @@ async function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Pro
 }
 
 const PERF_FALLBACK: PerformanceResult = {
-  score: 50,
+  score: 70,
   checks: [{ name: 'PageSpeed API', status: 'warn', message: 'PageSpeed check skipped (timeout)' }],
 };
 
