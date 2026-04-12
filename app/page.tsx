@@ -185,6 +185,112 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Free vs Full Comparison */}
+      <section className="bg-dark py-28 md:py-36 px-6">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-16">
+            <p className="text-gold text-sm uppercase tracking-[0.2em] font-semibold mb-4">Compare</p>
+            <h2 className="font-serif text-3xl md:text-5xl text-warm-white mb-4">
+              Free Scan vs. Full Audit
+            </h2>
+            <p className="text-warm-gray max-w-2xl mx-auto">
+              Our free scan gives you a quick snapshot. A full audit gives you the complete picture
+              with real Google data and everything your team needs to take action.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            {/* Free */}
+            <div className="bg-warm-white/5 rounded-2xl border border-warm-white/8 p-8">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-semibold text-warm-white">Free Scan</h3>
+                <span className="text-warm-gray text-sm">$0</span>
+              </div>
+              <p className="text-warm-gray text-sm mb-6 leading-relaxed">
+                A quick health check on your homepage. Good for a first look.
+              </p>
+              <ul className="space-y-3 mb-8">
+                {[
+                  { text: 'Homepage only (1 page)', included: true },
+                  { text: '47 automated checks', included: true },
+                  { text: 'Instant score & top issues', included: true },
+                  { text: 'Basic schema detection', included: true },
+                  { text: 'Lab-only performance data', included: true },
+                ].map((item) => (
+                  <li key={item.text} className="flex items-start gap-3 text-sm text-warm-gray">
+                    <Check className="w-4 h-4 text-gold mt-0.5 shrink-0" />
+                    {item.text}
+                  </li>
+                ))}
+                {[
+                  'Multi-page crawl (up to 500 pages)',
+                  'Real Google Search Console data',
+                  'Google Analytics traffic data',
+                  'Real user Core Web Vitals (CrUX)',
+                  'Professional PDF report',
+                  'Prioritized action plan with ROI',
+                  'Dev-ready code & Jira tickets',
+                  'Revenue impact estimates',
+                ].map((text) => (
+                  <li key={text} className="flex items-start gap-3 text-sm text-warm-gray-light/50 line-through">
+                    <span className="w-4 h-4 mt-0.5 shrink-0 text-center text-warm-gray-light/30">&times;</span>
+                    {text}
+                  </li>
+                ))}
+              </ul>
+              <a href="#audit-form" className="block w-full py-3.5 rounded-full font-semibold text-center bg-warm-white/5 text-warm-gray hover:bg-warm-white/10 transition-colors border border-warm-white/10">
+                Start Free Scan
+              </a>
+            </div>
+
+            {/* Full Audit */}
+            <div className="bg-dark-card rounded-2xl border-2 border-gold p-8 relative">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gold text-dark text-xs font-bold px-4 py-1 rounded-full">
+                Best Value
+              </div>
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-semibold text-warm-white">Full Audit</h3>
+                <div>
+                  <span className="text-warm-white font-bold">$499</span>
+                  <span className="text-warm-gray text-sm ml-1">one-time</span>
+                </div>
+              </div>
+              <p className="text-warm-gray text-sm mb-6 leading-relaxed">
+                The complete picture. Everything an agency delivers for $15K+, powered by AI.
+              </p>
+              <ul className="space-y-3 mb-8">
+                {[
+                  { text: 'Up to 500 pages crawled & analyzed', bold: true },
+                  { text: '47 checks per page, not just homepage', bold: true },
+                  { text: 'Instant score & full issue breakdown', bold: false },
+                  { text: 'Deep schema audit + generated code', bold: false },
+                  { text: 'Real Google Search Console data', bold: true },
+                  { text: 'Google Analytics organic traffic data', bold: true },
+                  { text: 'Real user Core Web Vitals (CrUX)', bold: true },
+                  { text: 'Professional PDF report for stakeholders', bold: true },
+                  { text: 'Prioritized action plan with revenue impact', bold: true },
+                  { text: 'Dev-ready components & Jira tickets', bold: true },
+                  { text: 'Schema markup code you can deploy', bold: false },
+                  { text: 'Revenue impact estimates per fix', bold: false },
+                  { text: 'Competitor visibility analysis', bold: false },
+                ].map((item) => (
+                  <li key={item.text} className={`flex items-start gap-3 text-sm ${item.bold ? 'text-warm-white' : 'text-warm-gray'}`}>
+                    <Check className="w-4 h-4 text-gold mt-0.5 shrink-0" />
+                    {item.text}
+                  </li>
+                ))}
+              </ul>
+              <a href="mailto:hello@whatseo.ai?subject=Full%20SEO%20Audit%20Request" className="block w-full py-3.5 rounded-full font-semibold text-center bg-gold text-dark hover:bg-gold-light transition-colors">
+                Get Full Audit &rarr;
+              </a>
+              <p className="text-center text-xs text-warm-gray-light mt-3">
+                <span className="line-through">$15,000+</span> at a traditional agency
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Results We've Delivered */}
       <section id="results" className="bg-cream py-28 md:py-36 px-6">
         <div className="max-w-6xl mx-auto">
