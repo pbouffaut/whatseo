@@ -18,6 +18,9 @@ interface FullAuditPayload {
   email: string;
   priorityPages: string[];
   competitorUrls: string[];
+  googleAccessToken: string | null;
+  googleRefreshToken: string | null;
+  ga4PropertyId: string | null;
 }
 
 export const fullAuditTask = task({
@@ -29,16 +32,10 @@ export const fullAuditTask = task({
     const supabase = getSupabase();
     const { auditId, creditId, url, userId, priorityPages, competitorUrls } = payload;
 
-    // Load Google tokens from onboarding data
-    const { data: onboarding } = await supabase
-      .from('onboarding_data')
-      .select('google_access_token, google_refresh_token, ga4_property_id, gsc_connected')
-      .eq('user_id', userId)
-      .single();
-
-    let googleAccessToken = onboarding?.google_access_token || null;
-    const googleRefreshToken = onboarding?.google_refresh_token || null;
-    const ga4PropertyId = onboarding?.ga4_property_id || null;
+    // Tokens passed directly from the API route (which has RLS access)
+    let googleAccessToken = payload.googleAccessToken;
+    const googleRefreshToken = payload.googleRefreshToken;
+    const ga4PropertyId = payload.ga4PropertyId;
     const apiKey = process.env.PAGESPEED_API_KEY || undefined;
 
     // Refresh expired Google token if we have a refresh token

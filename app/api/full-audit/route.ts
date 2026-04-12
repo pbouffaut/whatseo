@@ -82,7 +82,14 @@ export async function POST(request: NextRequest) {
       used_at: new Date().toISOString(),
     }).eq('id', creditId);
 
-    // Trigger background task on Trigger.dev — no fallback
+    // Load Google tokens from onboarding data (using authenticated client — RLS safe)
+    const { data: onboarding } = await db
+      .from('onboarding_data')
+      .select('google_access_token, google_refresh_token, ga4_property_id, gsc_connected')
+      .eq('user_id', user.id)
+      .single();
+
+    // Trigger background task on Trigger.dev — pass tokens directly
     try {
       const triggerSdk = await import('@trigger.dev/sdk');
       await triggerSdk.tasks.trigger('full-audit', {
@@ -93,6 +100,10 @@ export async function POST(request: NextRequest) {
         email: user.email || '',
         priorityPages,
         competitorUrls,
+        // Pass Google tokens directly — Trigger.dev can't read them from DB (RLS)
+        googleAccessToken: onboarding?.google_access_token || null,
+        googleRefreshToken: onboarding?.google_refresh_token || null,
+        ga4PropertyId: onboarding?.ga4_property_id || null,
       });
 
       return NextResponse.json({
