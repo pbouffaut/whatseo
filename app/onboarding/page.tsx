@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { Check, Plus, X, Info } from 'lucide-react';
+import { Check, Plus, X, Info, HelpCircle } from 'lucide-react';
 
 interface FormData {
   websiteUrl: string;
@@ -32,6 +32,7 @@ export default function OnboardingPage() {
   const supabase = createClient();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showHelp, setShowHelp] = useState(false);
   const [form, setForm] = useState<FormData>({
     websiteUrl: '',
     gscConnected: false,
@@ -129,7 +130,132 @@ export default function OnboardingPage() {
             Tell us about your website so we can deliver the most accurate analysis.
             Only the website URL is required &mdash; everything else can be added later.
           </p>
+          <button type="button" onClick={() => setShowHelp(true)}
+            className="mt-4 inline-flex items-center gap-1.5 text-gold text-sm hover:text-gold-light transition-colors">
+            <HelpCircle className="w-4 h-4" /> Need help setting up?
+          </button>
         </div>
+
+        {/* Help Modal */}
+        {showHelp && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-dark/80 backdrop-blur-sm" onClick={() => setShowHelp(false)}>
+            <div className="bg-dark-card border border-warm-white/10 rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto p-8" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="font-serif text-2xl text-warm-white">Setup Guide</h2>
+                <button onClick={() => setShowHelp(false)} className="text-warm-gray hover:text-warm-white">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-8">
+                {/* Step 1 */}
+                <div>
+                  <div className="flex items-center gap-3 mb-3">
+                    <span className="w-7 h-7 rounded-full bg-gold text-dark text-sm font-bold flex items-center justify-center shrink-0">1</span>
+                    <h3 className="text-warm-white font-semibold">Website URL (required)</h3>
+                  </div>
+                  <p className="text-warm-gray text-sm leading-relaxed ml-10">
+                    Enter the main URL of the website you want to audit. We&apos;ll crawl up to 500 pages starting from this domain, following your sitemap and internal links.
+                  </p>
+                </div>
+
+                {/* Step 2 */}
+                <div>
+                  <div className="flex items-center gap-3 mb-3">
+                    <span className="w-7 h-7 rounded-full bg-gold text-dark text-sm font-bold flex items-center justify-center shrink-0">2</span>
+                    <h3 className="text-warm-white font-semibold">Connect Google Search Console &amp; Analytics</h3>
+                  </div>
+                  <div className="text-warm-gray text-sm leading-relaxed ml-10 space-y-3">
+                    <p>
+                      Clicking <strong className="text-warm-white">&quot;Connect Google Search Console &amp; Analytics&quot;</strong> will redirect you to Google where you&apos;ll sign in and grant WhatSEO read-only access to your data.
+                    </p>
+                    <div className="bg-warm-white/5 rounded-xl p-4 space-y-2">
+                      <p className="text-warm-white text-xs font-semibold uppercase tracking-wider">What we access:</p>
+                      <ul className="space-y-1.5">
+                        <li className="flex items-start gap-2">
+                          <Check className="w-3.5 h-3.5 text-[#4aab6a] mt-0.5 shrink-0" />
+                          <span><strong className="text-warm-white">Search Console</strong> &mdash; your real search queries, clicks, impressions, and ranking positions for the last 90 days</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <Check className="w-3.5 h-3.5 text-[#4aab6a] mt-0.5 shrink-0" />
+                          <span><strong className="text-warm-white">Google Analytics</strong> &mdash; organic traffic volume, engagement rates, and top landing pages</span>
+                        </li>
+                      </ul>
+                    </div>
+                    <div className="bg-warm-white/5 rounded-xl p-4 space-y-2">
+                      <p className="text-warm-white text-xs font-semibold uppercase tracking-wider">What we don&apos;t do:</p>
+                      <ul className="space-y-1.5">
+                        <li className="flex items-start gap-2">
+                          <X className="w-3.5 h-3.5 text-[#e05555] mt-0.5 shrink-0" />
+                          <span>We never modify your data &mdash; access is strictly read-only</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <X className="w-3.5 h-3.5 text-[#e05555] mt-0.5 shrink-0" />
+                          <span>We never share your data with third parties</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <X className="w-3.5 h-3.5 text-[#e05555] mt-0.5 shrink-0" />
+                          <span>We never store your Google password</span>
+                        </li>
+                      </ul>
+                    </div>
+                    <p>
+                      You can revoke access anytime from your <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener noreferrer" className="text-gold hover:text-gold-light">Google Account permissions</a>.
+                    </p>
+                    <p className="text-warm-gray-light text-xs">
+                      Note: You may see a &quot;This app hasn&apos;t been verified&quot; warning from Google. This is normal for apps pending verification. Click &quot;Advanced&quot; → &quot;Go to WhatSEO (unsafe)&quot; to proceed safely.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Step 3 */}
+                <div>
+                  <div className="flex items-center gap-3 mb-3">
+                    <span className="w-7 h-7 rounded-full bg-gold text-dark text-sm font-bold flex items-center justify-center shrink-0">3</span>
+                    <h3 className="text-warm-white font-semibold">Google Analytics Property ID</h3>
+                  </div>
+                  <div className="text-warm-gray text-sm leading-relaxed ml-10 space-y-3">
+                    <p>To find your GA4 Property ID:</p>
+                    <ol className="list-decimal list-inside space-y-2 text-warm-gray">
+                      <li>Go to <a href="https://analytics.google.com" target="_blank" rel="noopener noreferrer" className="text-gold hover:text-gold-light">analytics.google.com</a></li>
+                      <li>Click the <strong className="text-warm-white">gear icon</strong> (Admin) at the bottom left</li>
+                      <li>In the <strong className="text-warm-white">Property</strong> column, click <strong className="text-warm-white">Property Settings</strong></li>
+                      <li>Copy the <strong className="text-warm-white">Property ID</strong> &mdash; it&apos;s a number like <span className="font-mono text-gold">325845615</span></li>
+                    </ol>
+                    <div className="bg-warm-white/5 rounded-xl p-4">
+                      <p className="text-warm-gray-light text-xs">
+                        <strong className="text-warm-white">Don&apos;t have Google Analytics?</strong> That&apos;s okay &mdash; this field is optional. Your audit will still crawl your site and check technical SEO, content, schema, and performance. You&apos;ll just miss the organic traffic insights.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Step 4 */}
+                <div>
+                  <div className="flex items-center gap-3 mb-3">
+                    <span className="w-7 h-7 rounded-full bg-gold text-dark text-sm font-bold flex items-center justify-center shrink-0">4</span>
+                    <h3 className="text-warm-white font-semibold">Competitors &amp; Priority Pages (optional)</h3>
+                  </div>
+                  <div className="text-warm-gray text-sm leading-relaxed ml-10 space-y-2">
+                    <p>
+                      <strong className="text-warm-white">Competitors:</strong> Enter up to 3 competitor websites (e.g., <span className="font-mono text-warm-gray-light">wework.com</span>). We&apos;ll compare their SEO profiles against yours.
+                    </p>
+                    <p>
+                      <strong className="text-warm-white">Priority pages:</strong> List up to 5 specific pages you care most about (e.g., <span className="font-mono text-warm-gray-light">/pricing</span>, <span className="font-mono text-warm-gray-light">/product</span>). We&apos;ll give these extra attention in the analysis.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-8 pt-6 border-t border-warm-white/8 text-center">
+                <button onClick={() => setShowHelp(false)}
+                  className="bg-gold text-dark px-8 py-3 rounded-full font-semibold hover:bg-gold-light transition-colors">
+                  Got it, let&apos;s set up
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Website URL */}
