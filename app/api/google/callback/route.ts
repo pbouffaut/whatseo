@@ -42,11 +42,16 @@ export async function GET(request: NextRequest) {
   });
 
   if (!tokenResponse.ok) {
-    const err = await tokenResponse.text();
-    console.error('Google token exchange failed:', tokenResponse.status, err);
+    const errBody = await tokenResponse.text();
+    console.error('Google token exchange failed:', tokenResponse.status, errBody);
     console.error('Redirect URI used:', redirectUri);
-    console.error('Client ID length:', GOOGLE_CLIENT_ID?.length, 'Secret length:', GOOGLE_CLIENT_SECRET?.length);
-    return NextResponse.redirect(`${appUrl}/onboarding?google_error=token_exchange_failed_${tokenResponse.status}`);
+    // Parse the error for user display
+    let errorDetail = `status_${tokenResponse.status}`;
+    try {
+      const parsed = JSON.parse(errBody);
+      errorDetail = parsed.error_description || parsed.error || errorDetail;
+    } catch { /* use status code */ }
+    return NextResponse.redirect(`${appUrl}/onboarding?google_error=${encodeURIComponent(errorDetail)}`);
   }
 
   const tokens = await tokenResponse.json();
