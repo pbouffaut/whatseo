@@ -1,4 +1,14 @@
+import Link from 'next/link';
 import { Globe, Mail, ExternalLink } from 'lucide-react';
+
+const serviceLinks = [
+  { name: 'SEO Audit', slug: 'seo-audit' },
+  { name: 'Technical Analysis', slug: 'technical-analysis' },
+  { name: 'Content Review', slug: 'content-review' },
+  { name: 'Schema Markup', slug: 'schema-markup' },
+  { name: 'Performance', slug: 'performance' },
+  { name: 'AI Readiness', slug: 'ai-readiness' },
+];
 
 export default function Footer() {
   return (
@@ -20,9 +30,11 @@ export default function Footer() {
           <div>
             <h4 className="text-warm-white text-sm uppercase tracking-wider font-semibold mb-4">Services</h4>
             <ul className="space-y-2">
-              {['SEO Audit', 'Technical Analysis', 'Content Review', 'Schema Markup', 'Performance', 'AI Readiness'].map((item) => (
-                <li key={item}>
-                  <span className="text-warm-gray hover:text-warm-white text-sm transition-colors cursor-pointer">{item}</span>
+              {serviceLinks.map((item) => (
+                <li key={item.slug}>
+                  <Link href={`/services/${item.slug}`} className="text-warm-gray hover:text-warm-white text-sm transition-colors">
+                    {item.name}
+                  </Link>
                 </li>
               ))}
             </ul>
