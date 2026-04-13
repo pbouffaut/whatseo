@@ -111,10 +111,12 @@ export const fullAuditTask = task({
           const { generatePremiumInsights } = await import("../lib/insights/generate");
           const insights = await generatePremiumInsights(result);
           result.insights = insights;
-          console.log(`Premium insights generated. Has actionPlan: ${'actionPlan' in insights}, tickets: ${(insights as Record<string,unknown>).tickets ? 'yes' : 'no'}`);
+          console.log(`Premium insights generated. Has actionPlan: ${'actionPlan' in insights}, tickets: ${(insights as unknown as Record<string,unknown>).tickets ? 'yes' : 'no'}`);
         } catch (premiumErr) {
-          console.error("Premium insights failed, trying basic:", premiumErr instanceof Error ? premiumErr.message : premiumErr);
-          console.error("Full premium error:", JSON.stringify(premiumErr, Object.getOwnPropertyNames(premiumErr instanceof Error ? premiumErr : {})).substring(0, 500));
+          const errMsg = premiumErr instanceof Error ? premiumErr.message : String(premiumErr);
+          const errStack = premiumErr instanceof Error ? premiumErr.stack?.substring(0, 300) : '';
+          console.error("Premium insights failed, trying basic:", errMsg);
+          console.error("Stack:", errStack);
           try {
             console.log("Starting basic insights generation (single Claude call)...");
             const { generateAuditInsights } = await import("../lib/insights/generate");
