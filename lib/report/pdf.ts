@@ -81,6 +81,23 @@ export function generateAuditPdf(result: FullAuditResult, websiteUrl: string): B
   doc.setFillColor(...GOLD);
   doc.rect(0, 293, pageWidth, 4, 'F');
 
+  // Helper to render multi-paragraph insight text
+  function renderInsight(text: string, maxWidth: number) {
+    if (!text) return;
+    doc.setFontSize(9);
+    doc.setTextColor(...GRAY);
+    const paragraphs = text.split('\n\n');
+    for (const para of paragraphs) {
+      checkPageBreak(20);
+      const lines = doc.splitTextToSize(para.trim(), maxWidth);
+      doc.text(lines, margin, y);
+      y += lines.length * 4 + 3;
+    }
+    y += 3;
+  }
+
+  const insights = result.insights;
+
   // --- EXECUTIVE SUMMARY ---
   addPage();
   doc.setTextColor(...GOLD);
@@ -95,6 +112,27 @@ export function generateAuditPdf(result: FullAuditResult, websiteUrl: string): B
   doc.setLineWidth(0.5);
   doc.line(margin, y, margin + 30, y);
   y += 10;
+
+  // Top Priority callout
+  if (insights?.topPriority) {
+    doc.setFillColor(250, 245, 235);
+    doc.roundedRect(margin, y, contentWidth, 20, 2, 2, 'F');
+    doc.setDrawColor(...GOLD);
+    doc.roundedRect(margin, y, contentWidth, 20, 2, 2, 'S');
+    doc.setFontSize(7);
+    doc.setTextColor(...GOLD);
+    doc.text('#1 PRIORITY', margin + 4, y + 5);
+    doc.setFontSize(8);
+    doc.setTextColor(...NAVY);
+    const prioLines = doc.splitTextToSize(insights.topPriority, contentWidth - 8);
+    doc.text(prioLines, margin + 4, y + 10);
+    y += 24;
+  }
+
+  // Executive insight
+  if (insights?.executive) {
+    renderInsight(insights.executive, contentWidth);
+  }
 
   // Score breakdown table
   const catRows = Object.entries(result.score.categories).map(([key, val]) => {
@@ -153,6 +191,54 @@ export function generateAuditPdf(result: FullAuditResult, websiteUrl: string): B
   y += 5;
   doc.setTextColor(...NAVY);
   doc.setFontSize(20);
+  doc.text('Expert Analysis', margin, y);
+  y += 3;
+  doc.setDrawColor(...GOLD);
+  doc.line(margin, y, margin + 30, y);
+  y += 10;
+
+  // Category-by-category expert insights
+  if (insights) {
+    const sections = [
+      { key: 'technical', label: 'Technical SEO' },
+      { key: 'onPage', label: 'On-Page SEO' },
+      { key: 'content', label: 'Content Quality' },
+      { key: 'schema', label: 'Structured Data' },
+      { key: 'performance', label: 'Performance' },
+      { key: 'aiReadiness', label: 'AI Search Readiness' },
+      { key: 'images', label: 'Image Optimization' },
+    ];
+
+    for (const { key, label } of sections) {
+      const text = insights[key as keyof typeof insights];
+      if (!text) continue;
+      checkPageBreak(25);
+      doc.setFontSize(11);
+      doc.setTextColor(...NAVY);
+      doc.text(label, margin, y);
+      y += 5;
+      renderInsight(text, contentWidth);
+    }
+
+    // Google data insights
+    if (insights.googleData) {
+      checkPageBreak(25);
+      doc.setFontSize(11);
+      doc.setTextColor(...NAVY);
+      doc.text('Google Search & Analytics', margin, y);
+      y += 5;
+      renderInsight(insights.googleData, contentWidth);
+    }
+  }
+
+  // --- RECOMMENDATIONS ---
+  addPage();
+  doc.setTextColor(...GOLD);
+  doc.setFontSize(8);
+  doc.text('03', margin, y);
+  y += 5;
+  doc.setTextColor(...NAVY);
+  doc.setFontSize(20);
   doc.text('Prioritized Recommendations', margin, y);
   y += 3;
   doc.setDrawColor(...GOLD);
@@ -203,7 +289,7 @@ export function generateAuditPdf(result: FullAuditResult, websiteUrl: string): B
   addPage();
   doc.setTextColor(...GOLD);
   doc.setFontSize(8);
-  doc.text('03', margin, y);
+  doc.text('04', margin, y);
   y += 5;
   doc.setTextColor(...NAVY);
   doc.setFontSize(20);
@@ -245,7 +331,7 @@ export function generateAuditPdf(result: FullAuditResult, websiteUrl: string): B
     addPage();
     doc.setTextColor(...GOLD);
     doc.setFontSize(8);
-    doc.text('04', margin, y);
+    doc.text('05', margin, y);
     y += 5;
     doc.setTextColor(...NAVY);
     doc.setFontSize(20);
