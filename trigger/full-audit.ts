@@ -101,25 +101,32 @@ export const fullAuditTask = task({
         updatedAt: new Date().toISOString(),
       }).eq("id", auditId);
 
-      try {
-        if (process.env.ANTHROPIC_API_KEY) {
-          // Use premium insights (3 parallel Claude calls) for paid audits
+      const hasApiKey = !!process.env.ANTHROPIC_API_KEY;
+      console.log(`ANTHROPIC_API_KEY present: ${hasApiKey}, key starts with: ${process.env.ANTHROPIC_API_KEY?.substring(0, 10) || 'MISSING'}`);
+
+      if (hasApiKey) {
+        // Try premium insights first, fall back to basic
+        try {
+          console.log("Starting premium insights generation (3 parallel Claude calls)...");
           const { generatePremiumInsights } = await import("../lib/insights/generate");
           const insights = await generatePremiumInsights(result);
           result.insights = insights;
-        }
-      } catch (insightErr) {
-        console.error("AI insights generation failed:", insightErr);
-        // Fallback: try basic insights if premium fails
-        try {
-          if (process.env.ANTHROPIC_API_KEY) {
+          console.log(`Premium insights generated. Has actionPlan: ${'actionPlan' in insights}, tickets: ${(insights as Record<string,unknown>).tickets ? 'yes' : 'no'}`);
+        } catch (premiumErr) {
+          console.error("Premium insights failed, trying basic:", premiumErr instanceof Error ? premiumErr.message : premiumErr);
+          console.error("Full premium error:", JSON.stringify(premiumErr, Object.getOwnPropertyNames(premiumErr instanceof Error ? premiumErr : {})).substring(0, 500));
+          try {
+            console.log("Starting basic insights generation (single Claude call)...");
             const { generateAuditInsights } = await import("../lib/insights/generate");
             const basicInsights = await generateAuditInsights(result);
             result.insights = basicInsights;
+            console.log("Basic insights generated successfully");
+          } catch (basicErr) {
+            console.error("Basic insights also failed:", basicErr instanceof Error ? basicErr.message : basicErr);
           }
-        } catch {
-          // Continue without any insights — don't fail the audit
         }
+      } else {
+        console.warn("ANTHROPIC_API_KEY not set — skipping AI insights");
       }
 
       // Building report phase

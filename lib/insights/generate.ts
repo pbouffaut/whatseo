@@ -313,14 +313,18 @@ function buildAuditSummary(result: FullAuditResult): string {
 // ============================================================
 
 function buildPageTypesSummary(groups: PageTypeGroup[]): string {
+  if (!groups || groups.length === 0) return 'PAGE TYPE GROUPS: None detected';
   const lines: string[] = ['PAGE TYPE GROUPS:'];
   for (const g of groups) {
-    lines.push(`  ${g.label} (${g.count} pages) — pattern: ${g.urlPattern}`);
-    lines.push(`    Avg word count: ${g.avgWordCount}, Avg response time: ${g.avgResponseTime}ms`);
-    lines.push(`    Schema present: ${g.schemaPresent}/${g.count} (${Math.round(g.schemaPresent / g.count * 100)}%)`);
-    lines.push(`    Missing titles: ${g.missingTitles}, Missing descriptions: ${g.missingDescriptions}`);
-    lines.push(`    Thin content (<300 words): ${g.thinContentCount}`);
-    lines.push(`    Sample URLs: ${g.sampleUrls.join(', ')}`);
+    try {
+      const schemaPct = g.count > 0 ? Math.round(g.schemaPresent / g.count * 100) : 0;
+      lines.push(`  ${g.label} (${g.count} pages) — pattern: ${g.urlPattern}`);
+      lines.push(`    Avg word count: ${g.avgWordCount}, Avg response time: ${g.avgResponseTime}ms`);
+      lines.push(`    Schema present: ${g.schemaPresent}/${g.count} (${schemaPct}%)`);
+      lines.push(`    Missing titles: ${g.missingTitles}, Missing descriptions: ${g.missingDescriptions}`);
+      lines.push(`    Thin content (<300 words): ${g.thinContentCount}`);
+      lines.push(`    Sample URLs: ${g.sampleUrls.join(', ')}`);
+    } catch { /* skip broken group */ }
   }
   return lines.join('\n');
 }
@@ -390,9 +394,21 @@ function parseJsonSafely<T>(text: string): T | null {
 }
 
 export async function generatePremiumInsights(result: FullAuditResult): Promise<PremiumInsights> {
-  const baseSummary = buildAuditSummary(result);
-  const pageTypesSummary = buildPageTypesSummary(result.pageTypeGroups || []);
-  const googleDeep = buildExtendedGoogleSummary(result);
+  console.log(`[PremiumInsights] Starting. Pages: ${result.pagesCrawled}, Score: ${result.score.overall}`);
+
+  let baseSummary: string, pageTypesSummary: string, googleDeep: string;
+  try {
+    baseSummary = buildAuditSummary(result);
+    console.log(`[PremiumInsights] baseSummary: ${baseSummary.length} chars`);
+  } catch (e) { console.error('[PremiumInsights] baseSummary failed:', e); baseSummary = `OVERALL SCORE: ${result.score.overall}/100\nPages: ${result.pagesCrawled}`; }
+  try {
+    pageTypesSummary = buildPageTypesSummary(result.pageTypeGroups || []);
+    console.log(`[PremiumInsights] pageTypesSummary: ${pageTypesSummary.length} chars`);
+  } catch (e) { console.error('[PremiumInsights] pageTypesSummary failed:', e); pageTypesSummary = 'PAGE TYPE GROUPS: Error building summary'; }
+  try {
+    googleDeep = buildExtendedGoogleSummary(result);
+    console.log(`[PremiumInsights] googleDeep: ${googleDeep.length} chars`);
+  } catch (e) { console.error('[PremiumInsights] googleDeep failed:', e); googleDeep = ''; }
 
   // Build failing checks list
   const failingChecks: string[] = [];
