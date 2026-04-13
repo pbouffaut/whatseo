@@ -1,7 +1,11 @@
 import Anthropic from '@anthropic-ai/sdk';
 import type { FullAuditResult, PremiumInsights, PageTypeGroup } from '../analyzer/types';
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+  maxRetries: 5,        // Retry up to 5 times on 429/529
+  timeout: 120_000,     // 2 minute timeout per call
+});
 
 export interface AuditInsights {
   executive: string;        // 3-4 paragraph CEO-friendly summary
@@ -431,7 +435,7 @@ export async function generatePremiumInsights(result: FullAuditResult): Promise<
   const competitorContext = `The site is ${domain}. Based on the site content and page types, identify their likely top 3 competitors in their industry. For each competitor, note what they do better in SEO (schema, content depth, local SEO, etc.). Use real competitor names.`;
 
   // --- CALL A: Strategy ---
-  const callA = anthropic.messages.create({
+  const makeCallA = () => anthropic.messages.create({
     model: 'claude-sonnet-4-20250514',
     max_tokens: 12000,
     messages: [{
@@ -477,7 +481,7 @@ Return ONLY the JSON object, no markdown fences.`
   });
 
   // --- CALL B: Analysis ---
-  const callB = anthropic.messages.create({
+  const makeCallB = () => anthropic.messages.create({
     model: 'claude-sonnet-4-20250514',
     max_tokens: 16000,
     messages: [{
@@ -522,7 +526,7 @@ Return ONLY the JSON object, no markdown fences.`
   });
 
   // --- CALL C: Implementation ---
-  const callC = anthropic.messages.create({
+  const makeCallC = () => anthropic.messages.create({
     model: 'claude-sonnet-4-20250514',
     max_tokens: 16000,
     messages: [{
@@ -584,12 +588,22 @@ Return ONLY the JSON object, no markdown fences.`
     }],
   });
 
-  // Run all 3 in parallel
-  const [responseA, responseB, responseC] = await Promise.all([
-    callA.catch(err => { console.error('Premium Call A failed:', err); return null; }),
-    callB.catch(err => { console.error('Premium Call B failed:', err); return null; }),
-    callC.catch(err => { console.error('Premium Call C failed:', err); return null; }),
-  ]);
+  // Run calls SEQUENTIALLY to avoid 529 rate limit saturation
+  // Each call has maxRetries=5 with exponential backoff built into the SDK
+  // Sequential is fine — customers perceive longer generation = deeper analysis
+  console.log('[PremiumInsights] Running 3 Claude calls sequentially (maxRetries=5 each)...');
+
+  console.log('[PremiumInsights] Starting Call A (Strategy + Action Plan)...');
+  const responseA = await makeCallA().catch(err => { console.error('Premium Call A failed:', err?.message || err); return null; });
+  console.log(`[PremiumInsights] Call A: ${responseA ? 'OK' : 'FAILED'}`);
+
+  console.log('[PremiumInsights] Starting Call B (Analysis + Deep-Dive)...');
+  const responseB = await makeCallB().catch(err => { console.error('Premium Call B failed:', err?.message || err); return null; });
+  console.log(`[PremiumInsights] Call B: ${responseB ? 'OK' : 'FAILED'}`);
+
+  console.log('[PremiumInsights] Starting Call C (Implementation + Tickets)...');
+  const responseC = await makeCallC().catch(err => { console.error('Premium Call C failed:', err?.message || err); return null; });
+  console.log(`[PremiumInsights] Call C: ${responseC ? 'OK' : 'FAILED'}`);
 
   // Parse responses
   const textA = responseA?.content[0]?.type === 'text' ? responseA.content[0].text : '';
