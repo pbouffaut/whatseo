@@ -7,10 +7,10 @@ import Link from 'next/link';
 
 const PHASES = [
   { key: 'crawling', label: 'Crawling your site', description: 'Discovering pages from sitemap and internal links' },
-  { key: 'analyzing', label: 'Analyzing pages', description: 'Running 47 checks on each page' },
-  { key: 'google_data', label: 'Fetching performance data', description: 'PageSpeed Insights, Core Web Vitals' },
-  { key: 'generating_report', label: 'Generating report', description: 'Aggregating results and creating recommendations' },
-  { key: 'generating_insights', label: 'Writing expert analysis', description: 'AI consultant generating personalized insights' },
+  { key: 'analyzing', label: 'Analyzing pages', description: 'Running 80+ checks on each page' },
+  { key: 'google_data', label: 'Fetching performance data', description: 'PageSpeed, Core Web Vitals, Search Console, Analytics' },
+  { key: 'generating_insights', label: 'Writing expert analysis', description: 'AI consultants generating action plan, schema templates, and tickets' },
+  { key: 'generating_report', label: 'Building your report', description: 'Assembling the full premium PDF report' },
   { key: 'complete', label: 'Audit complete', description: '' },
 ];
 

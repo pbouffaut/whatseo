@@ -122,6 +122,13 @@ export const fullAuditTask = task({
         }
       }
 
+      // Building report phase
+      metadata.set("phase", "generating_report");
+      await supabase.from("Audit").update({
+        phase: "generating_report",
+        updatedAt: new Date().toISOString(),
+      }).eq("id", auditId);
+
       // Send email report (PDF generated on-demand via /api/report/[id])
       const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://whatseo.vercel.app";
       try {
