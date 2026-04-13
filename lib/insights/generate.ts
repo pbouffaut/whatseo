@@ -257,6 +257,42 @@ function buildAuditSummary(result: FullAuditResult): string {
     lines.push('');
   }
 
+  // Competitor analysis data
+  if (result.competitors && result.competitors.competitors.length > 0) {
+    lines.push('COMPETITOR ANALYSIS:');
+    lines.push(`  Score: ${result.competitors.score}/100`);
+    for (const comp of result.competitors.competitors) {
+      if (comp.error) {
+        lines.push(`  ${comp.domain}: Failed to fetch — ${comp.error}`);
+      } else {
+        lines.push(`  ${comp.domain}:`);
+        lines.push(`    Title: ${comp.title || 'MISSING'}`);
+        lines.push(`    Word count: ${comp.wordCount}`);
+        lines.push(`    Schema types: ${comp.schemaTypes.join(', ') || 'NONE'}`);
+        lines.push(`    Local schema: ${comp.hasLocalSchema ? 'Yes' : 'No'}`);
+        lines.push(`    FAQ schema: ${comp.hasFaqSchema ? 'Yes' : 'No'}`);
+        lines.push(`    Review schema: ${comp.hasReviewSchema ? 'Yes' : 'No'}`);
+        lines.push(`    Internal links: ${comp.internalLinks}`);
+        lines.push(`    H2 headings: ${comp.h2Count}`);
+        lines.push(`    Images: ${comp.imageCount} (${comp.imagesWithAlt} with alt)`);
+        lines.push(`    Hreflang: ${comp.hasHreflang ? 'Yes' : 'No'}`);
+        lines.push(`    llms.txt: ${comp.hasLlmsTxt ? 'Yes' : 'No'}`);
+        lines.push(`    Response time: ${comp.responseTime}ms`);
+      }
+    }
+    if (result.competitors.comparison.length > 0) {
+      lines.push('  COMPARISON TABLE:');
+      for (const row of result.competitors.comparison) {
+        const compValues = row.competitors.map(c => `${c.domain}: ${c.value}`).join(', ');
+        lines.push(`    ${row.metric}: You=${row.yours} | ${compValues}`);
+      }
+    }
+    for (const c of result.competitors.checks.filter(c => c.status !== 'pass')) {
+      lines.push(`  ${c.status.toUpperCase()}: ${c.name} — ${c.message}`);
+    }
+    lines.push('');
+  }
+
   // Sample page data
   if (result.pages.length > 0) {
     const homepage = result.pages[0];

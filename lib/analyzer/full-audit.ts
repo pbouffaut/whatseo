@@ -17,6 +17,7 @@ import { analyzeSitemap, type SitemapAuditResult } from './sitemap-audit';
 import { analyzeHreflang, type HreflangResult } from './hreflang';
 import { analyzeBacklinks, type BacklinksResult } from './backlinks';
 import { analyzeProgrammatic, type ProgrammaticResult } from './programmatic';
+import { analyzeCompetitors, type CompetitorAnalysisResult } from './competitors';
 import { fetchPageSpeed, type PageSpeedData } from '../google/pagespeed';
 import { fetchCruxData, type CruxData } from '../google/crux';
 import { fetchGscData, type GscData } from '../google/gsc';
@@ -294,7 +295,7 @@ function generateRecommendations(
 
 export async function analyzeFullSite(options: FullAuditOptions): Promise<FullAuditResult> {
   const {
-    url, maxPages = 2500, priorityPages = [],
+    url, maxPages = 2500, priorityPages = [], competitorUrls = [],
     apiKey, googleAccessToken, ga4PropertyId,
     onPhaseChange, onProgress,
   } = options;
@@ -403,12 +404,30 @@ export async function analyzeFullSite(options: FullAuditOptions): Promise<FullAu
       : Promise.resolve(null as Ga4Data | null),
   ]);
 
-  // Run programmatic SEO analysis (sync, uses already-crawled data)
+  // Run sync analyses on already-crawled data
   const programmaticData = (() => {
     try {
       return analyzeProgrammatic(pageResults, sitemapData?.totalUrls || 0);
     } catch (e) { console.error('Programmatic analysis failed:', e); return null as ProgrammaticResult | null; }
   })();
+
+  // Run competitor analysis (fetches competitor homepages)
+  let competitorData: CompetitorAnalysisResult | undefined;
+  if (competitorUrls.length > 0) {
+    try {
+      const homepage = pageResults[0];
+      competitorData = await analyzeCompetitors({
+        title: homepage?.onPage.title || null,
+        wordCount: homepage?.content.wordCount || 0,
+        schemaTypes: homepage?.schema.schemasFound || [],
+        internalLinks: homepage?.onPage.internalLinks || 0,
+        h2Count: homepage?.onPage.h2s?.length || 0,
+        imageCount: homepage?.images.totalImages || 0,
+        hasHreflang: hreflangData?.tags?.length ? hreflangData.tags.length > 0 : false,
+        hasLlmsTxt: aiReadiness.checks.some(c => c.name.includes('llms.txt') && c.status === 'pass'),
+      }, competitorUrls);
+    } catch (e) { console.error('Competitor analysis failed:', e); }
+  }
 
   // Phase 4: Aggregate and detect patterns
   onPhaseChange?.('generating_report');
@@ -490,6 +509,7 @@ export async function analyzeFullSite(options: FullAuditOptions): Promise<FullAu
     hreflang: hreflangData || undefined,
     backlinks: backlinksData || undefined,
     programmatic: programmaticData || undefined,
+    competitors: competitorData || undefined,
     pageTypeGroups: groupPagesByType(pageResults),
     googleData: (pageSpeedData || cruxData || gscData || ga4Data) ? {
       pageSpeed: pageSpeedData || undefined,

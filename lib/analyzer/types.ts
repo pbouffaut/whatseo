@@ -207,6 +207,7 @@ export interface FullAuditResult {
   hreflang?: import('./hreflang').HreflangResult;
   backlinks?: import('./backlinks').BacklinksResult;
   programmatic?: import('./programmatic').ProgrammaticResult;
+  competitors?: import('./competitors').CompetitorAnalysisResult;
 
   // Page type grouping (for premium deep-dives)
   pageTypeGroups?: PageTypeGroup[];
