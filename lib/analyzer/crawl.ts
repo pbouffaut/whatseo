@@ -2,6 +2,16 @@ import * as cheerio from 'cheerio';
 import { CrawledPage, CrawlResult } from './types';
 import { fetchPageSafe } from './fetch';
 
+/** Extended CrawledPage with JS rendering detection */
+interface CrawledPageExtended extends CrawledPage {
+  jsRendered?: boolean;
+}
+
+/** Extended CrawlResult with orphan page tracking */
+interface CrawlResultExtended extends CrawlResult {
+  orphanPages?: string[];
+}
+
 interface CrawlOptions {
   maxPages: number;
   priorityPages?: string[];
@@ -89,6 +99,31 @@ function extractInternalLinks(html: string, pageUrl: string, acceptedHostnames: 
   return links;
 }
 
+/**
+ * Detect if a page is likely JS-rendered by checking the ratio of
+ * visible text content to total HTML size.
+ * Returns true if text content is less than 10% of total HTML and
+ * there are multiple script tags.
+ */
+function detectJsRendered(html: string): boolean {
+  if (!html || html.length < 100) return false;
+
+  const $ = cheerio.load(html);
+  // Remove script and style tags to get actual text content
+  $('script, style, noscript').remove();
+  const bodyText = $('body').text().replace(/\s+/g, ' ').trim();
+  const textLength = bodyText.length;
+  const htmlLength = html.length;
+
+  // Count script tags from original HTML
+  const $orig = cheerio.load(html);
+  const scriptCount = $orig('script').length;
+
+  // If text content is less than 10% of HTML and there are script tags, likely JS-rendered
+  const textRatio = textLength / htmlLength;
+  return textRatio < 0.10 && scriptCount > 3;
+}
+
 /** Runs promises with concurrency limiting */
 async function pool<T>(items: T[], concurrency: number, fn: (item: T) => Promise<void>): Promise<void> {
   let index = 0;
@@ -101,7 +136,7 @@ async function pool<T>(items: T[], concurrency: number, fn: (item: T) => Promise
   await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, () => worker()));
 }
 
-export async function crawlSite(rootUrl: string, options: CrawlOptions): Promise<CrawlResult> {
+export async function crawlSite(rootUrl: string, options: CrawlOptions): Promise<CrawlResultExtended> {
   const { maxPages, priorityPages = [], concurrency = 5, onProgress } = options;
   const start = Date.now();
 
@@ -158,8 +193,10 @@ export async function crawlSite(rootUrl: string, options: CrawlOptions): Promise
     enqueue(u, 1, 'sitemap');
   }
 
-  const pages: CrawledPage[] = [];
+  const pages: CrawledPageExtended[] = [];
   const skippedUrls: string[] = [];
+  // Track which pages are linked from other crawled pages (for orphan detection)
+  const linkedUrls = new Set<string>();
   let queueIndex = 0;
 
   while (queueIndex < queue.length && pages.length < maxPages) {
@@ -172,7 +209,7 @@ export async function crawlSite(rootUrl: string, options: CrawlOptions): Promise
     await pool(batch, concurrency, async (item) => {
       if (pages.length >= maxPages) return;
 
-      const page = await fetchPageSafe(item.url, item.depth, item.source);
+      const page: CrawledPageExtended = await fetchPageSafe(item.url, item.depth, item.source);
 
       if (page.error || page.statusCode >= 400) {
         skippedUrls.push(item.url);
@@ -183,12 +220,22 @@ export async function crawlSite(rootUrl: string, options: CrawlOptions): Promise
         return;
       }
 
+      // Detect JS rendering
+      if (page.html) {
+        page.jsRendered = detectJsRendered(page.html);
+      }
+
       pages.push(page);
 
       // Discover internal links from this page
       if (page.html && item.depth < 2) {
         const internalLinks = extractInternalLinks(page.html, page.finalUrl, acceptedHostnames);
         for (const link of internalLinks) {
+          // Track that this URL is linked from another page
+          const normalizedLink = normalizeUrl(link, origin);
+          if (normalizedLink) {
+            linkedUrls.add(normalizedLink);
+          }
           enqueue(link, item.depth + 1, 'internal_link');
         }
       }
@@ -197,10 +244,33 @@ export async function crawlSite(rootUrl: string, options: CrawlOptions): Promise
     });
   }
 
+  // Detect orphan pages: pages from sitemap that were crawled but never linked from any other page
+  const sitemapUrlsNormalized = new Set<string>();
+  for (const u of sitemapUrls) {
+    const normalized = normalizeUrl(u, origin);
+    if (normalized) sitemapUrlsNormalized.add(normalized);
+  }
+
+  const orphanPages: string[] = [];
+  for (const page of pages) {
+    if (page.statusCode >= 400 || page.error) continue;
+    const normalizedPageUrl = normalizeUrl(page.finalUrl, origin) || page.finalUrl;
+    // A page is orphan if it was found in the sitemap but no other page links to it
+    // Exclude the homepage — it's never orphan
+    if (
+      sitemapUrlsNormalized.has(normalizedPageUrl) &&
+      !linkedUrls.has(normalizedPageUrl) &&
+      page.source !== 'homepage'
+    ) {
+      orphanPages.push(page.finalUrl);
+    }
+  }
+
   return {
     pages: pages.filter((p) => p.statusCode < 400 && !p.error),
     sitemapUrls,
     skippedUrls,
+    orphanPages: orphanPages.length > 0 ? orphanPages : undefined,
     duration: Date.now() - start,
   };
 }

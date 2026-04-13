@@ -201,11 +201,12 @@ export interface FullAuditResult {
     ga4?: import('../google/ga4').Ga4Data;
   };
 
-  // Local SEO analysis (optional)
+  // Extended analysis (optional)
   localSeo?: import('./local-seo').LocalSeoResult;
-
-  // Sitemap audit (optional)
   sitemapAudit?: import('./sitemap-audit').SitemapAuditResult;
+  hreflang?: import('./hreflang').HreflangResult;
+  backlinks?: import('./backlinks').BacklinksResult;
+  programmatic?: import('./programmatic').ProgrammaticResult;
 
   // Page type grouping (for premium deep-dives)
   pageTypeGroups?: PageTypeGroup[];

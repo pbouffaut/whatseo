@@ -211,6 +211,52 @@ function buildAuditSummary(result: FullAuditResult): string {
     lines.push('');
   }
 
+  // Hreflang data
+  if (result.hreflang) {
+    const h = result.hreflang;
+    lines.push('HREFLANG / INTERNATIONAL SEO:');
+    lines.push(`  Score: ${h.score}/100`);
+    lines.push(`  Tags found: ${h.tags.length}`);
+    lines.push(`  Languages: ${h.languages.join(', ') || 'None'}`);
+    lines.push(`  Has x-default: ${h.hasXDefault ? 'Yes' : 'No'}`);
+    for (const c of h.checks.filter(c => c.status !== 'pass')) {
+      lines.push(`  ${c.status.toUpperCase()}: ${c.name} — ${c.message}`);
+    }
+    lines.push('');
+  }
+
+  // Backlinks data
+  if (result.backlinks) {
+    const b = result.backlinks;
+    lines.push('BACKLINK PROFILE:');
+    lines.push(`  Score: ${b.score}/100`);
+    lines.push(`  Data source: ${b.source}`);
+    if (b.referringDomains !== null) lines.push(`  Referring domains: ${b.referringDomains}`);
+    if (b.domainAuthority !== null) lines.push(`  Domain authority: ${b.domainAuthority}`);
+    if (b.backlinks !== null) lines.push(`  Total backlinks: ${b.backlinks}`);
+    for (const c of b.checks.filter(c => c.status !== 'pass')) {
+      lines.push(`  ${c.status.toUpperCase()}: ${c.name} — ${c.message}`);
+    }
+    lines.push('');
+  }
+
+  // Programmatic SEO data
+  if (result.programmatic) {
+    const p = result.programmatic;
+    lines.push('PROGRAMMATIC SEO:');
+    lines.push(`  Score: ${p.score}/100`);
+    lines.push(`  Index bloat risk: ${p.indexBloatRisk}`);
+    lines.push(`  Total pages in sitemap: ${p.totalPagesInSitemap}`);
+    lines.push(`  Template groups detected:`);
+    for (const g of p.templateGroups.slice(0, 10)) {
+      lines.push(`    ${g.pattern}: ${g.count} pages, avg ${g.avgWordCount} words`);
+    }
+    for (const c of p.checks.filter(c => c.status !== 'pass')) {
+      lines.push(`  ${c.status.toUpperCase()}: ${c.name} — ${c.message}`);
+    }
+    lines.push('');
+  }
+
   // Sample page data
   if (result.pages.length > 0) {
     const homepage = result.pages[0];

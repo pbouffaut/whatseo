@@ -14,6 +14,9 @@ import { analyzeAIReadiness } from './ai-readiness';
 import { calculateScore } from './scorer';
 import { analyzeLocalSeo, type LocalSeoResult } from './local-seo';
 import { analyzeSitemap, type SitemapAuditResult } from './sitemap-audit';
+import { analyzeHreflang, type HreflangResult } from './hreflang';
+import { analyzeBacklinks, type BacklinksResult } from './backlinks';
+import { analyzeProgrammatic, type ProgrammaticResult } from './programmatic';
 import { fetchPageSpeed, type PageSpeedData } from '../google/pagespeed';
 import { fetchCruxData, type CruxData } from '../google/crux';
 import { fetchGscData, type GscData } from '../google/gsc';
@@ -291,7 +294,7 @@ function generateRecommendations(
 
 export async function analyzeFullSite(options: FullAuditOptions): Promise<FullAuditResult> {
   const {
-    url, maxPages = 500, priorityPages = [],
+    url, maxPages = 2500, priorityPages = [],
     apiKey, googleAccessToken, ga4PropertyId,
     onPhaseChange, onProgress,
   } = options;
@@ -378,12 +381,14 @@ export async function analyzeFullSite(options: FullAuditOptions): Promise<FullAu
   const hostname = new URL(homepageFinalUrl).hostname.replace(/^www\./, '');
   const gscSiteUrl = `sc-domain:${hostname}`;
 
-  // Run all Google API calls + local SEO + sitemap audit in parallel
-  const [performance, aiReadiness, localSeoData, sitemapData, pageSpeedData, cruxData, gscData, ga4Data] = await Promise.all([
+  // Run all API calls + analyzers in parallel
+  const [performance, aiReadiness, localSeoData, sitemapData, hreflangData, backlinksData, pageSpeedData, cruxData, gscData, ga4Data] = await Promise.all([
     analyzePerformance(homepageFinalUrl),
     analyzeAIReadiness(homepageHtml, homepageFinalUrl),
     Promise.resolve().then(() => analyzeLocalSeo(homepageHtml, homepageFinalUrl, pageResults)).catch((e) => { console.error('Local SEO failed:', e); return null as LocalSeoResult | null; }),
     analyzeSitemap(`${homepageOrigin}/sitemap.xml`).catch((e) => { console.error('Sitemap audit failed:', e); return null as SitemapAuditResult | null; }),
+    Promise.resolve().then(() => analyzeHreflang(homepageHtml, homepageFinalUrl)).catch((e) => { console.error('Hreflang failed:', e); return null as HreflangResult | null; }),
+    analyzeBacklinks(hostname).catch((e) => { console.error('Backlinks failed:', e); return null as BacklinksResult | null; }),
     fetchPageSpeed(homepageFinalUrl, apiKey).catch((e) => { console.error('PageSpeed failed:', e); return null as PageSpeedData | null; }),
     fetchCruxData(homepageOrigin, apiKey).catch(() => null as CruxData | null),
     googleAccessToken
@@ -397,6 +402,13 @@ export async function analyzeFullSite(options: FullAuditOptions): Promise<FullAu
           .catch((e) => { console.error('GA4 failed:', e); return null as Ga4Data | null; })
       : Promise.resolve(null as Ga4Data | null),
   ]);
+
+  // Run programmatic SEO analysis (sync, uses already-crawled data)
+  const programmaticData = (() => {
+    try {
+      return analyzeProgrammatic(pageResults, sitemapData?.totalUrls || 0);
+    } catch (e) { console.error('Programmatic analysis failed:', e); return null as ProgrammaticResult | null; }
+  })();
 
   // Phase 4: Aggregate and detect patterns
   onPhaseChange?.('generating_report');
@@ -475,6 +487,9 @@ export async function analyzeFullSite(options: FullAuditOptions): Promise<FullAu
     recommendations,
     localSeo: localSeoData || undefined,
     sitemapAudit: sitemapData || undefined,
+    hreflang: hreflangData || undefined,
+    backlinks: backlinksData || undefined,
+    programmatic: programmaticData || undefined,
     pageTypeGroups: groupPagesByType(pageResults),
     googleData: (pageSpeedData || cruxData || gscData || ga4Data) ? {
       pageSpeed: pageSpeedData || undefined,

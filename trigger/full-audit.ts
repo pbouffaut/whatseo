@@ -70,7 +70,7 @@ export const fullAuditTask = task({
       // Run the full audit with Google API data
       const result = await analyzeFullSite({
         url,
-        maxPages: 500,
+        maxPages: 2500,
         priorityPages,
         competitorUrls,
         apiKey,
