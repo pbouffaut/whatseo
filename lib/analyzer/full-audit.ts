@@ -1,7 +1,7 @@
 import {
   FullAuditResult, PageAuditResult, Recommendation, CrawledPage,
   TechnicalResult, OnPageResult, SchemaResult, ImageResult, ContentResult,
-  PerformanceResult, AIReadinessResult, AuditScore,
+  PerformanceResult, AIReadinessResult, AuditScore, PageTypeGroup,
 } from './types';
 import { crawlSite } from './crawl';
 import { analyzeTechnical } from './technical';
@@ -144,6 +144,68 @@ function detectPatterns(pages: PageAuditResult[]): {
     .map(([description, urls]) => ({ description, urls }));
 
   return { thinContentPages, missingTitlePages, missingMetaDescPages, duplicateTitles, duplicateDescriptions, missingSchemaPages, slowPages };
+}
+
+function groupPagesByType(pages: PageAuditResult[]): PageTypeGroup[] {
+  const groups = new Map<string, PageAuditResult[]>();
+
+  for (const page of pages) {
+    try {
+      const path = new URL(page.url).pathname;
+      const segments = path.split('/').filter(Boolean);
+      // Group by first meaningful path segment
+      let type = 'homepage';
+      if (segments.length === 0) {
+        type = 'homepage';
+      } else if (segments.length === 1 && !segments[0].includes('.')) {
+        type = segments[0];
+      } else if (segments.length >= 2) {
+        type = segments[0];
+      }
+      // Normalize common patterns
+      type = type.toLowerCase().replace(/[-_]/g, '');
+      if (!groups.has(type)) groups.set(type, []);
+      groups.get(type)!.push(page);
+    } catch {
+      if (!groups.has('other')) groups.set('other', []);
+      groups.get('other')!.push(page);
+    }
+  }
+
+  // Convert to PageTypeGroup with stats
+  const labelMap: Record<string, string> = {
+    homepage: 'Homepage', blog: 'Blog Posts', news: 'News Articles',
+    locations: 'Location Pages', location: 'Location Pages',
+    products: 'Product Pages', product: 'Product Pages',
+    services: 'Service Pages', service: 'Service Pages',
+    about: 'About Pages', contact: 'Contact Pages',
+    faq: 'FAQ Pages', help: 'Help Pages',
+    categories: 'Category Pages', category: 'Category Pages',
+    tags: 'Tag Pages', tag: 'Tag Pages',
+    rooms: 'Room Pages', meetingrooms: 'Meeting Room Pages',
+    markets: 'Market Pages', solutions: 'Solution Pages',
+    other: 'Other Pages',
+  };
+
+  return Array.from(groups.entries())
+    .map(([type, groupPages]) => {
+      const wordCounts = groupPages.map(p => p.content.wordCount);
+      const responseTimes = groupPages.map(p => p.responseTime);
+      return {
+        type,
+        label: labelMap[type] || `${type.charAt(0).toUpperCase() + type.slice(1)} Pages`,
+        urlPattern: `/${type}/*`,
+        count: groupPages.length,
+        avgWordCount: Math.round(wordCounts.reduce((a, b) => a + b, 0) / wordCounts.length),
+        avgResponseTime: Math.round(responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length),
+        schemaPresent: groupPages.filter(p => p.schema.jsonLdBlocks > 0).length,
+        missingTitles: groupPages.filter(p => !p.onPage.title).length,
+        missingDescriptions: groupPages.filter(p => !p.onPage.metaDescription).length,
+        thinContentCount: groupPages.filter(p => p.content.wordCount < 300).length,
+        sampleUrls: groupPages.slice(0, 3).map(p => p.url),
+      };
+    })
+    .sort((a, b) => b.count - a.count); // Largest groups first
 }
 
 function generateRecommendations(
@@ -402,6 +464,7 @@ export async function analyzeFullSite(options: FullAuditOptions): Promise<FullAu
     ...patterns,
     brokenLinks,
     recommendations,
+    pageTypeGroups: groupPagesByType(pageResults),
     googleData: (pageSpeedData || cruxData || gscData || ga4Data) ? {
       pageSpeed: pageSpeedData || undefined,
       crux: cruxData || undefined,

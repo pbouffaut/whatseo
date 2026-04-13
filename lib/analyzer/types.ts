@@ -201,6 +201,81 @@ export interface FullAuditResult {
     ga4?: import('../google/ga4').Ga4Data;
   };
 
+  // Page type grouping (for premium deep-dives)
+  pageTypeGroups?: PageTypeGroup[];
+
   analyzedAt: string;
   duration: number;
+}
+
+// --- Premium Report Types ---
+
+export interface PageTypeGroup {
+  type: string;
+  label: string;
+  urlPattern: string;
+  count: number;
+  avgWordCount: number;
+  avgResponseTime: number;
+  schemaPresent: number;
+  missingTitles: number;
+  missingDescriptions: number;
+  thinContentCount: number;
+  sampleUrls: string[];
+}
+
+export interface ActionPlanPhase {
+  phase: 'critical' | 'high' | 'medium' | 'backlog';
+  title: string;
+  timeline: string;
+  items: ActionPlanItem[];
+  projectedScore: number;
+}
+
+export interface ActionPlanItem {
+  title: string;
+  description: string;
+  effort: string;
+  impact: string;
+  category: string;
+}
+
+export interface SchemaTemplate {
+  type: string;
+  description: string;
+  jsonLd: string;
+  applicablePages: string;
+}
+
+export interface AuditTicket {
+  id: string;
+  title: string;
+  priority: 'P0' | 'P1' | 'P2' | 'P3';
+  description: string;
+  acceptanceCriteria: string[];
+  storyPoints: number;
+  testingInstructions: string;
+  dependencies: string[];
+  category: string;
+}
+
+export interface PremiumInsights {
+  executive: string;
+  topPriority: string;
+  criticalIssues: string[];
+  quickWins: string[];
+  actionPlan: ActionPlanPhase[];
+  technical: string;
+  content: string;
+  onPage: string;
+  schema: string;
+  performance: string;
+  aiReadiness: string;
+  images: string;
+  googleData?: string;
+  deepDive: string;
+  googleDataDeep?: string;
+  schemaTemplates: SchemaTemplate[];
+  implementationGuide: string;
+  tickets: AuditTicket[];
 }

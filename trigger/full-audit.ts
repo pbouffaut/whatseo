@@ -103,13 +103,23 @@ export const fullAuditTask = task({
 
       try {
         if (process.env.ANTHROPIC_API_KEY) {
-          const { generateAuditInsights } = await import("../lib/insights/generate");
-          const insights = await generateAuditInsights(result);
+          // Use premium insights (3 parallel Claude calls) for paid audits
+          const { generatePremiumInsights } = await import("../lib/insights/generate");
+          const insights = await generatePremiumInsights(result);
           result.insights = insights;
         }
       } catch (insightErr) {
         console.error("AI insights generation failed:", insightErr);
-        // Continue without insights — don't fail the audit
+        // Fallback: try basic insights if premium fails
+        try {
+          if (process.env.ANTHROPIC_API_KEY) {
+            const { generateAuditInsights } = await import("../lib/insights/generate");
+            const basicInsights = await generateAuditInsights(result);
+            result.insights = basicInsights;
+          }
+        } catch {
+          // Continue without any insights — don't fail the audit
+        }
       }
 
       // Send email report (PDF generated on-demand via /api/report/[id])
