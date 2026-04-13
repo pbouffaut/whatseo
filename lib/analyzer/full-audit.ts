@@ -12,6 +12,8 @@ import { analyzeContent } from './content';
 import { analyzePerformance } from './performance';
 import { analyzeAIReadiness } from './ai-readiness';
 import { calculateScore } from './scorer';
+import { analyzeLocalSeo, type LocalSeoResult } from './local-seo';
+import { analyzeSitemap, type SitemapAuditResult } from './sitemap-audit';
 import { fetchPageSpeed, type PageSpeedData } from '../google/pagespeed';
 import { fetchCruxData, type CruxData } from '../google/crux';
 import { fetchGscData, type GscData } from '../google/gsc';
@@ -376,16 +378,18 @@ export async function analyzeFullSite(options: FullAuditOptions): Promise<FullAu
   const hostname = new URL(homepageFinalUrl).hostname.replace(/^www\./, '');
   const gscSiteUrl = `sc-domain:${hostname}`;
 
-  // Run all Google API calls in parallel
-  const [performance, aiReadiness, pageSpeedData, cruxData, gscData, ga4Data] = await Promise.all([
+  // Run all Google API calls + local SEO + sitemap audit in parallel
+  const [performance, aiReadiness, localSeoData, sitemapData, pageSpeedData, cruxData, gscData, ga4Data] = await Promise.all([
     analyzePerformance(homepageFinalUrl),
     analyzeAIReadiness(homepageHtml, homepageFinalUrl),
+    Promise.resolve().then(() => analyzeLocalSeo(homepageHtml, homepageFinalUrl, pageResults)).catch((e) => { console.error('Local SEO failed:', e); return null as LocalSeoResult | null; }),
+    analyzeSitemap(`${homepageOrigin}/sitemap.xml`).catch((e) => { console.error('Sitemap audit failed:', e); return null as SitemapAuditResult | null; }),
     fetchPageSpeed(homepageFinalUrl, apiKey).catch((e) => { console.error('PageSpeed failed:', e); return null as PageSpeedData | null; }),
     fetchCruxData(homepageOrigin, apiKey).catch(() => null as CruxData | null),
     googleAccessToken
       ? fetchGscData(gscSiteUrl, googleAccessToken)
-          .then(data => data ? data : fetchGscData(`https://www.${hostname}/`, googleAccessToken)) // Fallback to URL prefix
-          .then(data => data ? data : fetchGscData(`https://${hostname}/`, googleAccessToken)) // Try without www
+          .then(data => data ? data : fetchGscData(`https://www.${hostname}/`, googleAccessToken))
+          .then(data => data ? data : fetchGscData(`https://${hostname}/`, googleAccessToken))
           .catch((e) => { console.error('GSC failed:', e); return null as GscData | null; })
       : Promise.resolve(null as GscData | null),
     googleAccessToken && ga4PropertyId
@@ -469,6 +473,8 @@ export async function analyzeFullSite(options: FullAuditOptions): Promise<FullAu
     ...patterns,
     brokenLinks,
     recommendations,
+    localSeo: localSeoData || undefined,
+    sitemapAudit: sitemapData || undefined,
     pageTypeGroups: groupPagesByType(pageResults),
     googleData: (pageSpeedData || cruxData || gscData || ga4Data) ? {
       pageSpeed: pageSpeedData || undefined,

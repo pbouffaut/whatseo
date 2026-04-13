@@ -182,6 +182,35 @@ function buildAuditSummary(result: FullAuditResult): string {
     lines.push('');
   }
 
+  // Local SEO data
+  if (result.localSeo) {
+    const local = result.localSeo;
+    lines.push('LOCAL SEO:');
+    lines.push(`  Score: ${local.score}/100`);
+    lines.push(`  NAP detected: ${local.napDetected ? 'Yes' : 'No'}`);
+    lines.push(`  Location pages found: ${local.locationPageCount}`);
+    lines.push(`  Local schema present: ${local.hasLocalSchema ? 'Yes' : 'No'}`);
+    for (const c of local.checks.filter(c => c.status !== 'pass')) {
+      lines.push(`  ${c.status.toUpperCase()}: ${c.name} — ${c.message}`);
+    }
+    lines.push('');
+  }
+
+  // Sitemap audit data
+  if (result.sitemapAudit) {
+    const sm = result.sitemapAudit;
+    lines.push('SITEMAP AUDIT:');
+    lines.push(`  Score: ${sm.score}/100`);
+    lines.push(`  Total URLs in sitemaps: ${sm.totalUrls}`);
+    lines.push(`  Sub-sitemaps: ${sm.subsitemaps}`);
+    lines.push(`  Has lastmod dates: ${sm.hasLastmod ? 'Yes' : 'No'}`);
+    lines.push(`  Stale URLs (>1 year): ${sm.staleUrls}`);
+    for (const c of sm.checks.filter(c => c.status !== 'pass')) {
+      lines.push(`  ${c.status.toUpperCase()}: ${c.name} — ${c.message}`);
+    }
+    lines.push('');
+  }
+
   // Sample page data
   if (result.pages.length > 0) {
     const homepage = result.pages[0];
