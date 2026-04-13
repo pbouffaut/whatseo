@@ -34,6 +34,6 @@ export function analyzeContent(html: string): ContentResult {
   }).length;
   checks.push({ name: 'External references', status: extLinks > 0 ? 'pass' : 'warn', message: `${extLinks} external link(s)` });
 
-  const score = Math.round(checks.reduce((s, c) => s + (c.status === 'pass' ? 1 : c.status === 'warn' ? 0.5 : 0), 0) / checks.length * 100);
+  const score = Math.round(checks.reduce((s, c) => s + (c.status === 'pass' ? 1 : c.status === 'warn' ? 0.3 : 0), 0) / checks.length * 100);
   return { score, checks, wordCount, readabilityLevel: level };
 }

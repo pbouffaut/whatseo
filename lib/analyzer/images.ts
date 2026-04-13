@@ -32,6 +32,6 @@ export function analyzeImages(html: string): ImageResult {
   const firstEager = firstImg.attr('loading') === 'eager' || firstImg.attr('fetchpriority') === 'high';
   checks.push({ name: 'Hero image loading', status: firstEager ? 'pass' : !firstLazy ? 'warn' : 'fail', message: firstEager ? 'Hero image is eagerly loaded' : firstLazy ? 'Hero image is lazy loaded (should be eager)' : 'Hero image has no loading attribute' });
 
-  const score = Math.round(checks.reduce((s, c) => s + (c.status === 'pass' ? 1 : c.status === 'warn' ? 0.5 : 0), 0) / checks.length * 100);
+  const score = Math.round(checks.reduce((s, c) => s + (c.status === 'pass' ? 1 : c.status === 'warn' ? 0.3 : 0), 0) / checks.length * 100);
   return { score, checks, totalImages, missingAlt, lazyLoaded, webpImages };
 }

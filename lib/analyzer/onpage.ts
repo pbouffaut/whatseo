@@ -38,6 +38,6 @@ export function analyzeOnPage(html: string, url: string): OnPageResult {
   const ogImage = $('meta[property="og:image"]').attr('content');
   checks.push({ name: 'Open Graph image', status: ogImage ? 'pass' : 'fail', message: ogImage ? 'OG image present' : 'No og:image tag' });
 
-  const score = Math.round(checks.reduce((s, c) => s + (c.status === 'pass' ? 1 : c.status === 'warn' ? 0.5 : 0), 0) / checks.length * 100);
+  const score = Math.round(checks.reduce((s, c) => s + (c.status === 'pass' ? 1 : c.status === 'warn' ? 0.3 : 0), 0) / checks.length * 100);
   return { score, checks, title, metaDescription, h1s, h2s, internalLinks: internal, externalLinks: external };
 }

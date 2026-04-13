@@ -46,6 +46,6 @@ export async function analyzeTechnical(
   const ok = responseTime < 1500;
   checks.push(check('Response time', fast, `${responseTime}ms`, !fast && ok));
 
-  const score = Math.round(checks.reduce((s, c) => s + (c.status === 'pass' ? 1 : c.status === 'warn' ? 0.5 : 0), 0) / checks.length * 100);
+  const score = Math.round(checks.reduce((s, c) => s + (c.status === 'pass' ? 1 : c.status === 'warn' ? 0.3 : 0), 0) / checks.length * 100);
   return { score, checks };
 }

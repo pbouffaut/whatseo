@@ -299,13 +299,19 @@ export async function generatePremiumInsights(result: FullAuditResult): Promise<
     for (const s of page.schema.schemasFound) allSchemas.add(s);
   }
 
+  // Detect likely competitors from URL/industry
+  const domain = new URL(result.url).hostname.replace('www.', '');
+  const competitorContext = `The site is ${domain}. Based on the site content and page types, identify their likely top 3 competitors in their industry. For each competitor, note what they do better in SEO (schema, content depth, local SEO, etc.). Use real competitor names.`;
+
   // --- CALL A: Strategy ---
   const callA = anthropic.messages.create({
     model: 'claude-sonnet-4-20250514',
-    max_tokens: 8000,
+    max_tokens: 12000,
     messages: [{
       role: 'user',
-      content: `You are a senior SEO strategist writing a boardroom-ready report for ${result.url}. Your audience is a CEO, CMO, or VP of Marketing who doesn't know SEO jargon but needs to understand what to invest in and why.
+      content: `You are a senior SEO strategist at a top agency writing a comprehensive boardroom-ready report for ${result.url}. Your audience is a CEO, CMO, or VP of Marketing. Write with the depth and authority of a $15,000 agency report. Be specific, use numbers, and explain business impact.
+
+${competitorContext}
 
 AUDIT DATA:
 ${baseSummary}
@@ -315,29 +321,29 @@ ${pageTypesSummary}
 Return a JSON object with these keys:
 
 {
-  "executive": "4-5 paragraphs. Start with the score and what it means. Highlight top 3 wins and top 3 problems with specific numbers. End with projected ROI if top issues are fixed. Write as if briefing a CEO in 2 minutes.",
+  "executive": "Write 6-8 detailed paragraphs (at least 800 words total). Start with the overall score and what it means in their industry context. Compare to competitors. Detail the top 3 strengths with specific data. Detail the top 5 weaknesses with impact estimates. Include a section on competitive positioning — how they compare to key competitors in SEO. End with ROI projections: estimated additional clicks, conversion value, and annual revenue impact if recommendations are implemented. This should feel like a $15K consultant briefing.",
 
-  "topPriority": "The single most impactful action to take. Be very specific — which pages, what to change, expected outcome in clicks/traffic. Not a list, just one thing.",
+  "topPriority": "3-4 sentences. The single most impactful action with very specific instructions (which pages, what exactly to change, expected outcome in clicks/month, estimated revenue impact).",
 
-  "criticalIssues": ["5 strings, each describing a critical issue with impact. E.g., '487 pages lack schema markup — missing rich snippets in Google, estimated -15% click-through rate'"],
+  "criticalIssues": ["5 strings, each 2-3 sentences describing a critical issue with specific impact numbers and competitive context. E.g., '487 pages (100% of site) lack schema markup — competitors like WeWork and Regus have rich snippets showing star ratings, prices, and reviews in Google results, while this site shows plain blue links. Estimated impact: -15-25% click-through rate, costing approximately 3,000-5,000 clicks per month.'"],
 
-  "quickWins": ["5 strings, each describing an easy fix with impact. E.g., 'Add meta descriptions to 32 pages — 2 hours of work, +5% CTR on those pages'"],
+  "quickWins": ["5 strings, each 2-3 sentences with specific effort estimate and expected ROI. E.g., 'Add Organization schema to homepage and all pages (4 hours of developer time) — immediately enables brand Knowledge Panel in Google, matching competitor visibility. Expected impact: +500-1,000 branded clicks/month.'"],
 
   "actionPlan": [
     {
       "phase": "critical",
       "title": "Critical Foundation (Week 1-2)",
       "timeline": "Week 1-2",
-      "items": [{"title": "Fix X", "description": "Do Y because Z", "effort": "4-8 hours", "impact": "+5 score points, +2000 clicks/month", "category": "On-Page SEO"}],
-      "projectedScore": 78
+      "items": [{"title": "Fix X", "description": "Detailed 2-3 sentence description of what to do, why it matters, and what competitors are doing differently", "effort": "4-8 hours", "impact": "+5 score points, +2000 clicks/month, ~$X revenue", "category": "On-Page SEO"}],
+      "projectedScore": 0
     },
-    {"phase": "high", "title": "High Impact (Week 3-4)", "timeline": "Week 3-4", "items": [...], "projectedScore": 83},
-    {"phase": "medium", "title": "Growth Phase (Month 2-3)", "timeline": "Month 2-3", "items": [...], "projectedScore": 88},
-    {"phase": "backlog", "title": "Optimization Backlog", "timeline": "Ongoing", "items": [...], "projectedScore": 92}
+    {"phase": "high", "title": "High Impact (Week 3-4)", "timeline": "Week 3-4", "items": [3-5 items], "projectedScore": 0},
+    {"phase": "medium", "title": "Growth Phase (Month 2-3)", "timeline": "Month 2-3", "items": [3-5 items], "projectedScore": 0},
+    {"phase": "backlog", "title": "Optimization Backlog", "timeline": "Quarter 2+", "items": [3-5 items], "projectedScore": 0}
   ]
 }
 
-The current score is ${result.score.overall}/100. Make projected scores realistic — each phase should add 4-8 points. The total projected improvement should be reasonable (reaching 85-95 range).
+Each action plan phase should have 3-5 items with detailed descriptions. The current score is ${result.score.overall}/100. Set realistic projected scores — each phase should add 5-10 points. Target score: 80-90 range.
 
 Return ONLY the JSON object, no markdown fences.`
     }],
@@ -346,10 +352,12 @@ Return ONLY the JSON object, no markdown fences.`
   // --- CALL B: Analysis ---
   const callB = anthropic.messages.create({
     model: 'claude-sonnet-4-20250514',
-    max_tokens: 10000,
+    max_tokens: 16000,
     messages: [{
       role: 'user',
-      content: `You are an SEO analyst writing deep-dive findings for ${result.url}. Use specific data from the audit. Your audience is a marketing manager who needs to understand what's happening on their site.
+      content: `You are a senior SEO analyst writing comprehensive deep-dive findings for ${result.url}. Write with the depth of a $15,000 agency report. Every section should have specific numbers, competitive context, and actionable recommendations. Be thorough — this is the analytical core of a premium report.
+
+${competitorContext}
 
 AUDIT DATA:
 ${baseSummary}
@@ -361,18 +369,25 @@ ${googleDeep}
 Return a JSON object with these keys:
 
 {
-  "deepDive": "Write 2-3 paragraphs for EACH page type group. For each group, analyze: word count adequacy, schema adoption, title/description quality, content depth. Identify the biggest opportunity in each group. Use section headers like '### Location Pages (222 pages)' for each group.",
+  "deepDive": "Write a thorough analysis — AT LEAST 4-5 paragraphs for EACH page type group (aim for 2000+ words total). For each group use a ### header like '### Location Pages (222 pages)'. Analyze: word count vs industry standards, schema adoption vs competitors, title/description patterns and missed CTR opportunity, content depth and E-E-A-T signals, internal linking structure, conversion optimization opportunities. Compare to what competitors typically do for similar page types. End each group with a specific recommendation and estimated impact.",
 
-  "googleDataDeep": "3-4 paragraphs analyzing the Google data. Split queries into branded vs non-branded. Identify the top non-branded opportunities. Estimate revenue impact using: clicks × estimated conversion rate (2-5%) × average deal value. Identify pages ranking position 4-10 that could move to top 3.",
+  "googleDataDeep": "Write 5-6 detailed paragraphs (800+ words). Split queries into branded vs non-branded with a table-like breakdown. For non-branded queries, identify the top 5 opportunities where position is 4-20 (striking distance). Estimate revenue: clicks × conversion rate (use industry-appropriate rate) × average deal value (estimate from business type). Identify which competitor pages are outranking this site for key terms. Highlight pages with high impressions but low CTR — these are title/description optimization goldmines.",
 
-  "technical": "2-3 paragraphs about technical foundation in plain language. What does it mean for customers?",
-  "content": "2-3 paragraphs about content quality. Thin pages, duplicate content, E-E-A-T signals.",
-  "onPage": "2-3 paragraphs about titles, descriptions, headings. Click-through rate impact.",
-  "schema": "2 paragraphs about structured data. What rich results are they missing?",
-  "performance": "2 paragraphs about speed. LCP, CLS in human terms with actual numbers.",
-  "aiReadiness": "2 paragraphs about AI search visibility.",
-  "images": "1-2 paragraphs about image optimization.",
-  "googleData": "2-3 paragraphs summarizing Google data for executives."
+  "technical": "3-4 detailed paragraphs about technical SEO. Cover: crawlability (robots.txt, sitemaps, redirect chains), security headers (what's missing and why it matters), page speed impact on rankings, mobile-first indexing readiness. Mention what competitors typically have that this site doesn't. Include specific header recommendations.",
+
+  "content": "3-4 detailed paragraphs. Analyze thin content problem with specific page counts and word count distributions. Discuss duplicate content patterns. Evaluate E-E-A-T: author attribution, publication dates, external references, about/contact pages. Compare content depth to industry competitors. Recommend content strategy.",
+
+  "onPage": "3-4 detailed paragraphs. Analyze title tag patterns (length distribution, keyword usage, duplicates). Meta description coverage and quality. H1/H2 heading structure issues. Internal linking density. Estimate CTR impact of fixing title/description issues using CTR curve data (position 1 ~28% CTR, position 2 ~15%, etc.).",
+
+  "schema": "3-4 detailed paragraphs. List every schema type that should be implemented for this business type. Explain what rich results each enables (star ratings, FAQs, breadcrumbs, local pack, knowledge panel). Compare to competitors — do they have schema? What rich results do they get? Estimate traffic impact of schema implementation.",
+
+  "performance": "3-4 detailed paragraphs. Explain each Core Web Vital in human terms with the actual numbers. Compare to Google's thresholds. Discuss mobile vs desktop differences. Explain the ranking impact (Google uses CWV as a ranking signal). Recommend specific optimizations with expected improvement.",
+
+  "aiReadiness": "3-4 detailed paragraphs. Discuss AI Overviews (Google), ChatGPT search, Perplexity, Bing Copilot. Is this site being cited? What makes content citable? Analyze llms.txt presence, FAQ content, structured data for AI. Discuss what competitors are doing for AI search. Recommend specific changes.",
+
+  "images": "2-3 detailed paragraphs. Cover alt text coverage and quality, image formats (WebP/AVIF adoption), lazy loading strategy, responsive images. Discuss impact on accessibility, SEO, and Core Web Vitals (LCP). Estimate improvement from fixing hero image loading.",
+
+  "googleData": "3-4 detailed paragraphs summarizing all Google data for executives. Key metrics, trends, competitive positioning, biggest opportunities. This is the executive-level data summary."
 }
 
 Return ONLY the JSON object, no markdown fences.`
@@ -382,22 +397,26 @@ Return ONLY the JSON object, no markdown fences.`
   // --- CALL C: Implementation ---
   const callC = anthropic.messages.create({
     model: 'claude-sonnet-4-20250514',
-    max_tokens: 12000,
+    max_tokens: 16000,
     messages: [{
       role: 'user',
-      content: `You are a senior developer writing implementation deliverables for ${result.url}. The audience is a development team that needs copy-paste ready code and tickets.
+      content: `You are a senior frontend developer and SEO engineer writing premium implementation deliverables for ${result.url}. The audience is a development team that needs production-ready code, detailed tickets, and a comprehensive implementation guide. Write with the thoroughness of a senior consultant delivering a $15K engagement.
 
 SITE DATA:
 - URL: ${result.url}
+- Domain: ${domain}
 - Pages crawled: ${result.pagesCrawled}
 - Currently detected schema types: ${Array.from(allSchemas).join(', ') || 'NONE'}
 - Homepage title: ${result.pages[0]?.onPage.title || 'MISSING'}
+- Homepage H1s: ${result.pages[0]?.onPage.h1s.join(', ') || 'NONE'}
+- Homepage internal links: ${result.pages[0]?.onPage.internalLinks || 0}
+- Homepage word count: ${result.pages[0]?.content.wordCount || 0}
 
 FAILING CHECKS:
-${failingChecks.slice(0, 20).join('\n')}
+${failingChecks.slice(0, 25).join('\n')}
 
 RECOMMENDATIONS:
-${result.recommendations.map(r => `[${r.impact}/${r.effort}] ${r.title}: ${r.description} (${r.affectedUrls.length} URLs)`).join('\n')}
+${result.recommendations.map(r => `[${r.impact}/${r.effort}] ${r.title}: ${r.description} (${r.affectedUrls.length} URLs, first: ${r.affectedUrls[0] || 'n/a'})`).join('\n')}
 
 ${pageTypesSummary}
 
@@ -407,32 +426,32 @@ Return a JSON object with these keys:
   "schemaTemplates": [
     {
       "type": "Organization",
-      "description": "Add to all pages. Establishes brand entity in Google Knowledge Graph.",
-      "jsonLd": "{ full valid JSON-LD here, customized with the actual site name and URL }",
-      "applicablePages": "All pages (add to _app.tsx or layout.tsx)"
-    },
-    ...generate 4-5 more templates appropriate for this site type (LocalBusiness, BreadcrumbList, FAQPage, Article, Service, etc.)
+      "description": "2-3 sentences explaining when to use this, what rich results it enables, and which Google features it powers.",
+      "jsonLd": "Complete, valid JSON-LD customized with the actual site name (${domain}), URL, and realistic data. Include all recommended properties. This should be copy-paste deployable.",
+      "applicablePages": "All pages (add to layout component)"
+    }
+    ...generate 5-6 templates total, appropriate for this specific business type. Each JSON-LD must be complete, valid, and use the actual site's URL and brand name. Include template variables like {{LOCATION_NAME}} where page-specific data is needed. Templates should include: Organization, LocalBusiness/CoworkingSpace (if applicable), BreadcrumbList, FAQPage, Service, and one more appropriate for the business.
   ],
 
-  "implementationGuide": "Write a developer-ready implementation guide with:\n\n### Phase 1: Quick Fixes (Week 1)\n- Specific file paths and code changes\n- Verification commands (curl, grep, browser console)\n\n### Phase 2: Schema Implementation (Week 2-3)\n- How to add JSON-LD to the site\n- Component code for React/Next.js\n\n### Phase 3: Content & Technical (Month 2)\n- Content improvements needed\n- Technical fixes\n\nInclude actual commands to verify each fix.",
+  "implementationGuide": "Write a comprehensive developer guide (1500+ words) structured as:\n\n### Phase 1: Critical Fixes (Week 1)\nFor each fix: what file to edit, what code to change, exact curl/grep command to verify. Include security header configurations (exact header values). Include Next.js/React specific patterns if detected.\n\n### Phase 2: Schema Implementation (Week 2-3)\nStep-by-step: create a JSON-LD component, add to layout, template for dynamic pages. Include a React/Next.js component example. Explain how to validate with Google Rich Results Test.\n\n### Phase 3: Content Optimization (Month 2)\nWhich pages to expand, target word counts, heading structure templates, internal linking strategy.\n\n### Phase 4: Performance & Monitoring (Month 3)\nImage optimization steps, lazy loading fixes, CWV monitoring setup. Include verification commands for every step.\n\n### Verification Checklist\nA final checklist of curl/grep commands to verify all changes are live.",
 
   "tickets": [
     {
       "id": "SEO-001",
-      "title": "Add unique title tags to X pages with duplicates",
+      "title": "Clear, specific ticket title",
       "priority": "P0",
-      "description": "X pages share identical title tags, causing search engines to compete them against each other.",
-      "acceptanceCriteria": ["Each page has a unique <title> tag", "Titles follow pattern: [Page Topic] | [Brand]", "No title exceeds 60 characters"],
+      "description": "3-4 sentences. What's wrong, why it matters, what the business impact is. Reference specific URLs and page counts.",
+      "acceptanceCriteria": ["4-6 specific, testable criteria"],
       "storyPoints": 3,
-      "testingInstructions": "Run: curl -s URL | grep '<title>' for each affected page. Verify each title is unique.",
+      "testingInstructions": "2-3 specific test commands (curl, grep, Lighthouse, Google Rich Results Test). Include expected output.",
       "dependencies": [],
       "category": "On-Page SEO"
-    },
-    ...generate 15 more tickets covering all recommendations plus schema, security headers, performance, content improvements. Use priorities: P0 (critical, fix this week), P1 (high, fix in 2 weeks), P2 (medium, fix in 1-2 months), P3 (backlog). Story points: 1-8 scale.
+    }
+    ...generate 16 total tickets covering ALL findings: schema implementation (3-4 tickets), on-page fixes (3-4 tickets), content improvements (2-3 tickets), technical/security (2-3 tickets), performance (1-2 tickets), AI readiness (1 ticket), monitoring setup (1 ticket). Priorities: P0 (4 tickets), P1 (5 tickets), P2 (5 tickets), P3 (2 tickets). Story points 1-8 scale. Every ticket should have realistic dependencies mapped.
   ]
 }
 
-Make all JSON-LD valid and parseable. Use the actual site's URL and brand name. Schema templates should be realistic and deployable.
+CRITICAL: All JSON-LD must be syntactically valid JSON. Use the actual site URL (${result.url}) and brand name. Every ticket must have 4+ acceptance criteria and specific testing commands.
 
 Return ONLY the JSON object, no markdown fences.`
     }],

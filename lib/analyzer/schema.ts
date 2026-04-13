@@ -35,6 +35,6 @@ export function analyzeSchema(html: string): SchemaResult {
   const ogDesc = $('meta[property="og:description"]').attr('content');
   checks.push({ name: 'Open Graph fallback', status: ogTitle && ogDesc ? 'pass' : ogTitle || ogDesc ? 'warn' : 'fail', message: ogTitle ? 'OG tags present as fallback structured data' : 'No OG tags for fallback' });
 
-  const score = Math.round(checks.reduce((s, c) => s + (c.status === 'pass' ? 1 : c.status === 'warn' ? 0.5 : 0), 0) / checks.length * 100);
+  const score = Math.round(checks.reduce((s, c) => s + (c.status === 'pass' ? 1 : c.status === 'warn' ? 0.3 : 0), 0) / checks.length * 100);
   return { score, checks, schemasFound, jsonLdBlocks };
 }

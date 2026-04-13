@@ -443,6 +443,11 @@ export async function analyzeFullSite(options: FullAuditOptions): Promise<FullAu
     performance,
     aiReadiness,
     images: aggImages,
+  }, {
+    pages: pageResults,
+    thinContentCount: patterns.thinContentPages.length,
+    missingSchemaCount: patterns.missingSchemaPages.length,
+    totalPages: pageResults.length,
   });
 
   return {

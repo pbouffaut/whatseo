@@ -26,7 +26,7 @@ export async function analyzePerformance(url: string): Promise<PerformanceResult
     checks.push({ name: 'LCP', status: lcp < 2500 ? 'pass' : lcp < 4000 ? 'warn' : 'fail', message: `LCP: ${(lcp / 1000).toFixed(1)}s`, value: Math.round(lcp) });
     checks.push({ name: 'CLS', status: cls < 0.1 ? 'pass' : cls < 0.25 ? 'warn' : 'fail', message: `CLS: ${cls.toFixed(3)}`, value: cls });
 
-    const score = Math.round(checks.reduce((s, c) => s + (c.status === 'pass' ? 1 : c.status === 'warn' ? 0.5 : 0), 0) / checks.length * 100);
+    const score = Math.round(checks.reduce((s, c) => s + (c.status === 'pass' ? 1 : c.status === 'warn' ? 0.3 : 0), 0) / checks.length * 100);
     return {
       score, checks,
       lighthouseScores: {

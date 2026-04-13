@@ -42,6 +42,6 @@ export async function analyzeAIReadiness(html: string, url: string): Promise<AIR
   const hasTables = $('table, dl, ol').length > 0;
   checks.push({ name: 'Structured content', status: hasTables ? 'pass' : 'warn', message: hasTables ? 'Structured content found (tables, lists, definitions)' : 'No structured content detected' });
 
-  const score = Math.round(checks.reduce((s, c) => s + (c.status === 'pass' ? 1 : c.status === 'warn' ? 0.5 : 0), 0) / checks.length * 100);
+  const score = Math.round(checks.reduce((s, c) => s + (c.status === 'pass' ? 1 : c.status === 'warn' ? 0.3 : 0), 0) / checks.length * 100);
   return { score, checks };
 }
