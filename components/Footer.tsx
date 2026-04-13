@@ -12,27 +12,27 @@ const serviceLinks = [
 
 export default function Footer() {
   return (
-    <footer className="bg-dark border-t border-warm-white/8 pt-20 pb-8">
+    <footer className="bg-surface-high pt-20 pb-8">
       <div className="max-w-7xl mx-auto px-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
           {/* Brand */}
           <div>
-            <div className="text-xl font-bold text-warm-white mb-3">
-              What<span className="text-gold">SEO</span>
-              <span className="text-warm-gray text-sm">.ai</span>
+            <div className="text-xl font-bold text-on-surface mb-3">
+              What<span className="text-primary">SEO</span>
+              <span className="text-on-surface-light text-sm">.ai</span>
             </div>
-            <p className="text-warm-gray text-sm leading-relaxed">
+            <p className="text-on-surface-muted text-sm leading-relaxed">
               Expert-level SEO insights delivered in minutes. Professional analysis your team can act on.
             </p>
           </div>
 
           {/* Services */}
           <div>
-            <h4 className="text-warm-white text-sm uppercase tracking-wider font-semibold mb-4">Services</h4>
+            <h4 className="text-secondary text-xs uppercase tracking-[0.15em] font-semibold mb-4">Services</h4>
             <ul className="space-y-2">
               {serviceLinks.map((item) => (
                 <li key={item.slug}>
-                  <Link href={`/services/${item.slug}`} className="text-warm-gray hover:text-warm-white text-sm transition-colors">
+                  <Link href={`/services/${item.slug}`} className="text-on-surface-muted hover:text-primary text-sm transition-colors">
                     {item.name}
                   </Link>
                 </li>
@@ -42,11 +42,11 @@ export default function Footer() {
 
           {/* Company */}
           <div>
-            <h4 className="text-warm-white text-sm uppercase tracking-wider font-semibold mb-4">Company</h4>
+            <h4 className="text-secondary text-xs uppercase tracking-[0.15em] font-semibold mb-4">Company</h4>
             <ul className="space-y-2">
               {['About', 'How It Works', 'Pricing', 'Contact'].map((item) => (
                 <li key={item}>
-                  <span className="text-warm-gray hover:text-warm-white text-sm transition-colors cursor-pointer">{item}</span>
+                  <span className="text-on-surface-muted hover:text-primary text-sm transition-colors cursor-pointer">{item}</span>
                 </li>
               ))}
             </ul>
@@ -54,34 +54,34 @@ export default function Footer() {
 
           {/* Connect */}
           <div>
-            <h4 className="text-warm-white text-sm uppercase tracking-wider font-semibold mb-4">Connect</h4>
+            <h4 className="text-secondary text-xs uppercase tracking-[0.15em] font-semibold mb-4">Connect</h4>
             <div className="flex gap-4 mb-6">
               {[Globe, Mail, ExternalLink].map((Icon, i) => (
-                <span key={i} className="text-warm-gray hover:text-gold transition-colors cursor-pointer">
+                <span key={i} className="text-on-surface-light hover:text-primary transition-colors cursor-pointer">
                   <Icon className="w-5 h-5" />
                 </span>
               ))}
             </div>
-            <p className="text-warm-gray text-sm mb-3">Stay updated</p>
+            <p className="text-on-surface-muted text-sm mb-3">Stay updated</p>
             <div className="flex gap-2">
               <input
                 type="email"
                 placeholder="Email address"
-                className="flex-1 bg-warm-white/5 border border-warm-white/10 rounded-full px-4 py-2 text-sm text-warm-white placeholder-warm-gray-light focus:outline-none focus:border-gold"
+                className="flex-1 bg-surface-low border-ghost rounded-full px-4 py-2 text-sm text-on-surface placeholder-on-surface-light focus:outline-none focus:ring-2 focus:ring-primary/30"
               />
-              <button className="bg-gold text-dark rounded-full px-4 py-2 text-sm font-semibold hover:bg-gold-light transition-colors">
+              <button className="bg-gradient-cta text-on-primary rounded-full px-4 py-2 text-sm font-semibold hover:opacity-90 transition-opacity">
                 Join
               </button>
             </div>
           </div>
         </div>
 
-        {/* Bottom bar */}
-        <div className="border-t border-warm-white/8 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-warm-gray-light text-xs">&copy; 2026 WhatSEO.ai. All rights reserved.</p>
+        {/* Bottom bar — no border, use spacing */}
+        <div className="pt-8 mt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+          <p className="text-on-surface-light text-xs">&copy; 2026 WhatSEO.ai. All rights reserved.</p>
           <div className="flex gap-6">
-            <Link href="/privacy" className="text-warm-gray-light text-xs hover:text-warm-gray">Privacy Policy</Link>
-            <Link href="/terms" className="text-warm-gray-light text-xs hover:text-warm-gray">Terms of Service</Link>
+            <Link href="/privacy" className="text-on-surface-light text-xs hover:text-primary">Privacy Policy</Link>
+            <Link href="/terms" className="text-on-surface-light text-xs hover:text-primary">Terms of Service</Link>
           </div>
         </div>
       </div>

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { ArrowRight } from 'lucide-react';
 
 export default function UrlForm({ compact = false }: { compact?: boolean }) {
   const [url, setUrl] = useState('');
@@ -28,7 +29,7 @@ export default function UrlForm({ compact = false }: { compact?: boolean }) {
           onChange={(e) => setUrl(e.target.value)}
           placeholder="https://yourwebsite.com"
           required
-          className="flex-1 px-5 py-3.5 rounded-xl bg-warm-white/5 border border-warm-white/10 text-warm-white placeholder-warm-gray-light focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-colors text-base"
+          className="flex-1 px-5 py-3.5 rounded-xl bg-surface-low text-on-surface placeholder-on-surface-light focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all text-base border-ghost"
         />
         <input
           type="email"
@@ -36,12 +37,12 @@ export default function UrlForm({ compact = false }: { compact?: boolean }) {
           onChange={(e) => setEmail(e.target.value)}
           placeholder="you@company.com"
           required
-          className="flex-1 px-5 py-3.5 rounded-xl bg-warm-white/5 border border-warm-white/10 text-warm-white placeholder-warm-gray-light focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-colors text-base"
+          className="flex-1 px-5 py-3.5 rounded-xl bg-surface-low text-on-surface placeholder-on-surface-light focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all text-base border-ghost"
         />
         <button
           type="submit"
           disabled={loading}
-          className="px-8 py-3.5 bg-gold text-dark font-semibold rounded-full hover:bg-gold-light transition-colors disabled:opacity-60 flex items-center justify-center gap-2 min-w-[200px] text-base"
+          className="px-8 py-3.5 bg-gradient-cta text-on-primary font-semibold rounded-full hover:opacity-90 hover:scale-[1.02] transition-all disabled:opacity-60 flex items-center justify-center gap-2 min-w-[200px] text-base"
         >
           {loading ? (
             <>
@@ -52,7 +53,10 @@ export default function UrlForm({ compact = false }: { compact?: boolean }) {
               Analyzing...
             </>
           ) : (
-            'Start Your Free Scan'
+            <>
+              Start Your Free Scan
+              <ArrowRight className="w-4 h-4" />
+            </>
           )}
         </button>
       </div>

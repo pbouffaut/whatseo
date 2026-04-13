@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Shield, FileText, Code, Zap, BookOpen, Bot, Check } from 'lucide-react';
+import { Shield, FileText, Code, Zap, BookOpen, Bot, Check, ArrowRight } from 'lucide-react';
 import UrlForm from '@/components/UrlForm';
 import JsonLdSchema from './schema';
 
@@ -65,12 +65,13 @@ function ScoreCircle({ score, size = 56 }: { score: number; size?: number }) {
   const r = (size - 8) / 2;
   const circ = 2 * Math.PI * r;
   const offset = circ - (score / 100) * circ;
+  const color = score >= 70 ? '#4d6b32' : score >= 40 ? '#914d00' : '#ba1a1a';
   return (
     <svg width={size} height={size} className="-rotate-90">
-      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(201,168,92,0.15)" strokeWidth="4" />
-      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#c9a85c" strokeWidth="4"
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(145,77,0,0.12)" strokeWidth="4" />
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth="4"
         strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round" />
-      <text x={size/2} y={size/2 + 5} textAnchor="middle" fill="#c9a85c" fontSize="14" fontWeight="bold"
+      <text x={size/2} y={size/2 + 5} textAnchor="middle" fill={color} fontSize="14" fontWeight="bold"
         className="rotate-90 origin-center">{score}</text>
     </svg>
   );
@@ -81,65 +82,71 @@ export default function Home() {
     <>
       <JsonLdSchema />
 
-      {/* Hero */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-dark-warm via-dark to-[#1a2520]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(201,168,92,0.06),transparent_60%)]" />
-        <div className="relative z-10 max-w-5xl mx-auto px-6 text-center pt-20">
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-gold text-sm uppercase tracking-[0.2em] font-semibold mb-6"
-          >
-            AI-Powered SEO Analysis
-          </motion.p>
-          <motion.h1
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="font-serif text-5xl sm:text-6xl md:text-7xl lg:text-8xl text-warm-white leading-[1.05] mb-8"
-          >
-            Your website&apos;s
-            <br />
-            untapped potential,
-            <br />
-            <span className="text-gold">revealed.</span>
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="text-lg text-warm-gray max-w-2xl mx-auto mb-10 leading-relaxed"
-          >
-            We run 47 checks on your homepage and deliver the insights
-            your team needs to rank, convert, and grow.
-          </motion.p>
-          <motion.a
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            href="#audit-form"
-            className="inline-block bg-gold text-dark rounded-full px-10 py-4 text-lg font-semibold hover:bg-gold-light transition-colors"
-          >
-            Start Your Free Scan
-          </motion.a>
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className="text-warm-gray-light text-sm mt-6"
-          >
-            Complimentary homepage analysis &mdash; no credit card required
-          </motion.p>
+      {/* Hero — Warm cream with editorial serif */}
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-background">
+        {/* Subtle warm gradient orb */}
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[radial-gradient(ellipse_at_center,rgba(242,140,40,0.08),transparent_70%)]" />
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[radial-gradient(ellipse_at_center,rgba(201,238,169,0.06),transparent_70%)]" />
+
+        <div className="relative z-10 max-w-5xl mx-auto px-6 pt-28 pb-20">
+          {/* Asymmetric layout — text left-weighted */}
+          <div className="max-w-3xl">
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-secondary text-xs uppercase tracking-[0.2em] font-semibold mb-6"
+            >
+              AI-Powered SEO Analysis
+            </motion.p>
+            <motion.h1
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="font-serif text-5xl sm:text-6xl md:text-7xl text-on-surface leading-[1.08] mb-8 tracking-tight"
+            >
+              Your website&apos;s
+              <br />
+              untapped potential,
+              <br />
+              <span className="bg-gradient-to-r from-primary to-primary-container bg-clip-text text-transparent">revealed.</span>
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="text-lg text-on-surface-muted max-w-xl mb-10 leading-relaxed"
+            >
+              We run 47 checks on your homepage and deliver the insights
+              your team needs to rank, convert, and grow.
+            </motion.p>
+            <motion.a
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              href="#audit-form"
+              className="inline-flex items-center gap-2 bg-gradient-cta text-on-primary rounded-full px-10 py-4 text-lg font-semibold hover:opacity-90 transition-opacity hover:scale-[1.02] transform"
+            >
+              Start Your Free Scan
+              <ArrowRight className="w-5 h-5" />
+            </motion.a>
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+              className="text-on-surface-light text-sm mt-6"
+            >
+              Complimentary homepage analysis &mdash; no credit card required
+            </motion.p>
+          </div>
         </div>
       </section>
 
-      {/* What We Uncover */}
-      <section id="features" className="bg-cream py-28 md:py-36 px-6">
+      {/* What We Uncover — Tonal layer shift */}
+      <section id="features" className="bg-surface-low py-28 md:py-36 px-6">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-20">
-            <p className="text-gold text-sm uppercase tracking-[0.2em] font-semibold mb-4">Our Services</p>
-            <h2 className="font-serif text-3xl md:text-5xl text-dark">What We Uncover</h2>
+          <div className="mb-20">
+            <p className="text-secondary text-xs uppercase tracking-[0.2em] font-semibold mb-4">Our Services</p>
+            <h2 className="font-serif text-3xl md:text-5xl text-on-surface tracking-tight">What We Uncover</h2>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-16">
             {features.map((f, i) => (
@@ -150,25 +157,26 @@ export default function Home() {
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
               >
-                <div className="w-12 h-0.5 bg-gold mb-6" />
-                <f.icon className="w-10 h-10 text-gold mb-4" strokeWidth={1.5} />
-                <h3 className="text-xl font-semibold text-dark mb-3">{f.title}</h3>
-                <p className="text-dark/60 leading-relaxed">{f.desc}</p>
+                <div className="w-12 h-12 rounded-2xl bg-primary-fixed/40 flex items-center justify-center mb-5">
+                  <f.icon className="w-6 h-6 text-primary" strokeWidth={1.5} />
+                </div>
+                <h3 className="text-xl font-semibold text-on-surface mb-3">{f.title}</h3>
+                <p className="text-on-surface-muted leading-relaxed">{f.desc}</p>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* How It Works */}
-      <section id="how-it-works" className="bg-dark-warm py-28 md:py-36 px-6">
+      {/* How It Works — Surface white cards on cream */}
+      <section id="how-it-works" className="bg-background py-28 md:py-36 px-6">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-20">
-            <p className="text-gold text-sm uppercase tracking-[0.2em] font-semibold mb-4">Process</p>
-            <h2 className="font-serif text-3xl md:text-5xl text-warm-white">A Simple Process,<br />Powerful Results</h2>
+            <p className="text-secondary text-xs uppercase tracking-[0.2em] font-semibold mb-4">Process</p>
+            <h2 className="font-serif text-3xl md:text-5xl text-on-surface tracking-tight">A Simple Process,<br />Powerful Results</h2>
           </div>
           <div className="relative">
-            <div className="hidden md:block absolute top-7 left-[15%] right-[15%] h-px bg-gold-muted/30" />
+            <div className="hidden md:block absolute top-10 left-[15%] right-[15%] h-px bg-outline/20" />
             <div className="grid md:grid-cols-3 gap-16 md:gap-12">
               {steps.map((s, i) => (
                 <motion.div
@@ -179,11 +187,11 @@ export default function Home() {
                   transition={{ delay: i * 0.15 }}
                   className="text-center relative"
                 >
-                  <div className="w-14 h-14 rounded-full border border-gold text-gold text-sm font-semibold flex items-center justify-center mx-auto mb-6 bg-dark-warm relative z-10">
+                  <div className="w-14 h-14 rounded-full bg-gradient-cta text-on-primary text-sm font-bold flex items-center justify-center mx-auto mb-6 relative z-10">
                     {s.num}
                   </div>
-                  <h3 className="text-lg font-semibold text-warm-white mb-3">{s.title}</h3>
-                  <p className="text-warm-gray text-sm leading-relaxed">{s.desc}</p>
+                  <h3 className="text-lg font-semibold text-on-surface mb-3">{s.title}</h3>
+                  <p className="text-on-surface-muted text-sm leading-relaxed">{s.desc}</p>
                 </motion.div>
               ))}
             </div>
@@ -191,15 +199,15 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Free vs Full Comparison */}
-      <section className="bg-dark py-28 md:py-36 px-6">
+      {/* Free vs Full Comparison — Tonal layering */}
+      <section className="bg-surface-low py-28 md:py-36 px-6">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
-            <p className="text-gold text-sm uppercase tracking-[0.2em] font-semibold mb-4">Compare</p>
-            <h2 className="font-serif text-3xl md:text-5xl text-warm-white mb-4">
+            <p className="text-secondary text-xs uppercase tracking-[0.2em] font-semibold mb-4">Compare</p>
+            <h2 className="font-serif text-3xl md:text-5xl text-on-surface mb-4 tracking-tight">
               Free Scan vs. Full Audit
             </h2>
-            <p className="text-warm-gray max-w-2xl mx-auto">
+            <p className="text-on-surface-muted max-w-2xl mx-auto">
               Our free scan gives you a quick snapshot. A full audit gives you the complete picture
               with real Google data and everything your team needs to take action.
             </p>
@@ -207,12 +215,12 @@ export default function Home() {
 
           <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
             {/* Free */}
-            <div className="bg-warm-white/5 rounded-2xl border border-warm-white/8 p-8">
+            <div className="bg-surface-white rounded-[2rem] shadow-ambient p-8">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-semibold text-warm-white">Free Scan</h3>
-                <span className="text-warm-gray text-sm">$0</span>
+                <h3 className="text-xl font-semibold text-on-surface">Free Scan</h3>
+                <span className="text-on-surface-light text-sm">$0</span>
               </div>
-              <p className="text-warm-gray text-sm mb-6 leading-relaxed">
+              <p className="text-on-surface-muted text-sm mb-6 leading-relaxed">
                 A quick health check on your homepage. Good for a first look.
               </p>
               <ul className="space-y-3 mb-8">
@@ -223,8 +231,8 @@ export default function Home() {
                   { text: 'Basic schema detection', included: true },
                   { text: 'Lab-only performance data', included: true },
                 ].map((item) => (
-                  <li key={item.text} className="flex items-start gap-3 text-sm text-warm-gray">
-                    <Check className="w-4 h-4 text-gold mt-0.5 shrink-0" />
+                  <li key={item.text} className="flex items-start gap-3 text-sm text-on-surface-muted">
+                    <Check className="w-4 h-4 text-tertiary mt-0.5 shrink-0" />
                     {item.text}
                   </li>
                 ))}
@@ -238,30 +246,30 @@ export default function Home() {
                   'Dev-ready code & Jira tickets',
                   'Revenue impact estimates',
                 ].map((text) => (
-                  <li key={text} className="flex items-start gap-3 text-sm text-warm-gray-light/50 line-through">
-                    <span className="w-4 h-4 mt-0.5 shrink-0 text-center text-warm-gray-light/30">&times;</span>
+                  <li key={text} className="flex items-start gap-3 text-sm text-on-surface-light/50 line-through">
+                    <span className="w-4 h-4 mt-0.5 shrink-0 text-center text-on-surface-light/30">&times;</span>
                     {text}
                   </li>
                 ))}
               </ul>
-              <a href="#audit-form" className="block w-full py-3.5 rounded-full font-semibold text-center bg-warm-white/5 text-warm-gray hover:bg-warm-white/10 transition-colors border border-warm-white/10">
+              <a href="#audit-form" className="block w-full py-3.5 rounded-full font-semibold text-center bg-surface-high text-on-surface-muted hover:bg-surface-highest transition-colors">
                 Start Free Scan
               </a>
             </div>
 
             {/* Full Audit */}
-            <div className="bg-dark-card rounded-2xl border-2 border-gold p-8 relative">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gold text-dark text-xs font-bold px-4 py-1 rounded-full">
+            <div className="bg-surface-white rounded-[2rem] shadow-ambient p-8 relative ring-2 ring-primary">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-cta text-on-primary text-xs font-bold px-4 py-1 rounded-full">
                 Best Value
               </div>
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-semibold text-warm-white">Full Audit</h3>
+                <h3 className="text-xl font-semibold text-on-surface">Full Audit</h3>
                 <div>
-                  <span className="text-warm-white font-bold">$499</span>
-                  <span className="text-warm-gray text-sm ml-1">one-time</span>
+                  <span className="text-on-surface font-bold">$499</span>
+                  <span className="text-on-surface-light text-sm ml-1">one-time</span>
                 </div>
               </div>
-              <p className="text-warm-gray text-sm mb-6 leading-relaxed">
+              <p className="text-on-surface-muted text-sm mb-6 leading-relaxed">
                 The complete picture. Everything an agency delivers for $15K+, powered by AI.
               </p>
               <ul className="space-y-3 mb-8">
@@ -280,16 +288,16 @@ export default function Home() {
                   { text: 'Revenue impact estimates per fix', bold: false },
                   { text: 'Competitor visibility analysis', bold: false },
                 ].map((item) => (
-                  <li key={item.text} className={`flex items-start gap-3 text-sm ${item.bold ? 'text-warm-white' : 'text-warm-gray'}`}>
-                    <Check className="w-4 h-4 text-gold mt-0.5 shrink-0" />
+                  <li key={item.text} className={`flex items-start gap-3 text-sm ${item.bold ? 'text-on-surface' : 'text-on-surface-muted'}`}>
+                    <Check className="w-4 h-4 text-primary mt-0.5 shrink-0" />
                     {item.text}
                   </li>
                 ))}
               </ul>
-              <a href="/checkout/professional" className="block w-full py-3.5 rounded-full font-semibold text-center bg-gold text-dark hover:bg-gold-light transition-colors">
+              <a href="/checkout/professional" className="block w-full py-3.5 rounded-full font-semibold text-center bg-gradient-cta text-on-primary hover:opacity-90 transition-opacity">
                 Get Full Audit &rarr;
               </a>
-              <p className="text-center text-xs text-warm-gray-light mt-3">
+              <p className="text-center text-xs text-on-surface-light mt-3">
                 <span className="line-through">$15,000+</span> at a traditional agency
               </p>
             </div>
@@ -297,12 +305,12 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Results We've Delivered */}
-      <section id="results" className="bg-cream py-28 md:py-36 px-6">
+      {/* Results We've Delivered — White cards on cream */}
+      <section id="results" className="bg-background py-28 md:py-36 px-6">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-20">
-            <p className="text-gold text-sm uppercase tracking-[0.2em] font-semibold mb-4">Case Studies</p>
-            <h2 className="font-serif text-3xl md:text-5xl text-dark">Results We&apos;ve Delivered</h2>
+          <div className="mb-20">
+            <p className="text-secondary text-xs uppercase tracking-[0.2em] font-semibold mb-4">Case Studies</p>
+            <h2 className="font-serif text-3xl md:text-5xl text-on-surface tracking-tight">Results We&apos;ve Delivered</h2>
           </div>
           <div className="grid md:grid-cols-3 gap-8">
             {caseStudies.map((cs, i) => (
@@ -312,46 +320,46 @@ export default function Home() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.15 }}
-                className="bg-white rounded-2xl shadow-lg border border-cream-dark p-8 hover:shadow-xl transition-shadow"
+                className="bg-surface-white rounded-[2rem] shadow-ambient p-8 hover:translate-y-[-2px] transition-transform"
               >
-                <p className="text-sm uppercase tracking-wider text-gold font-semibold mb-6">{cs.category}</p>
+                <p className="text-xs uppercase tracking-[0.15em] text-secondary font-semibold mb-6">{cs.category}</p>
                 <div className="flex items-center justify-center gap-6 mb-6">
                   <div className="text-center">
                     <ScoreCircle score={cs.before} />
-                    <p className="text-xs text-dark/40 mt-1">Before</p>
+                    <p className="text-xs text-on-surface-light mt-1">Before</p>
                   </div>
-                  <div className="text-gold text-2xl">&rarr;</div>
+                  <div className="text-primary text-2xl">&rarr;</div>
                   <div className="text-center">
                     <ScoreCircle score={cs.after} />
-                    <p className="text-xs text-dark/40 mt-1">After</p>
+                    <p className="text-xs text-on-surface-light mt-1">After</p>
                   </div>
                 </div>
-                <p className="text-dark text-lg font-bold text-center mb-1">{cs.result}</p>
-                <p className="text-dark/40 text-sm text-center">in {cs.timeframe}</p>
+                <p className="text-on-surface text-lg font-bold text-center mb-1">{cs.result}</p>
+                <p className="text-on-surface-light text-sm text-center">in {cs.timeframe}</p>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Audit Form */}
-      <section id="audit-form" className="bg-dark py-28 md:py-36 px-6">
+      {/* Audit Form — Surface-low recessed feel */}
+      <section id="audit-form" className="bg-surface-low py-28 md:py-36 px-6">
         <div className="max-w-3xl mx-auto text-center">
-          <p className="text-gold text-sm uppercase tracking-[0.2em] font-semibold mb-4">Free Analysis</p>
-          <h2 className="font-serif text-3xl md:text-5xl text-warm-white mb-4">
+          <p className="text-secondary text-xs uppercase tracking-[0.2em] font-semibold mb-4">Free Analysis</p>
+          <h2 className="font-serif text-3xl md:text-5xl text-on-surface mb-4 tracking-tight">
             Ready to See What&apos;s Possible?
           </h2>
-          <p className="text-warm-gray mb-12 max-w-xl mx-auto leading-relaxed">
+          <p className="text-on-surface-muted mb-12 max-w-xl mx-auto leading-relaxed">
             Enter your website below for a complimentary homepage analysis.
             Your full report will be ready in minutes.
           </p>
           <div className="flex justify-center mb-8">
             <UrlForm />
           </div>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 text-warm-gray text-sm">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 text-on-surface-muted text-sm">
             {['Free homepage analysis', 'Results in seconds', 'No credit card required'].map((text) => (
               <span key={text} className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-gold" />
+                <Check className="w-4 h-4 text-tertiary" />
                 {text}
               </span>
             ))}
@@ -359,13 +367,13 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Pricing */}
-      <section id="pricing" className="bg-cream py-28 md:py-36 px-6">
+      {/* Pricing — White cards with tonal layering */}
+      <section id="pricing" className="bg-background py-28 md:py-36 px-6">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-20">
-            <p className="text-gold text-sm uppercase tracking-[0.2em] font-semibold mb-4">Pricing</p>
-            <h2 className="font-serif text-3xl md:text-5xl text-dark mb-4">Investment in Your Growth</h2>
-            <p className="text-dark/50 max-w-xl mx-auto">
+            <p className="text-secondary text-xs uppercase tracking-[0.2em] font-semibold mb-4">Pricing</p>
+            <h2 className="font-serif text-3xl md:text-5xl text-on-surface mb-4 tracking-tight">Investment in Your Growth</h2>
+            <p className="text-on-surface-muted max-w-xl mx-auto">
               No hidden fees. No long-term contracts. Professional-grade SEO insights at a fraction of agency costs.
             </p>
           </div>
@@ -373,37 +381,39 @@ export default function Home() {
             {pricing.map((p) => (
               <div
                 key={p.name}
-                className={`bg-white rounded-2xl p-8 flex flex-col ${
-                  p.highlighted
-                    ? 'border-2 border-gold shadow-xl relative'
-                    : 'border border-cream-dark shadow-md'
+                className={`bg-surface-white rounded-[2rem] p-8 flex flex-col shadow-ambient ${
+                  p.highlighted ? 'ring-2 ring-primary relative' : ''
                 }`}
               >
                 {p.highlighted && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gold text-dark text-xs font-bold px-4 py-1 rounded-full">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-cta text-on-primary text-xs font-bold px-4 py-1 rounded-full">
                     Most Popular
                   </div>
                 )}
-                <h3 className="text-lg font-semibold text-dark mb-2">{p.name}</h3>
+                <h3 className="text-lg font-semibold text-on-surface mb-2">{p.name}</h3>
                 <div className="mb-2">
-                  <span className="text-4xl font-bold text-dark">{p.price}</span>
-                  <span className="text-dark/40 ml-1">{p.period}</span>
+                  <span className="text-4xl font-bold text-on-surface">{p.price}</span>
+                  <span className="text-on-surface-light ml-1">{p.period}</span>
                 </div>
                 {'commitment' in p && p.commitment && (
-                  <p className="text-xs text-gold font-medium mb-4">{p.commitment}</p>
+                  <p className="text-xs text-primary font-medium mb-4">{p.commitment}</p>
                 )}
                 {!('commitment' in p && p.commitment) && <div className="mb-4" />}
                 <ul className="space-y-3 mb-8 flex-1">
                   {p.features.map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-sm text-dark/70">
-                      <Check className="w-4 h-4 text-gold mt-0.5 shrink-0" />
+                    <li key={f} className="flex items-start gap-2 text-sm text-on-surface-muted">
+                      <Check className="w-4 h-4 text-primary mt-0.5 shrink-0" />
                       {f}
                     </li>
                   ))}
                 </ul>
                 <a
                   href={`/checkout/${p.slug}`}
-                  className="block w-full py-3.5 rounded-full font-semibold transition-colors text-center bg-gold text-dark hover:bg-gold-light"
+                  className={`block w-full py-3.5 rounded-full font-semibold transition-all text-center ${
+                    p.highlighted
+                      ? 'bg-gradient-cta text-on-primary hover:opacity-90'
+                      : 'bg-surface-high text-on-surface hover:bg-surface-highest'
+                  }`}
                 >
                   {p.cta}
                 </a>
@@ -413,23 +423,24 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Final CTA */}
-      <section className="bg-dark-warm py-28 md:py-36 px-6">
+      {/* Final CTA — Warm editorial feel */}
+      <section className="bg-surface-low py-28 md:py-36 px-6">
         <div className="max-w-3xl mx-auto text-center">
-          <h2 className="font-serif text-3xl md:text-5xl text-warm-white mb-6">
+          <h2 className="font-serif text-3xl md:text-5xl text-on-surface mb-6 tracking-tight">
             Let&apos;s Grow Your
             <br />
-            <span className="text-gold">Organic Presence</span>
+            <span className="bg-gradient-to-r from-primary to-primary-container bg-clip-text text-transparent">Organic Presence</span>
           </h2>
-          <p className="text-warm-gray mb-10 max-w-xl mx-auto leading-relaxed">
+          <p className="text-on-surface-muted mb-10 max-w-xl mx-auto leading-relaxed">
             Every day without SEO optimization is traffic you&apos;re leaving to competitors.
             Start with a free analysis today.
           </p>
           <a
             href="#audit-form"
-            className="inline-block bg-gold text-dark rounded-full px-10 py-4 text-lg font-semibold hover:bg-gold-light transition-colors"
+            className="inline-flex items-center gap-2 bg-gradient-cta text-on-primary rounded-full px-10 py-4 text-lg font-semibold hover:opacity-90 transition-opacity hover:scale-[1.02] transform"
           >
             Start Your Free Scan
+            <ArrowRight className="w-5 h-5" />
           </a>
         </div>
       </section>

@@ -51,13 +51,13 @@ export default function Header() {
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        scrolled ? 'bg-dark/90 backdrop-blur-md border-b border-warm-white/8' : 'bg-transparent'
+        scrolled ? 'glass shadow-ambient' : 'bg-transparent'
       }`}
     >
       <nav className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-        <Link href="/" className="text-xl font-bold text-warm-white">
-          What<span className="text-gold">SEO</span>
-          <span className="text-warm-gray text-sm">.ai</span>
+        <Link href="/" className="text-xl font-bold text-on-surface">
+          What<span className="text-primary">SEO</span>
+          <span className="text-on-surface-light text-sm">.ai</span>
         </Link>
 
         <div className="hidden md:flex items-center gap-8">
@@ -65,7 +65,7 @@ export default function Header() {
             <a
               key={link.href}
               href={link.href}
-              className="text-sm font-medium text-warm-gray hover:text-warm-white transition-colors"
+              className="text-sm font-medium text-on-surface-muted hover:text-primary transition-colors"
             >
               {link.label}
             </a>
@@ -74,25 +74,25 @@ export default function Header() {
 
         {user ? (
           <div className="hidden md:flex items-center gap-4">
-            <Link href="/dashboard" className="flex items-center gap-2 text-sm text-warm-gray hover:text-warm-white transition-colors">
+            <Link href="/dashboard" className="flex items-center gap-2 text-sm text-on-surface-muted hover:text-primary transition-colors">
               <User className="w-4 h-4" />
               {user.email?.split('@')[0]}
             </Link>
             <button
               onClick={handleSignOut}
-              className="text-sm text-warm-gray-light hover:text-warm-white transition-colors"
+              className="text-sm text-on-surface-light hover:text-on-surface transition-colors"
             >
               Sign Out
             </button>
           </div>
         ) : (
           <div className="hidden md:flex items-center gap-4">
-            <Link href="/auth/login" className="text-sm text-warm-gray hover:text-warm-white transition-colors">
+            <Link href="/auth/login" className="text-sm text-on-surface-muted hover:text-primary transition-colors">
               Sign In
             </Link>
             <a
               href="#audit-form"
-              className="bg-gold text-dark rounded-full px-6 py-2.5 text-sm font-semibold hover:bg-gold-light transition-colors"
+              className="bg-gradient-cta text-on-primary rounded-full px-6 py-2.5 text-sm font-semibold hover:opacity-90 transition-opacity"
             >
               Free Scan
             </a>
@@ -101,21 +101,21 @@ export default function Header() {
 
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
-          className="md:hidden text-warm-gray hover:text-warm-white"
+          className="md:hidden text-on-surface-muted hover:text-on-surface"
         >
           {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
       </nav>
 
       {mobileOpen && (
-        <div className="md:hidden bg-dark border-t border-warm-white/8 px-6 py-6">
+        <div className="md:hidden glass px-6 py-6">
           <div className="flex flex-col gap-4">
             {navLinks.map((link) => (
               <a
                 key={link.href}
                 href={link.href}
                 onClick={() => setMobileOpen(false)}
-                className="text-warm-gray hover:text-warm-white transition-colors py-2"
+                className="text-on-surface-muted hover:text-primary transition-colors py-2"
               >
                 {link.label}
               </a>
@@ -123,16 +123,16 @@ export default function Header() {
             {user ? (
               <button
                 onClick={() => { handleSignOut(); setMobileOpen(false); }}
-                className="text-warm-gray hover:text-warm-white text-left py-2"
+                className="text-on-surface-muted hover:text-on-surface text-left py-2"
               >
                 Sign Out
               </button>
             ) : (
               <>
                 <Link href="/auth/login" onClick={() => setMobileOpen(false)}
-                  className="text-warm-gray hover:text-warm-white py-2">Sign In</Link>
+                  className="text-on-surface-muted hover:text-primary py-2">Sign In</Link>
                 <a href="#audit-form" onClick={() => setMobileOpen(false)}
-                  className="bg-gold text-dark rounded-full px-6 py-3 text-center font-semibold mt-2">
+                  className="bg-gradient-cta text-on-primary rounded-full px-6 py-3 text-center font-semibold mt-2">
                   Free Scan
                 </a>
               </>

@@ -39,7 +39,6 @@ function AnalyzeInner() {
         return;
       }
 
-      // API now returns inline results
       if (data.status === 'complete') {
         router.push(`/results/${data.id}`);
         return;
@@ -50,7 +49,6 @@ function AnalyzeInner() {
         return;
       }
 
-      // Fallback: poll if somehow still pending
       pollStatus(data.id);
     } catch {
       setError('Failed to connect. Please check your URL and try again.');
@@ -59,7 +57,6 @@ function AnalyzeInner() {
 
   const pollStatus = useCallback((id: string) => {
     const interval = setInterval(async () => {
-      // Timeout check
       if (Date.now() - startTime.current > TIMEOUT_MS) {
         clearInterval(interval);
         setError('Analysis is taking longer than expected. This can happen with very large sites or sites that block crawlers. Please try again.');
@@ -80,7 +77,6 @@ function AnalyzeInner() {
       } catch { /* retry on next tick */ }
     }, 3000);
 
-    // Cleanup on unmount
     return () => clearInterval(interval);
   }, [router]);
 
@@ -88,13 +84,11 @@ function AnalyzeInner() {
     if (url && email) startAnalysis();
   }, [url, email, startAnalysis]);
 
-  // Rotate messages
   useEffect(() => {
     const interval = setInterval(() => setMsgIndex((i) => (i + 1) % MESSAGES.length), 2500);
     return () => clearInterval(interval);
   }, []);
 
-  // Global timeout fallback
   useEffect(() => {
     const timeout = setTimeout(() => {
       setError('Analysis timed out. This can happen with sites that block automated crawlers or have very slow servers. Please try again or try a different URL.');
@@ -104,16 +98,16 @@ function AnalyzeInner() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-6">
+      <div className="min-h-screen flex items-center justify-center px-6 bg-background">
         <div className="text-center max-w-md">
-          <div className="w-16 h-16 rounded-full bg-[#e05555]/10 flex items-center justify-center mx-auto mb-6">
-            <span className="text-[#e05555] text-2xl">!</span>
+          <div className="w-16 h-16 rounded-full bg-error-light flex items-center justify-center mx-auto mb-6">
+            <span className="text-error text-2xl font-bold">!</span>
           </div>
-          <h2 className="font-serif text-2xl text-warm-white mb-3">Something went wrong</h2>
-          <p className="text-warm-gray text-sm mb-8 leading-relaxed">{error}</p>
+          <h2 className="font-serif text-2xl text-on-surface mb-3">Something went wrong</h2>
+          <p className="text-on-surface-muted text-sm mb-8 leading-relaxed">{error}</p>
           <button
             onClick={() => router.push('/')}
-            className="px-8 py-3.5 bg-gold text-dark rounded-full font-semibold hover:bg-gold-light transition-colors"
+            className="px-8 py-3.5 bg-gradient-cta text-on-primary rounded-full font-semibold hover:opacity-90 transition-opacity"
           >
             Try Again
           </button>
@@ -123,18 +117,18 @@ function AnalyzeInner() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6">
+    <div className="min-h-screen flex items-center justify-center px-6 bg-background">
       <div className="text-center">
         <div className="mb-8">
-          <svg className="animate-spin h-12 w-12 text-gold mx-auto" viewBox="0 0 24 24">
+          <svg className="animate-spin h-12 w-12 text-primary mx-auto" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
           </svg>
         </div>
-        <h1 className="font-serif text-3xl text-warm-white mb-3">Analyzing your site</h1>
-        <p className="text-warm-gray mb-8 text-sm max-w-md">{url}</p>
-        <p className="text-gold font-medium animate-pulse">{MESSAGES[msgIndex]}</p>
-        <p className="text-warm-gray-light text-xs mt-6">This typically takes 30&ndash;60 seconds</p>
+        <h1 className="font-serif text-3xl text-on-surface mb-3 tracking-tight">Analyzing your site</h1>
+        <p className="text-on-surface-muted mb-8 text-sm max-w-md">{url}</p>
+        <p className="text-primary font-medium animate-pulse">{MESSAGES[msgIndex]}</p>
+        <p className="text-on-surface-light text-xs mt-6">This typically takes 30&ndash;60 seconds</p>
       </div>
     </div>
   );
@@ -142,7 +136,7 @@ function AnalyzeInner() {
 
 export default function AnalyzePage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><p className="text-warm-gray">Loading...</p></div>}>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-background"><p className="text-on-surface-muted">Loading...</p></div>}>
       <AnalyzeInner />
     </Suspense>
   );

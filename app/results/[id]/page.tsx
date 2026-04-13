@@ -24,19 +24,19 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
   // Handle non-complete audits
   if (audit.status === 'failed') {
     return (
-      <div className="min-h-screen flex items-center justify-center px-6 pt-20">
+      <div className="min-h-screen flex items-center justify-center px-6 pt-20 bg-background">
         <div className="text-center max-w-md">
-          <div className="w-16 h-16 rounded-full bg-[#e05555]/10 flex items-center justify-center mx-auto mb-6">
-            <span className="text-[#e05555] text-2xl">!</span>
+          <div className="w-16 h-16 rounded-full bg-error-light flex items-center justify-center mx-auto mb-6">
+            <span className="text-error text-2xl font-bold">!</span>
           </div>
-          <h2 className="font-serif text-2xl text-warm-white mb-3">Audit Failed</h2>
-          <p className="text-warm-gray text-sm mb-2">{audit.url}</p>
-          <p className="text-warm-gray-light text-xs mb-8">{audit.error || 'An unexpected error occurred during the audit.'}</p>
+          <h2 className="font-serif text-2xl text-on-surface mb-3">Audit Failed</h2>
+          <p className="text-on-surface-muted text-sm mb-2">{audit.url}</p>
+          <p className="text-on-surface-light text-xs mb-8">{audit.error || 'An unexpected error occurred during the audit.'}</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/dashboard" className="px-8 py-3.5 bg-gold text-dark rounded-full font-semibold hover:bg-gold-light transition-colors">
+            <Link href="/dashboard" className="px-8 py-3.5 bg-gradient-cta text-on-primary rounded-full font-semibold hover:opacity-90 transition-opacity">
               Back to Dashboard
             </Link>
-            <Link href="/" className="px-8 py-3.5 bg-warm-white/5 text-warm-gray rounded-full font-semibold hover:bg-warm-white/10 transition-colors">
+            <Link href="/" className="px-8 py-3.5 bg-surface-high text-on-surface-muted rounded-full font-semibold hover:bg-surface-highest transition-colors">
               Run Free Scan
             </Link>
           </div>
@@ -46,7 +46,6 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
   }
 
   if (audit.status === 'running') {
-    // Full audits go to progress page, free scans go to analyze page
     if (audit.audit_type === 'full') {
       redirect(`/audit-progress/${id}`);
     } else {
@@ -61,7 +60,7 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
   // Full audits get the rich tabbed interface
   if (audit.audit_type === 'full') {
     return (
-      <div className="min-h-screen pt-28 pb-16 px-6">
+      <div className="min-h-screen pt-28 pb-16 px-6 bg-background">
         <div className="max-w-5xl mx-auto">
           <FullAuditResults audit={audit} results={results} />
         </div>
@@ -87,14 +86,14 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
   const wins = allChecks.filter((c) => c.status === 'pass').slice(0, 5);
 
   return (
-    <div className="min-h-screen pt-28 pb-16 px-6">
+    <div className="min-h-screen pt-28 pb-16 px-6 bg-background">
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="text-center mb-14">
-          <p className="text-gold text-sm uppercase tracking-[0.2em] font-semibold mb-3">Audit Complete</p>
-          <h1 className="font-serif text-3xl md:text-4xl text-warm-white mb-3">Your SEO Audit</h1>
-          <p className="text-warm-gray">{audit.url}</p>
-          <p className="text-xs text-warm-gray-light mt-2">
+          <p className="text-secondary text-xs uppercase tracking-[0.2em] font-semibold mb-3">Audit Complete</p>
+          <h1 className="font-serif text-3xl md:text-4xl text-on-surface mb-3 tracking-tight">Your SEO Audit</h1>
+          <p className="text-on-surface-muted">{audit.url}</p>
+          <p className="text-xs text-on-surface-light mt-2">
             Analyzed {new Date(audit.createdAt).toLocaleDateString()} in {Math.round((results.duration || 0) / 1000)}s
           </p>
         </div>
@@ -105,9 +104,9 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
         </div>
 
         {(audit.score || 0) < 50 && (
-          <div className="bg-warm-white/5 rounded-xl px-5 py-3 mb-12 text-center max-w-xl mx-auto">
-            <p className="text-xs text-warm-gray">
-              <span className="text-gold font-medium">Low score?</span> This is normal for minimal homepages or heavily app-based sites. Large brands often rely on domain authority rather than on-page SEO. The score reflects best practices that matter most for businesses competing for organic rankings.
+          <div className="bg-surface-low rounded-2xl px-5 py-3 mb-12 text-center max-w-xl mx-auto">
+            <p className="text-xs text-on-surface-muted">
+              <span className="text-primary font-medium">Low score?</span> This is normal for minimal homepages or heavily app-based sites. Large brands often rely on domain authority rather than on-page SEO. The score reflects best practices that matter most for businesses competing for organic rankings.
             </p>
           </div>
         )}
@@ -118,15 +117,15 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
 
         {/* Issues */}
         {issues.length > 0 && (
-          <div className="bg-dark-card rounded-2xl border border-warm-white/8 p-6 mb-6">
-            <h2 className="text-lg font-semibold mb-4 text-[#e05555]">Top Issues</h2>
+          <div className="bg-surface-white rounded-[2rem] shadow-ambient p-8 mb-6">
+            <h2 className="font-serif text-xl mb-4 text-error">Top Issues</h2>
             <ul className="space-y-3">
               {issues.map((c, i) => (
                 <li key={i} className="flex items-start gap-3">
-                  <span className="w-2 h-2 rounded-full bg-[#e05555] mt-2 shrink-0" />
+                  <span className="w-2 h-2 rounded-full bg-error mt-2 shrink-0" />
                   <div>
-                    <div className="text-sm font-medium text-warm-white">{c.name}</div>
-                    <div className="text-xs text-warm-gray">{c.message}</div>
+                    <div className="text-sm font-medium text-on-surface">{c.name}</div>
+                    <div className="text-xs text-on-surface-muted">{c.message}</div>
                   </div>
                 </li>
               ))}
@@ -136,15 +135,15 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
 
         {/* Wins */}
         {wins.length > 0 && (
-          <div className="bg-dark-card rounded-2xl border border-warm-white/8 p-6 mb-12">
-            <h2 className="text-lg font-semibold mb-4 text-[#4aab6a]">What&apos;s Working</h2>
+          <div className="bg-surface-white rounded-[2rem] shadow-ambient p-8 mb-12">
+            <h2 className="font-serif text-xl mb-4 text-tertiary">What&apos;s Working</h2>
             <ul className="space-y-3">
               {wins.map((c, i) => (
                 <li key={i} className="flex items-start gap-3">
-                  <span className="w-2 h-2 rounded-full bg-[#4aab6a] mt-2 shrink-0" />
+                  <span className="w-2 h-2 rounded-full bg-tertiary mt-2 shrink-0" />
                   <div>
-                    <div className="text-sm font-medium text-warm-white">{c.name}</div>
-                    <div className="text-xs text-warm-gray">{c.message}</div>
+                    <div className="text-sm font-medium text-on-surface">{c.name}</div>
+                    <div className="text-xs text-on-surface-muted">{c.message}</div>
                   </div>
                 </li>
               ))}
@@ -152,35 +151,35 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
           </div>
         )}
 
-        {/* Upsell — only show for free scans, not paid full audits */}
-        {(!audit.audit_type || audit.audit_type === 'free') && <div className="relative bg-gradient-to-br from-dark-card to-dark-warm rounded-2xl border border-gold/20 p-8 md:p-10 mb-12 overflow-hidden">
-          <div className="absolute -top-20 -right-20 w-60 h-60 bg-gold/5 rounded-full blur-3xl" />
-          <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-gold/5 rounded-full blur-3xl" />
+        {/* Upsell — only show for free scans */}
+        {(!audit.audit_type || audit.audit_type === 'free') && <div className="relative bg-surface-white rounded-[2rem] shadow-ambient p-8 md:p-10 mb-12 overflow-hidden">
+          <div className="absolute -top-20 -right-20 w-60 h-60 bg-primary-fixed/20 rounded-full blur-3xl" />
+          <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-tertiary-fixed/15 rounded-full blur-3xl" />
 
           <div className="relative">
-            <p className="text-gold text-sm uppercase tracking-[0.2em] font-semibold mb-3">Go Deeper</p>
-            <h2 className="font-serif text-2xl md:text-3xl text-warm-white mb-4">
-              This scan checked <span className="text-gold">one page</span>.
+            <p className="text-secondary text-xs uppercase tracking-[0.2em] font-semibold mb-3">Go Deeper</p>
+            <h2 className="font-serif text-2xl md:text-3xl text-on-surface mb-4 tracking-tight">
+              This scan checked <span className="text-primary">one page</span>.
               <br />
               Your full site tells a different story.
             </h2>
-            <p className="text-warm-gray mb-8 max-w-2xl leading-relaxed">
+            <p className="text-on-surface-muted mb-8 max-w-2xl leading-relaxed">
               The free audit analyzes your homepage against 47 criteria. But the issues costing you the most traffic are often hiding deeper &mdash; in your location pages, blog posts, product pages, and site architecture.
             </p>
 
             <div className="grid md:grid-cols-2 gap-8 mb-8">
               <div>
-                <h3 className="text-xs font-semibold text-gold mb-4 uppercase tracking-wider">Free Audit</h3>
+                <h3 className="text-xs font-semibold text-secondary mb-4 uppercase tracking-[0.15em]">Free Audit</h3>
                 <ul className="space-y-2">
                   {['Homepage title & meta tags', 'Basic schema detection', 'Single-page performance', 'Surface-level content check', 'Basic image audit'].map((item) => (
-                    <li key={item} className="flex items-center gap-2 text-sm text-warm-gray-light">
-                      <span className="text-warm-gray-light">{'\u2713'}</span> {item}
+                    <li key={item} className="flex items-center gap-2 text-sm text-on-surface-light">
+                      <span className="text-on-surface-light">{'\u2713'}</span> {item}
                     </li>
                   ))}
                 </ul>
               </div>
               <div>
-                <h3 className="text-xs font-semibold text-gold mb-4 uppercase tracking-wider">Full Audit</h3>
+                <h3 className="text-xs font-semibold text-primary mb-4 uppercase tracking-[0.15em]">Full Audit</h3>
                 <ul className="space-y-2">
                   {[
                     'Up to 500 pages crawled & analyzed',
@@ -194,49 +193,49 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
                     'Prioritized dev tickets (Jira-ready)',
                     'Professional PDF report',
                   ].map((item) => (
-                    <li key={item} className="flex items-center gap-2 text-sm text-warm-white">
-                      <span className="text-gold">{'\u2713'}</span> {item}
+                    <li key={item} className="flex items-center gap-2 text-sm text-on-surface">
+                      <span className="text-primary">{'\u2713'}</span> {item}
                     </li>
                   ))}
                 </ul>
               </div>
             </div>
 
-            <div className="bg-dark/50 rounded-xl p-5 mb-8 border border-warm-white/5">
-              <p className="text-sm text-warm-gray leading-relaxed">
-                <span className="text-gold font-semibold">Real example:</span> A recent full audit on a 200+ location website uncovered that broken title tags were costing <span className="text-warm-white font-semibold">38,000&ndash;69,000 clicks per quarter</span>, and zero schema markup was hiding them from rich results. Total impact: <span className="text-warm-white font-semibold">+$150K&ndash;$250K/quarter</span> in organic traffic value.
+            <div className="bg-surface-low rounded-2xl p-5 mb-8">
+              <p className="text-sm text-on-surface-muted leading-relaxed">
+                <span className="text-primary font-semibold">Real example:</span> A recent full audit on a 200+ location website uncovered that broken title tags were costing <span className="text-on-surface font-semibold">38,000&ndash;69,000 clicks per quarter</span>, and zero schema markup was hiding them from rich results. Total impact: <span className="text-on-surface font-semibold">+$150K&ndash;$250K/quarter</span> in organic traffic value.
               </p>
             </div>
 
             <div className="grid sm:grid-cols-3 gap-4 mb-6">
-              <a href="/checkout/professional" className="bg-dark/40 rounded-xl p-5 border border-warm-white/8 text-center hover:border-gold/30 transition-colors block">
-                <h4 className="text-warm-white font-semibold mb-1">Professional Audit</h4>
-                <div className="text-2xl font-bold text-gold mb-1">$499</div>
-                <p className="text-xs text-warm-gray">one-time</p>
-                <p className="text-xs text-warm-gray-light mt-2">Full audit + PDF + action plan</p>
+              <a href="/checkout/professional" className="bg-surface-low rounded-2xl p-5 text-center hover:bg-surface-high transition-colors block">
+                <h4 className="text-on-surface font-semibold mb-1">Professional Audit</h4>
+                <div className="text-2xl font-bold text-primary mb-1">$499</div>
+                <p className="text-xs text-on-surface-muted">one-time</p>
+                <p className="text-xs text-on-surface-light mt-2">Full audit + PDF + action plan</p>
               </a>
-              <a href="/checkout/monthly" className="bg-dark/40 rounded-xl p-5 border-2 border-gold text-center relative hover:bg-dark/60 transition-colors block">
-                <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-gold text-dark text-[10px] font-bold px-2.5 py-0.5 rounded-full">Best Value</div>
-                <h4 className="text-warm-white font-semibold mb-1">Monthly Monitor</h4>
-                <div className="text-2xl font-bold text-gold mb-1">$299<span className="text-sm text-warm-gray">/mo</span></div>
-                <p className="text-xs text-warm-gray">12-month agreement</p>
-                <p className="text-xs text-warm-gray-light mt-2">Monthly reports + Slack alerts</p>
+              <a href="/checkout/monthly" className="bg-surface-low rounded-2xl p-5 ring-2 ring-primary text-center relative hover:bg-surface-high transition-colors block">
+                <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-gradient-cta text-on-primary text-[10px] font-bold px-2.5 py-0.5 rounded-full">Best Value</div>
+                <h4 className="text-on-surface font-semibold mb-1">Monthly Monitor</h4>
+                <div className="text-2xl font-bold text-primary mb-1">$299<span className="text-sm text-on-surface-muted">/mo</span></div>
+                <p className="text-xs text-on-surface-muted">12-month agreement</p>
+                <p className="text-xs text-on-surface-light mt-2">Monthly reports + Slack alerts</p>
               </a>
-              <a href="/checkout/bimonthly" className="bg-dark/40 rounded-xl p-5 border border-warm-white/8 text-center hover:border-gold/30 transition-colors block">
-                <h4 className="text-warm-white font-semibold mb-1">Bi-Monthly</h4>
-                <div className="text-2xl font-bold text-gold mb-1">$399<span className="text-sm text-warm-gray">/2mo</span></div>
-                <p className="text-xs text-warm-gray">12-month agreement</p>
-                <p className="text-xs text-warm-gray-light mt-2">Report every 2 months</p>
+              <a href="/checkout/bimonthly" className="bg-surface-low rounded-2xl p-5 text-center hover:bg-surface-high transition-colors block">
+                <h4 className="text-on-surface font-semibold mb-1">Bi-Monthly</h4>
+                <div className="text-2xl font-bold text-primary mb-1">$399<span className="text-sm text-on-surface-muted">/2mo</span></div>
+                <p className="text-xs text-on-surface-muted">12-month agreement</p>
+                <p className="text-xs text-on-surface-light mt-2">Report every 2 months</p>
               </a>
             </div>
 
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-              <p className="text-xs text-warm-gray-light">
+              <p className="text-xs text-on-surface-light">
                 <span className="line-through">$15,000+</span> at a traditional agency &mdash; 30-day money-back guarantee
               </p>
               <a
                 href="/checkout/professional"
-                className="bg-gold text-dark px-8 py-3.5 rounded-full font-semibold hover:bg-gold-light transition-colors text-center shrink-0"
+                className="bg-gradient-cta text-on-primary px-8 py-3.5 rounded-full font-semibold hover:opacity-90 transition-opacity text-center shrink-0"
               >
                 Get Started &rarr;
               </a>
@@ -246,11 +245,11 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
 
         <div className="flex justify-center gap-4">
           {audit.audit_type === 'full' && (
-            <Link href="/dashboard" className="px-8 py-3.5 bg-gold text-dark rounded-full font-semibold text-center hover:bg-gold-light transition-colors">
+            <Link href="/dashboard" className="px-8 py-3.5 bg-gradient-cta text-on-primary rounded-full font-semibold text-center hover:opacity-90 transition-opacity">
               Back to Dashboard
             </Link>
           )}
-          <Link href="/" className="px-8 py-3.5 bg-warm-white/5 text-warm-gray rounded-full font-semibold text-center hover:bg-warm-white/10 transition-colors">
+          <Link href="/" className="px-8 py-3.5 bg-surface-high text-on-surface-muted rounded-full font-semibold text-center hover:bg-surface-highest transition-colors">
             {audit.audit_type === 'full' ? 'Run Another Scan' : 'Run Another Free Audit'}
           </Link>
         </div>

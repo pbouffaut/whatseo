@@ -59,7 +59,7 @@ export default function DashboardPage() {
     const price = plan.addonDisplayPrice ?? '$449';
     return (
       <button onClick={onClick} disabled={step === 'purchasing'}
-        className="bg-warm-white/5 text-warm-white px-6 py-2.5 rounded-full font-semibold hover:bg-warm-white/10 transition-colors border border-warm-white/10 text-sm">
+        className="bg-surface-high text-on-surface px-6 py-2.5 rounded-full font-semibold hover:bg-surface-highest transition-colors text-sm">
         Buy Extra Audit &mdash; {price} (10% subscriber discount)
       </button>
     );
@@ -115,7 +115,6 @@ export default function DashboardPage() {
     setError('');
 
     try {
-      // Call the full audit API — it handles credit consumption, crawling, analysis
       const res = await fetch('/api/full-audit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -131,7 +130,6 @@ export default function DashboardPage() {
         throw new Error(data.error || 'Failed to start audit');
       }
 
-      // Redirect to progress page
       router.push(`/audit-progress/${data.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Audit failed');
@@ -147,10 +145,8 @@ export default function DashboardPage() {
       const plan = PLANS[subscription.plan as keyof typeof PLANS];
       const addonPrice = plan?.addonPrice || 499_00;
 
-      // Simulate payment
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
-      // Add credit
       await supabase.from('audit_credits').insert({
         user_id: user.id,
         credit_type: 'addon',
@@ -159,7 +155,7 @@ export default function DashboardPage() {
       });
 
       setConfirmStep('idle');
-      loadData(); // Refresh
+      loadData();
     } catch {
       setError('Failed to purchase addon. Please try again.');
       setConfirmStep('idle');
@@ -180,8 +176,8 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <svg className="animate-spin h-8 w-8 text-gold" viewBox="0 0 24 24">
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <svg className="animate-spin h-8 w-8 text-primary" viewBox="0 0 24 24">
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
         </svg>
@@ -190,47 +186,47 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen pt-28 pb-16 px-6">
+    <div className="min-h-screen pt-28 pb-16 px-6 bg-background">
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-12">
           <div>
-            <p className="text-gold text-sm uppercase tracking-[0.2em] font-semibold mb-2">Dashboard</p>
-            <h1 className="font-serif text-3xl text-warm-white">
+            <p className="text-secondary text-xs uppercase tracking-[0.2em] font-semibold mb-2">Dashboard</p>
+            <h1 className="font-serif text-3xl text-on-surface tracking-tight">
               Welcome back{user?.user_metadata?.full_name ? `, ${user.user_metadata.full_name}` : ''}
             </h1>
           </div>
           <button onClick={handleSignOut}
-            className="px-5 py-2 rounded-full text-sm text-warm-gray border border-warm-white/10 hover:text-warm-white hover:border-warm-white/20 transition-colors">
+            className="px-5 py-2 rounded-full text-sm text-on-surface-muted bg-surface-high hover:bg-surface-highest transition-colors">
             Sign Out
           </button>
         </div>
 
         {/* Credits & Run Audit */}
-        <div className="bg-dark-card rounded-2xl border border-warm-white/8 p-6 mb-6">
+        <div className="bg-surface-white rounded-[2rem] shadow-ambient p-8 mb-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-warm-white">Audit Credits</h2>
+            <h2 className="font-serif text-xl text-on-surface">Audit Credits</h2>
             <div className="flex items-center gap-2">
-              <Zap className="w-4 h-4 text-gold" />
-              <span className="text-gold font-bold text-lg">{availableCredits.length}</span>
-              <span className="text-warm-gray text-sm">available</span>
+              <Zap className="w-4 h-4 text-primary" />
+              <span className="text-primary font-bold text-lg">{availableCredits.length}</span>
+              <span className="text-on-surface-muted text-sm">available</span>
             </div>
           </div>
 
           {/* Running audit banner */}
           {runningAudit && (
-            <div className="bg-gold/10 border border-gold/20 rounded-xl p-4 mb-4 flex items-center justify-between">
+            <div className="bg-primary-fixed/30 rounded-2xl p-4 mb-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <svg className="animate-spin h-5 w-5 text-gold" viewBox="0 0 24 24">
+                <svg className="animate-spin h-5 w-5 text-primary" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
                 <div>
-                  <p className="text-warm-white text-sm font-medium">Audit in progress</p>
-                  <p className="text-warm-gray text-xs">{String(runningAudit.url)}</p>
+                  <p className="text-on-surface text-sm font-medium">Audit in progress</p>
+                  <p className="text-on-surface-muted text-xs">{String(runningAudit.url)}</p>
                 </div>
               </div>
               <Link href={`/audit-progress/${runningAudit.id}`}
-                className="bg-gold text-dark px-5 py-2 rounded-full text-sm font-semibold hover:bg-gold-light transition-colors">
+                className="bg-gradient-cta text-on-primary px-5 py-2 rounded-full text-sm font-semibold hover:opacity-90 transition-opacity">
                 View Progress
               </Link>
             </div>
@@ -238,25 +234,24 @@ export default function DashboardPage() {
 
           {onboarding ? (
             <>
-              {/* Confirmation Flow — hide if audit is running */}
               {!runningAudit && confirmStep === 'idle' && availableCredits.length > 0 && (
                 <button onClick={() => setConfirmStep('confirming')}
-                  className="bg-gold text-dark px-8 py-3 rounded-full font-semibold hover:bg-gold-light transition-colors flex items-center gap-2">
+                  className="bg-gradient-cta text-on-primary px-8 py-3 rounded-full font-semibold hover:opacity-90 hover:scale-[1.02] transition-all flex items-center gap-2">
                   <Zap className="w-4 h-4" /> Run Audit Now
                 </button>
               )}
 
               {!runningAudit && confirmStep === 'idle' && availableCredits.length === 0 && (
                 <div>
-                  <p className="text-warm-gray text-sm mb-4">No credits remaining. Purchase more to run an audit.</p>
+                  <p className="text-on-surface-muted text-sm mb-4">No credits remaining. Purchase more to run an audit.</p>
                   <div className="flex flex-wrap gap-3">
                     <Link href="/checkout/professional"
-                      className="bg-gold text-dark px-6 py-2.5 rounded-full font-semibold hover:bg-gold-light transition-colors text-sm">
+                      className="bg-gradient-cta text-on-primary px-6 py-2.5 rounded-full font-semibold hover:opacity-90 transition-opacity text-sm">
                       Buy One-Time Audit — $499
                     </Link>
                     {!subscription && (
                       <Link href="/#pricing"
-                        className="bg-warm-white/5 text-warm-white px-6 py-2.5 rounded-full font-semibold hover:bg-warm-white/10 transition-colors border border-warm-white/10 text-sm">
+                        className="bg-surface-high text-on-surface px-6 py-2.5 rounded-full font-semibold hover:bg-surface-highest transition-colors text-sm">
                         View Subscription Plans
                       </Link>
                     )}
@@ -266,71 +261,71 @@ export default function DashboardPage() {
               )}
 
               {confirmStep === 'confirming' && (
-                <div className="bg-dark/50 rounded-xl p-6 border border-gold/20">
+                <div className="bg-surface-low rounded-2xl p-6">
                   <div className="flex items-start gap-3 mb-4">
-                    <AlertCircle className="w-5 h-5 text-gold shrink-0 mt-0.5" />
+                    <AlertCircle className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                     <div>
-                      <h3 className="text-warm-white font-semibold mb-1">Confirm Audit</h3>
-                      <p className="text-warm-gray text-sm leading-relaxed">
-                        This will use <span className="text-gold font-medium">1 audit credit</span> and start a full analysis of:
+                      <h3 className="text-on-surface font-semibold mb-1">Confirm Audit</h3>
+                      <p className="text-on-surface-muted text-sm leading-relaxed">
+                        This will use <span className="text-primary font-medium">1 audit credit</span> and start a full analysis of:
                       </p>
                     </div>
                   </div>
 
-                  <div className="bg-warm-white/5 rounded-lg p-4 mb-4 space-y-2">
+                  <div className="bg-surface-white rounded-xl p-4 mb-4 space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-warm-gray">Website</span>
-                      <span className="text-warm-white font-medium">{onboarding.website_url}</span>
+                      <span className="text-on-surface-muted">Website</span>
+                      <span className="text-on-surface font-medium">{onboarding.website_url}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-warm-gray">Search Console</span>
-                      <span className={onboarding.gsc_connected ? 'text-[#4aab6a]' : 'text-warm-gray-light'}>
+                      <span className="text-on-surface-muted">Search Console</span>
+                      <span className={onboarding.gsc_connected ? 'text-tertiary' : 'text-on-surface-light'}>
                         {onboarding.gsc_connected ? 'Connected' : 'Not connected'}
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-warm-gray">GA4 Property</span>
-                      <span className={onboarding.ga4_property_id ? 'text-warm-white' : 'text-warm-gray-light'}>
+                      <span className="text-on-surface-muted">GA4 Property</span>
+                      <span className={onboarding.ga4_property_id ? 'text-on-surface' : 'text-on-surface-light'}>
                         {onboarding.ga4_property_id || 'Not configured'}
                       </span>
                     </div>
                     {onboarding.competitor_urls?.length > 0 && (
                       <div className="flex justify-between text-sm">
-                        <span className="text-warm-gray">Competitors</span>
-                        <span className="text-warm-white">{onboarding.competitor_urls.length} tracked</span>
+                        <span className="text-on-surface-muted">Competitors</span>
+                        <span className="text-on-surface">{onboarding.competitor_urls.length} tracked</span>
                       </div>
                     )}
                     <div className="flex justify-between text-sm">
-                      <span className="text-warm-gray">Credits remaining after</span>
-                      <span className="text-gold font-medium">{availableCredits.length - 1}</span>
+                      <span className="text-on-surface-muted">Credits remaining after</span>
+                      <span className="text-primary font-medium">{availableCredits.length - 1}</span>
                     </div>
                   </div>
 
                   {/* Warnings for missing integrations */}
                   {(!onboarding.gsc_connected || !onboarding.ga4_property_id || (onboarding.gsc_connected && !onboarding.google_access_token)) && (
-                    <div className="bg-[#d4952b]/10 border border-[#d4952b]/20 rounded-lg p-4 mb-4">
+                    <div className="bg-primary-fixed/30 rounded-xl p-4 mb-4">
                       <div className="flex items-start gap-2 mb-2">
-                        <AlertCircle className="w-4 h-4 text-[#d4952b] shrink-0 mt-0.5" />
-                        <p className="text-[#d4952b] text-sm font-medium">Missing data sources</p>
+                        <AlertCircle className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                        <p className="text-primary text-sm font-medium">Missing data sources</p>
                       </div>
                       <div className="space-y-1 ml-6">
                         {!onboarding.gsc_connected && (
-                          <p className="text-warm-gray text-xs">
+                          <p className="text-on-surface-muted text-xs">
                             <strong>Google Search Console</strong> not connected — audit will not include real search queries, clicks, impressions, or ranking data.
                           </p>
                         )}
                         {onboarding.gsc_connected && !onboarding.google_access_token && (
-                          <p className="text-warm-gray text-xs">
+                          <p className="text-on-surface-muted text-xs">
                             <strong>Google tokens expired</strong> — please reconnect Google in Settings to refresh your access tokens.
                           </p>
                         )}
                         {!onboarding.ga4_property_id && (
-                          <p className="text-warm-gray text-xs">
+                          <p className="text-on-surface-muted text-xs">
                             <strong>GA4 Property ID</strong> not configured — audit will not include organic traffic, engagement rates, or conversion data.
                           </p>
                         )}
                       </div>
-                      <Link href="/onboarding" className="text-[#d4952b] text-xs hover:text-[#e5a63b] mt-2 inline-block">
+                      <Link href="/onboarding" className="text-primary text-xs hover:text-primary-container mt-2 inline-block">
                         Connect now in Settings →
                       </Link>
                     </div>
@@ -338,47 +333,47 @@ export default function DashboardPage() {
 
                   <div className="flex gap-3">
                     <button onClick={handleRunAudit}
-                      className="bg-gold text-dark px-6 py-3 rounded-full font-semibold hover:bg-gold-light transition-colors flex items-center gap-2">
+                      className="bg-gradient-cta text-on-primary px-6 py-3 rounded-full font-semibold hover:opacity-90 transition-opacity flex items-center gap-2">
                       <Check className="w-4 h-4" /> {(!onboarding.gsc_connected || !onboarding.ga4_property_id) ? 'Run Anyway' : 'Confirm & Run Audit'}
                     </button>
                     <button onClick={() => setConfirmStep('idle')}
-                      className="px-6 py-3 rounded-full text-warm-gray hover:text-warm-white transition-colors">
+                      className="px-6 py-3 rounded-full text-on-surface-muted hover:text-on-surface transition-colors">
                       Cancel
                     </button>
                   </div>
 
-                  <p className="text-xs text-warm-gray-light mt-3">
-                    <Link href="/onboarding" className="text-gold hover:text-gold-light">Edit configuration</Link> before running if needed.
+                  <p className="text-xs text-on-surface-light mt-3">
+                    <Link href="/onboarding" className="text-primary hover:text-primary-container">Edit configuration</Link> before running if needed.
                   </p>
                 </div>
               )}
 
               {confirmStep === 'running' && (
                 <div className="flex items-center gap-3 py-4">
-                  <svg className="animate-spin h-5 w-5 text-gold" viewBox="0 0 24 24">
+                  <svg className="animate-spin h-5 w-5 text-primary" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
-                  <span className="text-gold font-medium">Running audit on {onboarding.website_url}...</span>
+                  <span className="text-primary font-medium">Running audit on {onboarding.website_url}...</span>
                 </div>
               )}
 
               {confirmStep === 'purchasing' && (
                 <div className="flex items-center gap-3 py-4">
-                  <svg className="animate-spin h-5 w-5 text-gold" viewBox="0 0 24 24">
+                  <svg className="animate-spin h-5 w-5 text-primary" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
-                  <span className="text-gold font-medium">Processing additional credit purchase...</span>
+                  <span className="text-primary font-medium">Processing additional credit purchase...</span>
                 </div>
               )}
 
-              {error && <p className="text-[#e05555] text-sm mt-3">{error}</p>}
+              {error && <p className="text-error text-sm mt-3">{error}</p>}
             </>
           ) : (
             <div>
-              <p className="text-warm-gray text-sm mb-4">Configure your audit settings before running your first analysis.</p>
-              <Link href="/onboarding" className="bg-gold text-dark px-6 py-2.5 rounded-full font-semibold hover:bg-gold-light transition-colors inline-block">
+              <p className="text-on-surface-muted text-sm mb-4">Configure your audit settings before running your first analysis.</p>
+              <Link href="/onboarding" className="bg-gradient-cta text-on-primary px-6 py-2.5 rounded-full font-semibold hover:opacity-90 transition-opacity inline-block">
                 Set Up Now
               </Link>
             </div>
@@ -386,83 +381,83 @@ export default function DashboardPage() {
         </div>
 
         {/* Subscription */}
-        <div className="bg-dark-card rounded-2xl border border-warm-white/8 p-6 mb-6">
-          <h2 className="text-lg font-semibold text-warm-white mb-4">Subscription</h2>
+        <div className="bg-surface-white rounded-[2rem] shadow-ambient p-8 mb-6">
+          <h2 className="font-serif text-xl text-on-surface mb-4">Subscription</h2>
           {subscription ? (
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-warm-white font-medium">{planLabels[subscription.plan] || subscription.plan}</p>
-                <p className="text-warm-gray text-sm mt-1">
+                <p className="text-on-surface font-medium">{planLabels[subscription.plan] || subscription.plan}</p>
+                <p className="text-on-surface-muted text-sm mt-1">
                   {'Status: '}
-                  <span className={subscription.status === 'active' ? 'text-[#4aab6a]' : 'text-warm-gray'}>{subscription.status}</span>
+                  <span className={subscription.status === 'active' ? 'text-tertiary' : 'text-on-surface-muted'}>{subscription.status}</span>
                   {subscription.expires_at ? ` · Expires ${new Date(subscription.expires_at).toLocaleDateString()}` : ''}
                 </p>
               </div>
-              <span className="bg-gold/10 text-gold text-xs font-bold px-3 py-1 rounded-full">Active</span>
+              <span className="bg-tertiary-fixed/30 text-tertiary text-xs font-bold px-3 py-1 rounded-full">Active</span>
             </div>
           ) : (
             <div className="flex items-center justify-between">
-              <p className="text-warm-gray text-sm">No active subscription</p>
-              <Link href="/#pricing" className="text-gold text-sm hover:text-gold-light">View plans</Link>
+              <p className="text-on-surface-muted text-sm">No active subscription</p>
+              <Link href="/#pricing" className="text-primary text-sm hover:text-primary-container">View plans</Link>
             </div>
           )}
         </div>
 
         {/* Audit Configuration */}
-        <div className="bg-dark-card rounded-2xl border border-warm-white/8 p-6 mb-6">
+        <div className="bg-surface-white rounded-[2rem] shadow-ambient p-8 mb-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-warm-white">Audit Configuration</h2>
-            <Link href="/onboarding" className="text-gold text-sm hover:text-gold-light">
+            <h2 className="font-serif text-xl text-on-surface">Audit Configuration</h2>
+            <Link href="/onboarding" className="text-primary text-sm hover:text-primary-container">
               {onboarding ? 'Edit' : 'Set up'}
             </Link>
           </div>
           {onboarding ? (
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
-                <p className="text-xs text-warm-gray-light uppercase tracking-wider mb-1">Website</p>
-                <p className="text-warm-white text-sm">{onboarding.website_url}</p>
+                <p className="text-xs text-secondary uppercase tracking-[0.1em] mb-1">Website</p>
+                <p className="text-on-surface text-sm">{onboarding.website_url}</p>
               </div>
               {onboarding.gsc_connected && (
                 <div>
-                  <p className="text-xs text-warm-gray-light uppercase tracking-wider mb-1">Search Console</p>
-                  <p className="text-[#4aab6a] text-sm">Connected</p>
+                  <p className="text-xs text-secondary uppercase tracking-[0.1em] mb-1">Search Console</p>
+                  <p className="text-tertiary text-sm">Connected</p>
                 </div>
               )}
               {onboarding.ga4_property_id && (
                 <div>
-                  <p className="text-xs text-warm-gray-light uppercase tracking-wider mb-1">GA4 Property</p>
-                  <p className="text-warm-white text-sm">{onboarding.ga4_property_id}</p>
+                  <p className="text-xs text-secondary uppercase tracking-[0.1em] mb-1">GA4 Property</p>
+                  <p className="text-on-surface text-sm">{onboarding.ga4_property_id}</p>
                 </div>
               )}
               {onboarding.competitor_urls?.length > 0 && (
                 <div>
-                  <p className="text-xs text-warm-gray-light uppercase tracking-wider mb-1">Competitors</p>
-                  <p className="text-warm-white text-sm">{onboarding.competitor_urls.length} tracked</p>
+                  <p className="text-xs text-secondary uppercase tracking-[0.1em] mb-1">Competitors</p>
+                  <p className="text-on-surface text-sm">{onboarding.competitor_urls.length} tracked</p>
                 </div>
               )}
             </div>
           ) : (
-            <p className="text-warm-gray text-sm">Complete your audit setup to get the most accurate analysis.</p>
+            <p className="text-on-surface-muted text-sm">Complete your audit setup to get the most accurate analysis.</p>
           )}
         </div>
 
         {/* Audit History */}
-        <div className="bg-dark-card rounded-2xl border border-warm-white/8 p-6">
-          <h2 className="text-lg font-semibold text-warm-white mb-4">Audit History</h2>
+        <div className="bg-surface-white rounded-[2rem] shadow-ambient p-8">
+          <h2 className="font-serif text-xl text-on-surface mb-4">Audit History</h2>
           {audits.length > 0 ? (
             <div className="space-y-3">
               {audits.map((audit) => (
                 <Link key={String(audit.id)} href={`/results/${audit.id}`}
-                  className="flex items-center justify-between p-4 rounded-xl bg-warm-white/3 hover:bg-warm-white/5 transition-colors block">
+                  className="flex items-center justify-between p-4 rounded-xl bg-surface-low hover:bg-surface-high transition-colors block">
                   <div>
-                    <p className="text-warm-white text-sm font-medium">{String(audit.url)}</p>
-                    <p className="text-warm-gray-light text-xs mt-1">
+                    <p className="text-on-surface text-sm font-medium">{String(audit.url)}</p>
+                    <p className="text-on-surface-light text-xs mt-1">
                       {new Date(audit.createdAt as string).toLocaleDateString()} · {String(audit.status)}
                     </p>
                   </div>
                   {audit.score != null && (
                     <div className={`text-lg font-bold ${
-                      Number(audit.score) >= 70 ? 'text-[#4aab6a]' : Number(audit.score) >= 40 ? 'text-[#d4952b]' : 'text-[#e05555]'
+                      Number(audit.score) >= 70 ? 'text-tertiary' : Number(audit.score) >= 40 ? 'text-primary' : 'text-error'
                     }`}>
                       {String(audit.score)}
                     </div>
@@ -471,24 +466,24 @@ export default function DashboardPage() {
               ))}
             </div>
           ) : (
-            <p className="text-warm-gray text-sm">No audits yet. Use a credit to run your first audit.</p>
+            <p className="text-on-surface-muted text-sm">No audits yet. Use a credit to run your first audit.</p>
           )}
         </div>
 
         {/* Credit History */}
         {credits.length > 0 && (
-          <div className="mt-6 bg-dark-card rounded-2xl border border-warm-white/8 p-6">
-            <h2 className="text-lg font-semibold text-warm-white mb-4">Credit History</h2>
+          <div className="mt-6 bg-surface-white rounded-[2rem] shadow-ambient p-8">
+            <h2 className="font-serif text-xl text-on-surface mb-4">Credit History</h2>
             <div className="space-y-2">
               {credits.map((credit) => (
                 <div key={credit.id} className="flex items-center justify-between py-2 text-sm">
                   <div className="flex items-center gap-3">
-                    <span className={`w-2 h-2 rounded-full ${credit.status === 'available' ? 'bg-[#4aab6a]' : 'bg-warm-gray-light'}`} />
-                    <span className="text-warm-gray capitalize">{credit.credit_type.replace('_', ' ')}</span>
+                    <span className={`w-2 h-2 rounded-full ${credit.status === 'available' ? 'bg-tertiary' : 'bg-on-surface-light'}`} />
+                    <span className="text-on-surface-muted capitalize">{credit.credit_type.replace('_', ' ')}</span>
                   </div>
                   <div className="flex items-center gap-4">
-                    <span className="text-warm-gray-light text-xs">{new Date(credit.created_at).toLocaleDateString()}</span>
-                    <span className={credit.status === 'available' ? 'text-[#4aab6a] font-medium' : 'text-warm-gray-light'}>
+                    <span className="text-on-surface-light text-xs">{new Date(credit.created_at).toLocaleDateString()}</span>
+                    <span className={credit.status === 'available' ? 'text-tertiary font-medium' : 'text-on-surface-light'}>
                       {credit.status === 'available' ? 'Available' : credit.status === 'used' ? 'Used' : 'Expired'}
                     </span>
                   </div>
@@ -499,7 +494,7 @@ export default function DashboardPage() {
         )}
 
         <div className="mt-8 text-center">
-          <p className="text-warm-gray-light text-xs">Signed in as {user?.email}</p>
+          <p className="text-on-surface-light text-xs">Signed in as {user?.email}</p>
         </div>
       </div>
     </div>

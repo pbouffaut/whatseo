@@ -1,31 +1,105 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-dark: #1a1a1a;
-  --color-dark-warm: #1c2927;
-  --color-dark-card: #232323;
-  --color-cream: #faf8f5;
-  --color-cream-dark: #f0ece4;
-  --color-gold: #c9a85c;
-  --color-gold-light: #e8d5a0;
-  --color-gold-muted: #b89a4a;
-  --color-warm-white: #f5f0e8;
-  --color-warm-gray: #a09888;
-  --color-warm-gray-light: #6b6358;
-  --font-serif: var(--font-dm-serif);
+  /* === The Academic Rebel Design System === */
+
+  /* Surface Hierarchy (warm ivory/cream foundation) */
+  --color-background: #fdf9f3;
+  --color-surface: #fdf9f3;
+  --color-surface-low: #f7f3ed;
+  --color-surface-high: #ede9e3;
+  --color-surface-highest: #e6e2dc;
+  --color-surface-white: #ffffff;
+
+  /* Primary: Sunset Orange */
+  --color-primary: #914d00;
+  --color-primary-container: #f28c28;
+  --color-primary-fixed: #ffddb3;
+  --color-on-primary: #ffffff;
+
+  /* Secondary: Slate Blue */
+  --color-secondary: #505f79;
+  --color-secondary-container: #d1e0ff;
+  --color-on-secondary-container: #0e1b32;
+
+  /* Tertiary: Sage Green */
+  --color-tertiary: #4d6b32;
+  --color-tertiary-fixed: #c9eea9;
+
+  /* Text */
+  --color-on-surface: #1c1c18;
+  --color-on-surface-muted: #4a4a44;
+  --color-on-surface-light: #7a7a72;
+
+  /* Outline / Ghost Border */
+  --color-outline: #dbc2b0;
+
+  /* Error */
+  --color-error: #ba1a1a;
+  --color-error-light: #ffdad6;
+
+  /* Success */
+  --color-success: #4d6b32;
+  --color-success-light: #c9eea9;
+
+  /* Legacy aliases (backward compat during transition) */
+  --color-dark: #1c1c18;
+  --color-dark-warm: #2a2520;
+  --color-dark-card: #f7f3ed;
+  --color-cream: #fdf9f3;
+  --color-cream-dark: #ede9e3;
+  --color-gold: #914d00;
+  --color-gold-light: #f28c28;
+  --color-gold-muted: #7a4100;
+  --color-warm-white: #1c1c18;
+  --color-warm-gray: #4a4a44;
+  --color-warm-gray-light: #7a7a72;
+
+  /* Typography */
+  --font-sans: var(--font-jakarta);
+  --font-serif: var(--font-noto-serif);
+
+  /* Border Radius (organic, softened) */
+  --radius-md: 1.5rem;
+  --radius-lg: 2rem;
+  --radius-full: 9999px;
 }
 
 html { scroll-behavior: smooth; }
 
 body {
-  background-color: var(--color-dark);
-  color: var(--color-warm-white);
+  background-color: var(--color-background);
+  color: var(--color-on-surface);
 }
 
 ::selection {
-  background-color: rgba(201, 168, 92, 0.3);
+  background-color: rgba(145, 77, 0, 0.15);
 }
 
+/* Subtle scrollbar matching cream theme */
 ::-webkit-scrollbar { width: 8px; }
-::-webkit-scrollbar-track { background: var(--color-dark); }
-::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
+::-webkit-scrollbar-track { background: var(--color-surface-low); }
+::-webkit-scrollbar-thumb { background: var(--color-surface-highest); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-outline); }
+
+/* Utility: Ambient shadow (not dark drop-shadow) */
+.shadow-ambient {
+  box-shadow: 0 20px 40px rgba(28, 28, 24, 0.06);
+}
+
+/* Utility: Ghost border */
+.border-ghost {
+  outline: 1px solid rgba(219, 194, 176, 0.15);
+}
+
+/* Utility: Glassmorphism */
+.glass {
+  background: rgba(253, 249, 243, 0.80);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* Utility: Gradient CTA */
+.bg-gradient-cta {
+  background: linear-gradient(135deg, #914d00, #f28c28);
+}
