@@ -340,6 +340,20 @@ export default function FullAuditResults({ audit, results }: FullAuditResultsPro
             ))}
           </div>
 
+          {/* Roadmap context note */}
+          {scoreRoadmap.length > 2 && (() => {
+            // Find plateaus — consecutive milestones with same score
+            const hasPlateau = scoreRoadmap.some((m, i) => i > 0 && m.projectedScore === scoreRoadmap[i - 1].projectedScore);
+            if (!hasPlateau) return null;
+            const plateauMilestone = scoreRoadmap.find((m, i) => i > 0 && m.projectedScore === scoreRoadmap[i - 1].projectedScore);
+            return (
+              <p className="text-xs text-on-surface-light leading-relaxed mt-3 px-1">
+                <span className="font-medium text-on-surface-muted">{plateauMilestone?.timeline} items don't move the score — but they matter.</span>{' '}
+                They fix infrastructure Google re-evaluates slowly (Core Web Vitals, schema, site architecture), protect your rankings from algorithm updates, and compound into the final gains shown at Quarter 2+.
+              </p>
+            );
+          })()}
+
           {/* Quick wins for execs */}
           {insights?.quickWins && insights.quickWins.length > 0 && (
             <div className="mt-6 pt-6 border-t border-on-surface-light/10">
