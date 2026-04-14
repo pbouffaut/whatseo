@@ -3,9 +3,9 @@ export default function JsonLdSchema() {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "WhatSEO.ai",
-    url: "https://whatseo.vercel.app",
-    logo: "https://whatseo.vercel.app/og-image.png",
-    description: "AI-powered SEO analysis delivering professional-grade audits across 47 criteria in minutes.",
+    url: "https://whatseo.ai",
+    logo: "https://whatseo.ai/og-image.png",
+    description: "AI-powered SEO analysis delivering professional-grade audits across 80+ criteria in minutes.",
     sameAs: [],
     contactPoint: {
       "@type": "ContactPoint",
@@ -18,11 +18,11 @@ export default function JsonLdSchema() {
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: "WhatSEO.ai",
-    url: "https://whatseo.vercel.app",
-    description: "AI-powered SEO analysis across 47 criteria.",
+    url: "https://whatseo.ai",
+    description: "AI-powered SEO analysis across 80+ criteria.",
     potentialAction: {
       "@type": "SearchAction",
-      target: "https://whatseo.vercel.app/analyze?url={search_term_string}",
+      target: "https://whatseo.ai/analyze?url={search_term_string}",
       "query-input": "required name=search_term_string",
     },
   };
@@ -35,7 +35,7 @@ export default function JsonLdSchema() {
         "@type": "ListItem",
         position: 1,
         name: "Home",
-        item: "https://whatseo.vercel.app",
+        item: "https://whatseo.ai",
       },
     ],
   };
@@ -45,7 +45,7 @@ export default function JsonLdSchema() {
     "@type": "Service",
     name: "AI SEO Audit",
     provider: { "@type": "Organization", name: "WhatSEO.ai" },
-    description: "Comprehensive AI-powered SEO analysis across 47 criteria with professional PDF report and prioritized action plan.",
+    description: "Comprehensive AI-powered SEO analysis across 80+ criteria with professional PDF report and prioritized action plan.",
     serviceType: "SEO Audit",
     offers: [
       {
@@ -53,14 +53,14 @@ export default function JsonLdSchema() {
         name: "Free Scan",
         price: "0",
         priceCurrency: "USD",
-        description: "Homepage analysis across 47 checks",
+        description: "Homepage analysis across 80+ checks",
       },
       {
         "@type": "Offer",
         name: "Professional Audit",
         price: "499",
         priceCurrency: "USD",
-        description: "Full site audit across up to 500 pages with Google data integration",
+        description: "Full site audit across up to 1,000 pages with Google data integration, AI Search readiness, and GitHub/Jira ticket export",
       },
     ],
   };

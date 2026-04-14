@@ -14,13 +14,13 @@ export const metadata: Metadata = {
     template: "%s | WhatSEO.ai",
   },
   description:
-    "Professional SEO analysis your team can act on. 47 checks on your homepage for free, or a full audit across up to 500 pages with real Google data.",
+    "Professional SEO analysis your team can act on. 80+ checks on your homepage for free, or a full audit across up to 1,000 pages with real Google data, AI Search readiness, and GitHub/Jira ticket export.",
   alternates: {
     canonical: "/",
   },
   openGraph: {
     title: "WhatSEO.ai — Expert-Level SEO Insights in Minutes",
-    description: "AI-powered SEO analysis across 47 criteria. Professional reports with prioritized action plans. No agency needed.",
+    description: "AI-powered SEO analysis across 80+ criteria. Professional reports with prioritized action plans, AI Search readiness, and GitHub/Jira ticket export. No agency needed.",
     url: "https://whatseo.ai",
     siteName: "WhatSEO.ai",
     type: "website",
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "WhatSEO.ai — Expert-Level SEO Insights in Minutes",
-    description: "AI-powered SEO analysis across 47 criteria. No agency needed.",
+    description: "AI-powered SEO analysis across 80+ criteria. No agency needed.",
     images: ["/og-image.png"],
   },
   icons: {

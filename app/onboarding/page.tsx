@@ -159,7 +159,7 @@ export default function OnboardingPage() {
                     <h3 className="text-warm-white font-semibold">Website URL (required)</h3>
                   </div>
                   <p className="text-warm-gray text-sm leading-relaxed ml-10">
-                    Enter the main URL of the website you want to audit. We&apos;ll crawl up to 500 pages starting from this domain, following your sitemap and internal links.
+                    Enter the main URL of the website you want to audit. We&apos;ll crawl up to 1,000 pages starting from this domain, following your sitemap and internal links.
                   </p>
                 </div>
 
@@ -265,7 +265,7 @@ export default function OnboardingPage() {
           {/* Website URL */}
           <div>
             <FieldLabel label="Website URL" required
-              description="The primary URL we'll audit. We'll crawl up to 500 pages starting from this domain." />
+              description="The primary URL we'll audit. We'll crawl up to 1,000 pages starting from this domain." />
             <input type="url" value={form.websiteUrl}
               onChange={(e) => setForm({ ...form, websiteUrl: e.target.value })}
               placeholder="https://yourcompany.com" required

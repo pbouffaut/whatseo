@@ -164,7 +164,7 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
               Your full site tells a different story.
             </h2>
             <p className="text-on-surface-muted mb-8 max-w-2xl leading-relaxed">
-              The free audit analyzes your homepage against 47 criteria. But the issues costing you the most traffic are often hiding deeper &mdash; in your location pages, blog posts, product pages, and site architecture.
+              The free audit analyzes your homepage against 80+ criteria. But the issues costing you the most traffic are often hiding deeper &mdash; in your location pages, blog posts, product pages, and site architecture.
             </p>
 
             <div className="grid md:grid-cols-2 gap-8 mb-8">
@@ -182,7 +182,7 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
                 <h3 className="text-xs font-semibold text-primary mb-4 uppercase tracking-[0.15em]">Full Audit</h3>
                 <ul className="space-y-2">
                   {[
-                    'Up to 500 pages crawled & analyzed',
+                    'Up to 1,000 pages crawled & analyzed',
                     'Real Search Console data (clicks, rankings)',
                     'Google Analytics conversion data',
                     'Real user Core Web Vitals',
@@ -190,7 +190,7 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
                     'Thin content & index bloat detection',
                     'Local SEO & Google Business Profile',
                     'AI search readiness analysis',
-                    'Prioritized dev tickets (Jira-ready)',
+                    'Push tickets to GitHub Issues or Jira',
                     'Professional PDF report',
                   ].map((item) => (
                     <li key={item} className="flex items-center gap-2 text-sm text-on-surface">

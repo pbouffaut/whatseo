@@ -16,7 +16,7 @@ const features = [
 
 const steps = [
   { num: '01', title: 'Share Your Website', desc: 'Enter your URL and tell us where to send the report.' },
-  { num: '02', title: 'We Analyze Everything', desc: 'Our AI runs 47 checks on your homepage in seconds.' },
+  { num: '02', title: 'We Analyze Everything', desc: 'Our AI runs 80+ checks on your homepage in seconds.' },
   { num: '03', title: 'Receive Your Report', desc: 'A professional PDF with scores, insights, and a prioritized action plan.' },
 ];
 
@@ -32,7 +32,7 @@ const pricing = [
     slug: 'professional',
     price: '$499',
     period: 'one-time',
-    features: ['47 checks across up to 500 pages', 'Real Google Search Console data', 'Professional PDF report', 'Prioritized action plan', 'Dev-ready schema components'],
+    features: ['80+ checks across up to 1,000 pages', 'Real Google Search Console data', 'Professional PDF report', 'Prioritized action plan & GitHub/Jira tickets', 'Dev-ready schema components'],
     cta: 'Get Your Audit',
     active: true,
     highlighted: false,
@@ -116,7 +116,7 @@ export default function Home() {
               transition={{ delay: 0.2 }}
               className="text-lg text-on-surface-muted max-w-xl mb-10 leading-relaxed"
             >
-              We run 47 checks on your homepage and deliver the insights
+              We run 80+ checks on your homepage and deliver the insights
               your team needs to rank, convert, and grow.
             </motion.p>
             <motion.a
@@ -226,7 +226,7 @@ export default function Home() {
               <ul className="space-y-3 mb-8">
                 {[
                   { text: 'Homepage only (1 page)', included: true },
-                  { text: '47 automated checks', included: true },
+                  { text: '80+ automated checks', included: true },
                   { text: 'Instant score & top issues', included: true },
                   { text: 'Basic schema detection', included: true },
                   { text: 'Lab-only performance data', included: true },
@@ -237,13 +237,13 @@ export default function Home() {
                   </li>
                 ))}
                 {[
-                  'Multi-page crawl (up to 500 pages)',
+                  'Multi-page crawl (up to 1,000 pages)',
                   'Real Google Search Console data',
                   'Google Analytics traffic data',
                   'Real user Core Web Vitals (CrUX)',
                   'Professional PDF report',
                   'Prioritized action plan with ROI',
-                  'Dev-ready code & Jira tickets',
+                  'Dev-ready code & GitHub/Jira tickets',
                   'Revenue impact estimates',
                 ].map((text) => (
                   <li key={text} className="flex items-start gap-3 text-sm text-on-surface-light/50 line-through">
@@ -274,8 +274,8 @@ export default function Home() {
               </p>
               <ul className="space-y-3 mb-8">
                 {[
-                  { text: 'Up to 500 pages crawled & analyzed', bold: true },
-                  { text: '47 checks per page, not just homepage', bold: true },
+                  { text: 'Up to 1,000 pages crawled & analyzed', bold: true },
+                  { text: '80+ checks per page, not just homepage', bold: true },
                   { text: 'Instant score & full issue breakdown', bold: false },
                   { text: 'Deep schema audit + generated code', bold: false },
                   { text: 'Real Google Search Console data', bold: true },
@@ -283,7 +283,7 @@ export default function Home() {
                   { text: 'Real user Core Web Vitals (CrUX)', bold: true },
                   { text: 'Professional PDF report for stakeholders', bold: true },
                   { text: 'Prioritized action plan with revenue impact', bold: true },
-                  { text: 'Dev-ready components & Jira tickets', bold: true },
+                  { text: 'Push tickets to GitHub Issues or Jira', bold: true },
                   { text: 'Schema markup code you can deploy', bold: false },
                   { text: 'Revenue impact estimates per fix', bold: false },
                   { text: 'Competitor visibility analysis', bold: false },
