@@ -18,8 +18,11 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
           {/* Brand */}
           <div>
-            <div className="mb-3">
-              <Image src="/logo-light.svg" alt="WhatSEO.ai" width={120} height={32} />
+            <div className="flex items-center gap-2 mb-3">
+              <Image src="/logo-icon.svg" alt="" width={28} height={28} />
+              <span className="text-xl font-bold text-on-surface">
+                What<span className="text-primary">SEO</span><span className="text-on-surface-light text-sm">.ai</span>
+              </span>
             </div>
             <p className="text-on-surface-muted text-sm leading-relaxed">
               Expert-level SEO insights delivered in minutes. Professional analysis your team can act on.

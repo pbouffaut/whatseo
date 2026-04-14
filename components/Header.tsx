@@ -56,8 +56,11 @@ export default function Header() {
       }`}
     >
       <nav className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-        <Link href="/" className="flex items-center">
-          <Image src="/logo-light.svg" alt="WhatSEO.ai" width={135} height={36} priority />
+        <Link href="/" className="flex items-center gap-2.5">
+          <Image src="/logo-icon.svg" alt="" width={32} height={32} priority />
+          <span className="text-xl font-bold text-on-surface">
+            What<span className="text-primary">SEO</span><span className="text-on-surface-light text-sm">.ai</span>
+          </span>
         </Link>
 
         <div className="hidden md:flex items-center gap-8">
