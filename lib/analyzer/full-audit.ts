@@ -32,7 +32,7 @@ interface FullAuditOptions {
   apiKey?: string;
   googleAccessToken?: string;
   ga4PropertyId?: string;
-  onPhaseChange?: (phase: string) => void;
+  onPhaseChange?: (phase: string, realPageCount?: number, hitMaxPages?: boolean) => void;
   onProgress?: (crawled: number, total: number) => void;
 }
 
@@ -98,6 +98,9 @@ async function analyzePages(pages: CrawledPage[], onProgress?: (done: number, to
         content,
       });
     } catch { /* skip failed page analysis */ }
+
+    // Free HTML from memory immediately after analysis to avoid OOM on large crawls
+    page.html = '';
 
     onProgress?.(i + 1, pages.length);
   }
@@ -334,10 +337,23 @@ export async function analyzeFullSite(options: FullAuditOptions): Promise<FullAu
   }
 
   // Phase 2: Analyze pages — process and discard HTML immediately
-  onPhaseChange?.('analyzing');
+  // Pass the real crawled-page count so the progress page can show the actual
+  // site size (not the queue estimate which can be as high as maxPages).
+  // hitMaxPages signals we stopped early — the site has more pages than the cap.
+  const realPageCount = crawlResult.pages.filter(p => p.statusCode < 400 && !p.error).length;
+  const hitMaxPages = (crawlResult as { hitMaxPages?: boolean }).hitMaxPages ?? false;
+  onPhaseChange?.('analyzing', realPageCount, hitMaxPages);
+  const analyzedUrls = new Set<string>();
   for (let i = 0; i < crawlResult.pages.length; i++) {
     const page = crawlResult.pages[i];
     if (!page.html || page.statusCode >= 400) continue;
+
+    // Safety-net dedup: skip if this final URL was already analyzed
+    // (primary dedup is in crawl.ts via seenFinalUrls, but guards against
+    //  any edge-case where two different queue URLs resolve to the same page)
+    const pageKey = page.finalUrl || page.url;
+    if (analyzedUrls.has(pageKey)) continue;
+    analyzedUrls.add(pageKey);
 
     // Save homepage data for later phases
     if (i === 0) {
@@ -492,6 +508,7 @@ export async function analyzeFullSite(options: FullAuditOptions): Promise<FullAu
     score,
     pagesCrawled: pageResults.length,
     pagesTotal: crawlResult.pages.length,
+    hitMaxPages: (crawlResult as { hitMaxPages?: boolean }).hitMaxPages ?? false,
     crawlDuration,
     technical: aggTechnical,
     onPage: aggOnPage,

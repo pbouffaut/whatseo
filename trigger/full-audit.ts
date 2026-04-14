@@ -3,10 +3,12 @@ import { createClient } from "@supabase/supabase-js";
 import { analyzeFullSite } from "../lib/analyzer/full-audit";
 
 // Create a Supabase client for the task (runs on Trigger.dev infrastructure, not Vercel)
+// Uses service role key to bypass RLS — needed for credit refunds and audit updates
+// across user sessions (anon key would be blocked by RLS policies)
 function getSupabase() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 }
 
@@ -16,21 +18,26 @@ interface FullAuditPayload {
   url: string;
   userId: string;
   email: string;
-  priorityPages: string[];
   competitorUrls: string[];
   googleAccessToken: string | null;
   googleRefreshToken: string | null;
   ga4PropertyId: string | null;
+  avgDealValue?: number | null;
+  conversionRatePct?: number | null;
 }
 
 export const fullAuditTask = task({
   id: "full-audit",
-  maxDuration: 600, // 10 minutes
-  machine: { preset: "medium-1x" }, // More RAM for large crawls (500 pages)
+  maxDuration: 1800, // 30 minutes — crawl (1000 pages) + 3 sequential Claude calls
+  machine: { preset: "large-1x" }, // 8GB RAM for large crawls (1000 pages)
 
   run: async (payload: FullAuditPayload) => {
     const supabase = getSupabase();
-    const { auditId, creditId, url, userId, priorityPages, competitorUrls } = payload;
+    const { auditId, creditId, url, userId, competitorUrls } = payload;
+    const businessMetrics = {
+      avgDealValue: payload.avgDealValue ?? null,
+      conversionRatePct: payload.conversionRatePct ?? null,
+    };
 
     // Tokens passed directly from the API route (which has RLS access)
     let googleAccessToken = payload.googleAccessToken;
@@ -70,18 +77,26 @@ export const fullAuditTask = task({
       // Run the full audit with Google API data
       const result = await analyzeFullSite({
         url,
-        maxPages: 2500,
-        priorityPages,
+        maxPages: 1000,
         competitorUrls,
         apiKey,
         googleAccessToken: googleAccessToken || undefined,
         ga4PropertyId: ga4PropertyId || undefined,
-        onPhaseChange: async (phase) => {
+        onPhaseChange: async (phase, realPageCount?: number, hitMaxPages?: boolean) => {
           metadata.set("phase", phase);
-          await supabase.from("Audit").update({
-            phase,
-            updatedAt: new Date().toISOString(),
-          }).eq("id", auditId);
+          const update: Record<string, unknown> = { phase, updatedAt: new Date().toISOString() };
+          // When crawling finishes, write the real page count so the progress
+          // page shows actual site size, not the queue estimate (up to maxPages).
+          // Store pages_total as negative when we hit the cap — the status API
+          // surfaces this so the UI can show "1000+" instead of "1000".
+          if (realPageCount !== undefined) {
+            const storedTotal = hitMaxPages ? -realPageCount : realPageCount;
+            update.pages_crawled = realPageCount;
+            update.pages_total = storedTotal;
+            metadata.set("pagesCrawled", realPageCount);
+            metadata.set("pagesTotal", storedTotal);
+          }
+          await supabase.from("Audit").update(update).eq("id", auditId);
         },
         onProgress: async (crawled, total) => {
           metadata.set("pagesCrawled", crawled);
@@ -109,7 +124,7 @@ export const fullAuditTask = task({
         try {
           console.log("Starting premium insights generation (3 parallel Claude calls)...");
           const { generatePremiumInsights } = await import("../lib/insights/generate");
-          const insights = await generatePremiumInsights(result);
+          const insights = await generatePremiumInsights(result, businessMetrics);
           result.insights = insights;
           console.log(`Premium insights generated. Has actionPlan: ${'actionPlan' in insights}, tickets: ${(insights as unknown as Record<string,unknown>).tickets ? 'yes' : 'no'}`);
         } catch (premiumErr) {
@@ -194,6 +209,37 @@ export const fullAuditTask = task({
         audit_id: null,
         used_at: null,
       }).eq("id", creditId);
+
+      // Notify user by email
+      try {
+        if (payload.email && process.env.RESEND_API_KEY) {
+          const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://whatseo.vercel.app";
+          const resend = await import("resend");
+          const client = new resend.Resend(process.env.RESEND_API_KEY);
+          await client.emails.send({
+            from: `WhatSEO.ai <${process.env.RESEND_FROM_EMAIL || 'reports@whatseo.ai'}>`,
+            to: payload.email,
+            subject: `Your SEO Audit Encountered an Issue`,
+            html: `<div style="max-width:600px;margin:0 auto;padding:40px 24px;background:#1a1a1a;font-family:system-ui,sans-serif;">
+              <div style="text-align:center;margin-bottom:32px;">
+                <span style="font-size:20px;font-weight:bold;color:#f5f0e8;">What</span><span style="font-size:20px;font-weight:bold;color:#c9a85c;">SEO</span><span style="font-size:14px;color:#a09888;">.ai</span>
+              </div>
+              <div style="background:#232323;border-radius:16px;padding:32px;text-align:center;margin-bottom:24px;">
+                <div style="width:56px;height:56px;border-radius:50%;background:#3d1f1f;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+                  <span style="font-size:24px;font-weight:bold;color:#e05555;">!</span>
+                </div>
+                <p style="color:#c9a85c;font-size:12px;text-transform:uppercase;letter-spacing:2px;margin:0 0 12px;">Audit Unsuccessful</p>
+                <h2 style="color:#f5f0e8;font-size:20px;margin:0 0 12px;">We hit a snag auditing ${url}</h2>
+                <p style="color:#a09888;font-size:14px;margin:0 0 20px;">Your audit credit has been fully refunded and is ready to use again.</p>
+                <a href="${appUrl}/dashboard" style="display:inline-block;background:#c9a85c;color:#1a1a1a;padding:12px 28px;border-radius:50px;text-decoration:none;font-weight:600;font-size:15px;">Retry from Dashboard →</a>
+              </div>
+              <p style="color:#6b6b6b;font-size:12px;text-align:center;">If this keeps happening, reply to this email and we'll investigate.</p>
+            </div>`,
+          });
+        }
+      } catch (emailErr) {
+        console.error("Failure email delivery failed:", emailErr);
+      }
 
       metadata.set("phase", "failed");
       metadata.set("error", errorMsg);

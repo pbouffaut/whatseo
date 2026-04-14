@@ -1,10 +1,16 @@
 import Anthropic from '@anthropic-ai/sdk';
 import type { FullAuditResult, PremiumInsights, PageTypeGroup } from '../analyzer/types';
+import {
+  projectScoreRoadmap,
+  calculateClickOpportunities,
+  calculateRevenueProjection,
+  formatProjectionsForPrompt,
+} from '../analyzer/projections';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
-  maxRetries: 5,        // Retry up to 5 times on 429/529
-  timeout: 120_000,     // 2 minute timeout per call
+  maxRetries: 2,        // 2 retries — worst case: 2 × 120s × 3 calls = 720s (12 min)
+  timeout: 120_000,     // 120s — Sonnet generates ~70 tok/s; 8k tokens needs ~115s
 });
 
 export interface AuditInsights {
@@ -397,8 +403,23 @@ function parseJsonSafely<T>(text: string): T | null {
   }
 }
 
-export async function generatePremiumInsights(result: FullAuditResult): Promise<PremiumInsights> {
+export async function generatePremiumInsights(
+  result: FullAuditResult,
+  businessMetrics?: { avgDealValue?: number | null; conversionRatePct?: number | null },
+): Promise<PremiumInsights> {
   console.log(`[PremiumInsights] Starting. Pages: ${result.pagesCrawled}, Score: ${result.score.overall}`);
+
+  // ── Grounded projections (calculated, not hallucinated) ────────────────────
+  const roadmap = projectScoreRoadmap(result);
+  const gscData = result.googleData?.gsc as { topQueries?: { query: string; clicks: number; impressions: number; position: number; ctr: number }[] } | undefined;
+  const clicks = calculateClickOpportunities(gscData);
+  const revenue = calculateRevenueProjection(
+    clicks.totalMonthlyGain,
+    businessMetrics?.avgDealValue,
+    businessMetrics?.conversionRatePct,
+  );
+  const projectionsContext = formatProjectionsForPrompt(roadmap, clicks, revenue);
+  console.log(`[PremiumInsights] Projections: score ${roadmap.currentScore} → ${roadmap.phases[2].projectedScore}, clicks +${clicks.totalMonthlyGain}/mo, revenue +$${revenue.monthlyRevenueGain}/mo`);
 
   let baseSummary: string, pageTypesSummary: string, googleDeep: string;
   try {
@@ -434,10 +455,11 @@ export async function generatePremiumInsights(result: FullAuditResult): Promise<
   const domain = new URL(result.url).hostname.replace('www.', '');
   const competitorContext = `The site is ${domain}. Based on the site content and page types, identify their likely top 3 competitors in their industry. For each competitor, note what they do better in SEO (schema, content depth, local SEO, etc.). Use real competitor names.`;
 
-  // --- CALL A: Strategy ---
+  // ─── CALL A: Strategy ────────────────────────────────────────────────────────
+  // executive summary, critical issues, quick wins, action plan (~4,500 tokens)
   const makeCallA = () => anthropic.messages.create({
     model: 'claude-sonnet-4-20250514',
-    max_tokens: 12000,
+    max_tokens: 8000,
     messages: [{
       role: 'user',
       content: `You are a senior SEO strategist at a top agency writing a comprehensive boardroom-ready report for ${result.url}. Your audience is a CEO, CMO, or VP of Marketing. Write with the depth and authority of a $15,000 agency report. Be specific, use numbers, and explain business impact.
@@ -449,7 +471,9 @@ ${baseSummary}
 
 ${pageTypesSummary}
 
-Return a JSON object with these keys:
+${projectionsContext}
+
+Return a JSON object with these exact keys:
 
 {
   "executive": "Write 6-8 detailed paragraphs (at least 800 words total). Start with the overall score and what it means in their industry context. Compare to competitors. Detail the top 3 strengths with specific data. Detail the top 5 weaknesses with impact estimates. Include a section on competitive positioning — how they compare to key competitors in SEO. End with ROI projections: estimated additional clicks, conversion value, and annual revenue impact if recommendations are implemented. This should feel like a $15K consultant briefing.",
@@ -468,9 +492,9 @@ Return a JSON object with these keys:
       "items": [{"title": "Fix X", "description": "Detailed 2-3 sentence description of what to do, why it matters, and what competitors are doing differently", "effort": "4-8 hours", "impact": "+5 score points, +2000 clicks/month, ~$X revenue", "category": "On-Page SEO"}],
       "projectedScore": 0
     },
-    {"phase": "high", "title": "High Impact (Week 3-4)", "timeline": "Week 3-4", "items": [3-5 items], "projectedScore": 0},
-    {"phase": "medium", "title": "Growth Phase (Month 2-3)", "timeline": "Month 2-3", "items": [3-5 items], "projectedScore": 0},
-    {"phase": "backlog", "title": "Optimization Backlog", "timeline": "Quarter 2+", "items": [3-5 items], "projectedScore": 0}
+    {"phase": "high", "title": "High Impact (Week 3-4)", "timeline": "Week 3-4", "items": [], "projectedScore": 0},
+    {"phase": "medium", "title": "Growth Phase (Month 2-3)", "timeline": "Month 2-3", "items": [], "projectedScore": 0},
+    {"phase": "backlog", "title": "Optimization Backlog", "timeline": "Quarter 2+", "items": [], "projectedScore": 0}
   ]
 }
 
@@ -480,13 +504,48 @@ Return ONLY the JSON object, no markdown fences.`
     }],
   });
 
-  // --- CALL B: Analysis ---
+  // ─── CALL B: Core Analysis ────────────────────────────────────────────────────
+  // technical, content, on-page, schema, performance, images (~5,500 tokens)
   const makeCallB = () => anthropic.messages.create({
     model: 'claude-sonnet-4-20250514',
-    max_tokens: 16000,
+    max_tokens: 8000,
     messages: [{
       role: 'user',
-      content: `You are a senior SEO analyst writing comprehensive deep-dive findings for ${result.url}. Write with the depth of a $15,000 agency report. Every section should have specific numbers, competitive context, and actionable recommendations. Be thorough — this is the analytical core of a premium report.
+      content: `You are a senior SEO analyst writing the core technical and on-page findings for ${result.url}. Write with the depth of a $15,000 agency report. Every section must include specific numbers from the audit data, competitive context, and actionable next steps.
+
+${competitorContext}
+
+AUDIT DATA:
+${baseSummary}
+
+Return a JSON object with these exact keys:
+
+{
+  "technical": "3-4 detailed paragraphs about technical SEO. Cover: crawlability (robots.txt, sitemaps, redirect chains), security headers (what's missing and why it matters for trust and rankings), page speed impact, mobile-first indexing readiness. Mention what competitors typically have that this site doesn't. Include specific header values to add.",
+
+  "content": "3-4 detailed paragraphs. Analyze thin content problem with specific page counts and word count distributions. Discuss duplicate content patterns. Evaluate E-E-A-T signals: author attribution, publication dates, external references, about/contact pages. Compare content depth to industry competitors. Recommend a concrete content strategy.",
+
+  "onPage": "3-4 detailed paragraphs. Analyze title tag patterns (length distribution, keyword usage, duplicates). Meta description coverage and quality. H1/H2 heading structure issues. Internal linking density. Estimate CTR impact using CTR curve data (position 1 ~28%, position 2 ~15%, position 3 ~11%).",
+
+  "schema": "3-4 detailed paragraphs. List every schema type that should be implemented for this business type. Explain which rich results each enables (star ratings, FAQs, breadcrumbs, local pack, knowledge panel). Compare to competitors — do they have schema? What rich results do they get? Estimate traffic uplift from implementation.",
+
+  "performance": "3-4 detailed paragraphs. Explain each Core Web Vital in plain language with the actual measured numbers. Compare to Google's Pass/Fail thresholds. Explain the ranking impact. Recommend specific optimizations with expected CWV improvement.",
+
+  "images": "2-3 detailed paragraphs. Cover alt text coverage and quality (count missing), image format adoption (WebP/AVIF vs JPEG/PNG), lazy loading strategy, responsive images. Discuss combined impact on accessibility, SEO, and LCP Core Web Vital."
+}
+
+Return ONLY the JSON object, no markdown fences.`
+    }],
+  });
+
+  // ─── CALL C: Deep-Dive Analysis ───────────────────────────────────────────────
+  // per-page-type deep dive, AI readiness, Google data analysis (~5,500 tokens)
+  const makeCallC = () => anthropic.messages.create({
+    model: 'claude-sonnet-4-20250514',
+    max_tokens: 8000,
+    messages: [{
+      role: 'user',
+      content: `You are a senior SEO analyst writing the deep-dive and data analysis sections for ${result.url}. These are the most detailed sections of a premium $15,000 report.
 
 ${competitorContext}
 
@@ -497,41 +556,29 @@ ${pageTypesSummary}
 
 ${googleDeep}
 
-Return a JSON object with these keys:
+Return a JSON object with these exact keys:
 
 {
-  "deepDive": "Write a thorough analysis — AT LEAST 4-5 paragraphs for EACH page type group (aim for 2000+ words total). For each group use a ### header like '### Location Pages (222 pages)'. Analyze: word count vs industry standards, schema adoption vs competitors, title/description patterns and missed CTR opportunity, content depth and E-E-A-T signals, internal linking structure, conversion optimization opportunities. Compare to what competitors typically do for similar page types. End each group with a specific recommendation and estimated impact.",
+  "deepDive": "Write a thorough page-type analysis — 4-5 paragraphs for EACH page type group (aim for 2000+ words total). For each group use a ### heading like '### Location Pages (222 pages)'. For each group analyze: word count vs industry standards, schema adoption rate vs competitors, title/description patterns and missed CTR opportunity, content depth and E-E-A-T signals, internal linking structure, conversion optimization gaps. Compare to competitor approaches for that page type. End each group with a specific recommendation and estimated traffic/revenue impact.",
 
-  "googleDataDeep": "Write 5-6 detailed paragraphs (800+ words). Split queries into branded vs non-branded with a table-like breakdown. For non-branded queries, identify the top 5 opportunities where position is 4-20 (striking distance). Estimate revenue: clicks × conversion rate (use industry-appropriate rate) × average deal value (estimate from business type). Identify which competitor pages are outranking this site for key terms. Highlight pages with high impressions but low CTR — these are title/description optimization goldmines.",
+  "googleDataDeep": "Write 5-6 detailed paragraphs (800+ words). Break down branded vs non-branded queries. For non-branded, identify the top 5 striking-distance opportunities (position 4-20). Estimate revenue: clicks × industry conversion rate × average deal value. Name the competitor pages outranking this site for key terms. Flag pages with high impressions but low CTR as title/description optimization priorities.",
 
-  "technical": "3-4 detailed paragraphs about technical SEO. Cover: crawlability (robots.txt, sitemaps, redirect chains), security headers (what's missing and why it matters), page speed impact on rankings, mobile-first indexing readiness. Mention what competitors typically have that this site doesn't. Include specific header recommendations.",
+  "aiReadiness": "Write a comprehensive AI search visibility guide structured EXACTLY as follows (use these exact ### headings):\n\n### Why AI Search Matters for This Business\n2 paragraphs. Explain concretely: Google AI Overviews now appear for 30-40% of queries. ChatGPT has 100M+ weekly users who skip Google entirely. Perplexity cites specific pages. If a business's content isn't structured to be cited, it is invisible in this new channel. Estimate the traffic risk specific to this business type — e.g. 'coworking space searches increasingly trigger AI Overviews, putting your location pages at risk of zero-click.'\n\n### Platform Assessment\nFour sub-sections, one per platform. For each: status (Ready/Partially Ready/Not Ready), 1-2 sentences on why, and 1 specific action.\n**Google AI Overviews** — requires structured content (headings, lists, FAQs), schema markup, and high E-E-A-T signals. Does this site meet these?\n**ChatGPT & OpenAI** — GPTBot must not be blocked, llms.txt helps, factual content about the brand matters. Check robots.txt.\n**Perplexity** — cites pages with clear facts, structured data, and authoritative backlinks. Is this site's content answer-first?\n**Bing Copilot** — requires IndexNow for fast indexing, Bing Webmaster Tools verification, and schema markup.\n\n### What's Blocking AI Citations Right Now\n1 paragraph listing the top 3 specific technical gaps found in this audit (be precise: 'No llms.txt', 'GPTBot blocked', 'No FAQPage schema', etc.).\n\n### 7 Concrete Actions to Become AI-Visible\nNumbered list, each action with: what to do, where to put it (file/page), and why it helps AI. Cover: (1) Add/update llms.txt with brand overview and key services, (2) Add FAQPage schema to top pages, (3) Restructure content to answer-first format, (4) Add headings every 250-300 words, (5) Unblock AI crawlers in robots.txt if blocked, (6) Add an About page with E-E-A-T signals (team, credentials, awards), (7) Create a dedicated FAQ page for common customer questions.\n\n### Content Format Guide\n1 paragraph explaining exactly how to rewrite existing content to be AI-citation-ready: use direct answers in the first sentence of each section, use numbered/bulleted lists for steps and comparisons, add a 'Key Takeaways' section at the top of long articles, include definitions for industry terms.",
 
-  "content": "3-4 detailed paragraphs. Analyze thin content problem with specific page counts and word count distributions. Discuss duplicate content patterns. Evaluate E-E-A-T: author attribution, publication dates, external references, about/contact pages. Compare content depth to industry competitors. Recommend content strategy.",
-
-  "onPage": "3-4 detailed paragraphs. Analyze title tag patterns (length distribution, keyword usage, duplicates). Meta description coverage and quality. H1/H2 heading structure issues. Internal linking density. Estimate CTR impact of fixing title/description issues using CTR curve data (position 1 ~28% CTR, position 2 ~15%, etc.).",
-
-  "schema": "3-4 detailed paragraphs. List every schema type that should be implemented for this business type. Explain what rich results each enables (star ratings, FAQs, breadcrumbs, local pack, knowledge panel). Compare to competitors — do they have schema? What rich results do they get? Estimate traffic impact of schema implementation.",
-
-  "performance": "3-4 detailed paragraphs. Explain each Core Web Vital in human terms with the actual numbers. Compare to Google's thresholds. Discuss mobile vs desktop differences. Explain the ranking impact (Google uses CWV as a ranking signal). Recommend specific optimizations with expected improvement.",
-
-  "aiReadiness": "3-4 detailed paragraphs. Discuss AI Overviews (Google), ChatGPT search, Perplexity, Bing Copilot. Is this site being cited? What makes content citable? Analyze llms.txt presence, FAQ content, structured data for AI. Discuss what competitors are doing for AI search. Recommend specific changes.",
-
-  "images": "2-3 detailed paragraphs. Cover alt text coverage and quality, image formats (WebP/AVIF adoption), lazy loading strategy, responsive images. Discuss impact on accessibility, SEO, and Core Web Vitals (LCP). Estimate improvement from fixing hero image loading.",
-
-  "googleData": "3-4 detailed paragraphs summarizing all Google data for executives. Key metrics, trends, competitive positioning, biggest opportunities. This is the executive-level data summary."
+  "googleData": "3-4 paragraphs — executive-level Google data summary. Key metrics with trends, competitive positioning, biggest traffic opportunities, and recommended next steps. Written for a CMO, not a developer."
 }
 
 Return ONLY the JSON object, no markdown fences.`
     }],
   });
 
-  // --- CALL C: Implementation ---
-  const makeCallC = () => anthropic.messages.create({
+  // ─── CALL D: Schema Templates + Implementation Guide (~5,500 tokens) ──────────
+  const makeCallD = () => anthropic.messages.create({
     model: 'claude-sonnet-4-20250514',
-    max_tokens: 16000,
+    max_tokens: 8000,
     messages: [{
       role: 'user',
-      content: `You are a senior frontend developer and SEO engineer writing premium implementation deliverables for ${result.url}. The audience is a development team that needs production-ready code, detailed tickets, and a comprehensive implementation guide. Write with the thoroughness of a senior consultant delivering a $15K engagement.
+      content: `You are a senior SEO engineer writing production-ready schema markup and an implementation guide for ${result.url}. Write with the precision of a senior consultant delivering a $15K engagement.
 
 SITE DATA:
 - URL: ${result.url}
@@ -540,72 +587,117 @@ SITE DATA:
 - Currently detected schema types: ${Array.from(allSchemas).join(', ') || 'NONE'}
 - Homepage title: ${result.pages[0]?.onPage.title || 'MISSING'}
 - Homepage H1s: ${result.pages[0]?.onPage.h1s.join(', ') || 'NONE'}
-- Homepage internal links: ${result.pages[0]?.onPage.internalLinks || 0}
 - Homepage word count: ${result.pages[0]?.content.wordCount || 0}
 
-FAILING CHECKS:
-${failingChecks.slice(0, 25).join('\n')}
-
-RECOMMENDATIONS:
-${result.recommendations.map(r => `[${r.impact}/${r.effort}] ${r.title}: ${r.description} (${r.affectedUrls.length} URLs, first: ${r.affectedUrls[0] || 'n/a'})`).join('\n')}
+FAILING CHECKS (top 20):
+${failingChecks.slice(0, 20).join('\n')}
 
 ${pageTypesSummary}
 
-Return a JSON object with these keys:
+Return a JSON object with EXACTLY these two keys:
 
 {
   "schemaTemplates": [
     {
       "type": "Organization",
-      "description": "2-3 sentences explaining when to use this, what rich results it enables, and which Google features it powers.",
-      "jsonLd": "Complete, valid JSON-LD customized with the actual site name (${domain}), URL, and realistic data. Include all recommended properties. This should be copy-paste deployable.",
-      "applicablePages": "All pages (add to layout component)"
+      "description": "2-3 sentences: when to use it, what rich results it enables, which Google features it unlocks.",
+      "jsonLd": "Complete valid JSON-LD using the actual domain (${domain}). All recommended properties. Copy-paste deployable. Use {{PLACEHOLDER}} for dynamic values only.",
+      "applicablePages": "e.g. All pages — add to <head> in layout"
     }
-    ...generate 5-6 templates total, appropriate for this specific business type. Each JSON-LD must be complete, valid, and use the actual site's URL and brand name. Include template variables like {{LOCATION_NAME}} where page-specific data is needed. Templates should include: Organization, LocalBusiness/CoworkingSpace (if applicable), BreadcrumbList, FAQPage, Service, and one more appropriate for the business.
   ],
-
-  "implementationGuide": "Write a comprehensive developer guide (1500+ words) structured as:\n\n### Phase 1: Critical Fixes (Week 1)\nFor each fix: what file to edit, what code to change, exact curl/grep command to verify. Include security header configurations (exact header values). Include Next.js/React specific patterns if detected.\n\n### Phase 2: Schema Implementation (Week 2-3)\nStep-by-step: create a JSON-LD component, add to layout, template for dynamic pages. Include a React/Next.js component example. Explain how to validate with Google Rich Results Test.\n\n### Phase 3: Content Optimization (Month 2)\nWhich pages to expand, target word counts, heading structure templates, internal linking strategy.\n\n### Phase 4: Performance & Monitoring (Month 3)\nImage optimization steps, lazy loading fixes, CWV monitoring setup. Include verification commands for every step.\n\n### Verification Checklist\nA final checklist of curl/grep commands to verify all changes are live.",
-
-  "tickets": [
-    {
-      "id": "SEO-001",
-      "title": "Clear, specific ticket title",
-      "priority": "P0",
-      "description": "3-4 sentences. What's wrong, why it matters, what the business impact is. Reference specific URLs and page counts.",
-      "acceptanceCriteria": ["4-6 specific, testable criteria"],
-      "storyPoints": 3,
-      "testingInstructions": "2-3 specific test commands (curl, grep, Lighthouse, Google Rich Results Test). Include expected output.",
-      "dependencies": [],
-      "category": "On-Page SEO"
-    }
-    ...generate 16 total tickets covering ALL findings: schema implementation (3-4 tickets), on-page fixes (3-4 tickets), content improvements (2-3 tickets), technical/security (2-3 tickets), performance (1-2 tickets), AI readiness (1 ticket), monitoring setup (1 ticket). Priorities: P0 (4 tickets), P1 (5 tickets), P2 (5 tickets), P3 (2 tickets). Story points 1-8 scale. Every ticket should have realistic dependencies mapped.
-  ]
+  "implementationGuide": "Developer guide with 4 phases (target ~1000 words):\n\n### Phase 1: Critical Fixes (Week 1)\nFor each failing check: exact file/header to change, code snippet, verification command.\n\n### Phase 2: Schema Implementation (Week 2-3)\nHow to create a reusable JSON-LD component, inject into layout, use dynamic page data. Validation with Google Rich Results Test.\n\n### Phase 3: Content Optimization (Month 2)\nPages to expand, target word counts, heading structure, internal linking strategy.\n\n### Phase 4: Performance & Monitoring (Month 3)\nCore Web Vitals fixes, image optimization, monitoring setup, success KPIs."
 }
 
-CRITICAL: All JSON-LD must be syntactically valid JSON. Use the actual site URL (${result.url}) and brand name. Every ticket must have 4+ acceptance criteria and specific testing commands.
+Generate 4 schema templates most relevant for this business type (always include Organization + BreadcrumbList, then pick 2 more from: LocalBusiness, FAQPage, Service, Product, Article, WebSite based on the site content).
+
+CRITICAL: All JSON-LD must be syntactically valid JSON. No trailing commas. No comments inside the JSON-LD strings.
 
 Return ONLY the JSON object, no markdown fences.`
     }],
   });
 
-  // Run calls SEQUENTIALLY to avoid 529 rate limit saturation
-  // Each call has maxRetries=5 with exponential backoff built into the SDK
-  // Sequential is fine — customers perceive longer generation = deeper analysis
-  console.log('[PremiumInsights] Running 3 Claude calls sequentially (maxRetries=5 each)...');
+  // ─── CALL E: Dev Tickets (~5,500 tokens) ──────────────────────────────────────
+  const makeCallE = () => anthropic.messages.create({
+    model: 'claude-sonnet-4-20250514',
+    max_tokens: 8000,
+    messages: [{
+      role: 'user',
+      content: `You are a senior frontend developer writing Jira-ready implementation tickets for the SEO audit of ${result.url}. Each ticket must be immediately actionable by a developer.
+
+SITE DATA:
+- URL: ${result.url}
+- Domain: ${domain}
+- Pages crawled: ${result.pagesCrawled}
+- Score: ${result.score.overall}/100
+
+FAILING CHECKS (top 20):
+${failingChecks.slice(0, 20).join('\n')}
+
+TOP RECOMMENDATIONS:
+${result.recommendations.slice(0, 15).map(r => `[${r.impact}/${r.effort}] ${r.title}: ${r.description} (${r.affectedUrls.length} URLs)`).join('\n')}
+
+Return a JSON object with EXACTLY one key:
+
+{
+  "tickets": [
+    {
+      "id": "SEO-001",
+      "title": "Concise actionable title (max 60 chars)",
+      "priority": "P0",
+      "description": "2-3 sentences: what is broken, why it matters for SEO/business, which URLs/pages are affected.",
+      "acceptanceCriteria": ["4 specific testable criteria — each verifiable with a tool or command"],
+      "storyPoints": 3,
+      "testingInstructions": "1-2 specific commands (curl, Lighthouse, Rich Results Test, Search Console) with the expected output.",
+      "dependencies": [],
+      "category": "Schema"
+    }
+  ]
+}
+
+Generate exactly 14 tickets:
+- Schema: 3 tickets (e.g. add Organization, BreadcrumbList, FAQPage)
+- On-page: 3 tickets (titles, meta descriptions, H1 structure)
+- Content: 2 tickets (thin pages, word count, E-E-A-T)
+- Technical/Security: 2 tickets (headers, HTTPS, canonicals)
+- Performance: 2 tickets (LCP, CLS, image optimisation)
+- AI Readiness: 1 ticket (llms.txt, FAQ structured data)
+- Monitoring: 1 ticket (GSC alerts, uptime, Core Web Vitals dashboard)
+
+Priorities: P0×4, P1×4, P2×4, P3×2.
+
+Return ONLY the JSON object, no markdown fences.`
+    }],
+  });
+
+  // Run all 5 calls SEQUENTIALLY — avoids 529 rate-limit saturation
+  // Worst case with maxRetries=2: 5 × 2 × 120s = ~20 min (well within 30 min maxDuration)
+  // Expected: 5 × ~70s = ~6 min for generation
+  // Call D and E are intentionally split so each stays well under 8k tokens (no JSON truncation)
+  console.log('[PremiumInsights] Running 5 Claude calls sequentially (maxRetries=2, timeout=120s each)...');
 
   console.log('[PremiumInsights] Starting Call A (Strategy + Action Plan)...');
   const responseA = await makeCallA().catch(err => { console.error('Premium Call A failed:', err?.message || err); return null; });
   console.log(`[PremiumInsights] Call A: ${responseA ? 'OK' : 'FAILED'}`);
 
-  console.log('[PremiumInsights] Starting Call B (Analysis + Deep-Dive)...');
+  console.log('[PremiumInsights] Starting Call B (Core Analysis)...');
   const responseB = await makeCallB().catch(err => { console.error('Premium Call B failed:', err?.message || err); return null; });
   console.log(`[PremiumInsights] Call B: ${responseB ? 'OK' : 'FAILED'}`);
 
-  console.log('[PremiumInsights] Starting Call C (Implementation + Tickets)...');
+  console.log('[PremiumInsights] Starting Call C (Deep-Dive + Google Data)...');
   const responseC = await makeCallC().catch(err => { console.error('Premium Call C failed:', err?.message || err); return null; });
   console.log(`[PremiumInsights] Call C: ${responseC ? 'OK' : 'FAILED'}`);
 
-  // Parse responses
+  console.log('[PremiumInsights] Starting Call D (Schema Templates + Implementation Guide)...');
+  const responseD = await makeCallD().catch(err => { console.error('Premium Call D failed:', err?.message || err); return null; });
+  const textD = responseD?.content[0]?.type === 'text' ? responseD.content[0].text : '';
+  console.log(`[PremiumInsights] Call D: ${responseD ? `OK (${textD.length} chars)` : 'FAILED'}`);
+
+  console.log('[PremiumInsights] Starting Call E (Dev Tickets)...');
+  const responseE = await makeCallE().catch(err => { console.error('Premium Call E failed:', err?.message || err); return null; });
+  const textE = responseE?.content[0]?.type === 'text' ? responseE.content[0].text : '';
+  console.log(`[PremiumInsights] Call E: ${responseE ? `OK (${textE.length} chars)` : 'FAILED'}`);
+
+  // Parse all responses
   const textA = responseA?.content[0]?.type === 'text' ? responseA.content[0].text : '';
   const textB = responseB?.content[0]?.type === 'text' ? responseB.content[0].text : '';
   const textC = responseC?.content[0]?.type === 'text' ? responseC.content[0].text : '';
@@ -613,6 +705,14 @@ Return ONLY the JSON object, no markdown fences.`
   const dataA = parseJsonSafely<Record<string, unknown>>(textA) || {};
   const dataB = parseJsonSafely<Record<string, unknown>>(textB) || {};
   const dataC = parseJsonSafely<Record<string, unknown>>(textC) || {};
+  const dataD = parseJsonSafely<Record<string, unknown>>(textD) || {};
+  const dataE = parseJsonSafely<Record<string, unknown>>(textE) || {};
+
+  // Log parse results to catch silent failures
+  console.log(`[PremiumInsights] Parse results — A:${Object.keys(dataA).length} keys, B:${Object.keys(dataB).length} keys, C:${Object.keys(dataC).length} keys, D:${Object.keys(dataD).length} keys, E:${Object.keys(dataE).length} keys`);
+  if (!dataD.schemaTemplates) console.warn('[PremiumInsights] Call D missing schemaTemplates — raw:', textD.substring(0, 200));
+  if (!dataD.implementationGuide) console.warn('[PremiumInsights] Call D missing implementationGuide — raw:', textD.substring(0, 200));
+  if (!dataE.tickets) console.warn('[PremiumInsights] Call E missing tickets — raw:', textE.substring(0, 200));
 
   return {
     // Call A — Strategy
@@ -620,23 +720,31 @@ Return ONLY the JSON object, no markdown fences.`
     topPriority: (dataA.topPriority as string) || '',
     criticalIssues: (dataA.criticalIssues as string[]) || [],
     quickWins: (dataA.quickWins as string[]) || [],
-    actionPlan: (dataA.actionPlan as PremiumInsights['actionPlan']) || [],
+    // Override projectedScore with calculated values — Claude's are hallucinated
+    actionPlan: ((dataA.actionPlan as PremiumInsights['actionPlan']) || []).map((phase, i) => ({
+      ...phase,
+      projectedScore: roadmap.phases[i]?.projectedScore ?? phase.projectedScore,
+    })),
 
-    // Call B — Analysis
+    // Call B — Core Analysis
     technical: (dataB.technical as string) || '',
     content: (dataB.content as string) || '',
     onPage: (dataB.onPage as string) || '',
     schema: (dataB.schema as string) || '',
     performance: (dataB.performance as string) || '',
-    aiReadiness: (dataB.aiReadiness as string) || '',
     images: (dataB.images as string) || '',
-    googleData: (dataB.googleData as string) || undefined,
-    deepDive: (dataB.deepDive as string) || '',
-    googleDataDeep: (dataB.googleDataDeep as string) || undefined,
 
-    // Call C — Implementation
-    schemaTemplates: (dataC.schemaTemplates as PremiumInsights['schemaTemplates']) || [],
-    implementationGuide: (dataC.implementationGuide as string) || '',
-    tickets: (dataC.tickets as PremiumInsights['tickets']) || [],
+    // Call C — Deep-Dive + Google Data
+    deepDive: (dataC.deepDive as string) || '',
+    googleDataDeep: (dataC.googleDataDeep as string) || undefined,
+    aiReadiness: (dataC.aiReadiness as string) || '',
+    googleData: (dataC.googleData as string) || undefined,
+
+    // Call D — Schema Templates + Implementation Guide
+    schemaTemplates: (dataD.schemaTemplates as PremiumInsights['schemaTemplates']) || [],
+    implementationGuide: (dataD.implementationGuide as string) || '',
+
+    // Call E — Dev Tickets
+    tickets: (dataE.tickets as PremiumInsights['tickets']) || [],
   };
 }

@@ -10,7 +10,8 @@ interface FormData {
   gscConnected: boolean;
   ga4PropertyId: string;
   competitorUrls: string[];
-  priorityPages: string[];
+  avgDealValue: string;
+  conversionRatePct: string;
 }
 
 function FieldLabel({ label, required, description }: { label: string; required?: boolean; description: string }) {
@@ -38,7 +39,8 @@ export default function OnboardingPage() {
     gscConnected: false,
     ga4PropertyId: '',
     competitorUrls: [''],
-    priorityPages: [''],
+    avgDealValue: '',
+    conversionRatePct: '',
   });
 
   const handleConnectGSC = () => {
@@ -72,22 +74,23 @@ export default function OnboardingPage() {
           gscConnected: data.gsc_connected || false,
           ga4PropertyId: data.ga4_property_id || '',
           competitorUrls: data.competitor_urls?.length ? data.competitor_urls : [''],
-          priorityPages: data.priority_pages?.length ? data.priority_pages : [''],
+          avgDealValue: data.avg_deal_value ? String(data.avg_deal_value) : '',
+          conversionRatePct: data.conversion_rate_pct ? String(data.conversion_rate_pct) : '',
         });
       }
     });
   }, [supabase]);
 
-  const addField = (field: 'competitorUrls' | 'priorityPages', max: number) => {
+  const addField = (field: 'competitorUrls', max: number) => {
     if (form[field].length >= max) return;
     setForm({ ...form, [field]: [...form[field], ''] });
   };
 
-  const removeField = (field: 'competitorUrls' | 'priorityPages', index: number) => {
+  const removeField = (field: 'competitorUrls', index: number) => {
     setForm({ ...form, [field]: form[field].filter((_, i) => i !== index) });
   };
 
-  const updateArrayField = (field: 'competitorUrls' | 'priorityPages', index: number, value: string) => {
+  const updateArrayField = (field: 'competitorUrls', index: number, value: string) => {
     const updated = [...form[field]];
     updated[index] = value;
     setForm({ ...form, [field]: updated });
@@ -109,7 +112,8 @@ export default function OnboardingPage() {
       notification_channel: 'email',
       slack_webhook_url: null,
       competitor_urls: form.competitorUrls.filter(Boolean),
-      priority_pages: form.priorityPages.filter(Boolean),
+      avg_deal_value: form.avgDealValue ? Number(form.avgDealValue) : null,
+      conversion_rate_pct: form.conversionRatePct ? Number(form.conversionRatePct) : null,
       completed_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }, { onConflict: 'user_id' });
@@ -234,14 +238,14 @@ export default function OnboardingPage() {
                 <div>
                   <div className="flex items-center gap-3 mb-3">
                     <span className="w-7 h-7 rounded-full bg-gold text-dark text-sm font-bold flex items-center justify-center shrink-0">4</span>
-                    <h3 className="text-warm-white font-semibold">Competitors &amp; Priority Pages (optional)</h3>
+                    <h3 className="text-warm-white font-semibold">Competitors &amp; Business Metrics (optional)</h3>
                   </div>
                   <div className="text-warm-gray text-sm leading-relaxed ml-10 space-y-2">
                     <p>
-                      <strong className="text-warm-white">Competitors:</strong> Enter up to 3 competitor websites (e.g., <span className="font-mono text-warm-gray-light">wework.com</span>). We&apos;ll compare their SEO profiles against yours.
+                      <strong className="text-warm-white">Competitors:</strong> Enter up to 3 competitor URLs (e.g., <span className="font-mono text-warm-gray-light">wework.com</span>). We&apos;ll crawl them and compare their SEO profile directly against yours.
                     </p>
                     <p>
-                      <strong className="text-warm-white">Priority pages:</strong> List up to 5 specific pages you care most about (e.g., <span className="font-mono text-warm-gray-light">/pricing</span>, <span className="font-mono text-warm-gray-light">/product</span>). We&apos;ll give these extra attention in the analysis.
+                      <strong className="text-warm-white">Business metrics:</strong> Your average deal/order value and visitor conversion rate. We use these to calculate real revenue projections — e.g., &ldquo;fixing these title tags is worth +$8,400/month.&rdquo; Without them, we fall back to industry-average defaults.
                     </p>
                   </div>
                 </div>
@@ -329,28 +333,34 @@ export default function OnboardingPage() {
             )}
           </div>
 
-          {/* Priority Pages */}
+          {/* Business Metrics — for grounded ROI projections */}
           <div>
-            <FieldLabel label="Priority Pages (up to 5)"
-              description="Specific pages you want us to focus on — your top landing pages, underperforming pages, or key conversion pages. We'll provide deeper analysis on these." />
-            {form.priorityPages.map((page, i) => (
-              <div key={i} className="flex gap-2 mb-2">
-                <input type="text" value={page}
-                  onChange={(e) => updateArrayField('priorityPages', i, e.target.value)}
-                  placeholder={`/your-important-page-${i + 1}`}
-                  className="flex-1 px-5 py-3 rounded-xl bg-warm-white/5 border border-warm-white/10 text-warm-white placeholder-warm-gray-light focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold" />
-                {form.priorityPages.length > 1 && (
-                  <button type="button" onClick={() => removeField('priorityPages', i)}
-                    className="p-3 text-warm-gray-light hover:text-warm-white"><X className="w-4 h-4" /></button>
-                )}
+            <FieldLabel label="Business Metrics (optional)"
+              description="Used to calculate real revenue projections in your report. Without these we use industry averages — with them, your ROI numbers are specific to your business." />
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs text-warm-gray mb-1.5 block">Average Deal / Order Value ($)</label>
+                <input
+                  type="number" min="1" value={form.avgDealValue}
+                  onChange={(e) => setForm({ ...form, avgDealValue: e.target.value })}
+                  placeholder="e.g., 500"
+                  className="w-full px-4 py-3 rounded-xl bg-warm-white/5 border border-warm-white/10 text-warm-white placeholder-warm-gray-light focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold"
+                />
               </div>
-            ))}
-            {form.priorityPages.length < 5 && (
-              <button type="button" onClick={() => addField('priorityPages', 5)}
-                className="flex items-center gap-1.5 text-gold text-sm hover:text-gold-light mt-1">
-                <Plus className="w-4 h-4" /> Add page
-              </button>
-            )}
+              <div>
+                <label className="text-xs text-warm-gray mb-1.5 block">Visitor Conversion Rate (%)</label>
+                <input
+                  type="number" min="0.1" max="100" step="0.1" value={form.conversionRatePct}
+                  onChange={(e) => setForm({ ...form, conversionRatePct: e.target.value })}
+                  placeholder="e.g., 2"
+                  className="w-full px-4 py-3 rounded-xl bg-warm-white/5 border border-warm-white/10 text-warm-white placeholder-warm-gray-light focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold"
+                />
+              </div>
+            </div>
+            <p className="text-xs text-warm-gray-light mt-2">
+              Example: $500 deal value × 2% conversion = every 100 new visitors = $1,000 revenue.
+              If left blank, we use $500 deal value and 2% conversion as defaults.
+            </p>
           </div>
 
           {error && <p className="text-[#e05555] text-sm">{error}</p>}

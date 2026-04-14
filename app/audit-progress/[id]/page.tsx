@@ -22,6 +22,7 @@ export default function AuditProgressPage() {
   const [phase, setPhase] = useState('crawling');
   const [pagesCrawled, setPagesCrawled] = useState(0);
   const [pagesTotal, setPagesTotal] = useState(0);
+  const [pagesHitMax, setPagesHitMax] = useState(false);
   const [score, setScore] = useState<number | null>(null);
   const [error, setError] = useState('');
   const [elapsed, setElapsed] = useState(0);
@@ -54,6 +55,7 @@ export default function AuditProgressPage() {
         setPhase(data.phase || 'crawling');
         setPagesCrawled(data.pages_crawled || 0);
         setPagesTotal(data.pages_total || 0);
+        setPagesHitMax(data.pages_hit_max || false);
 
         if (data.status === 'complete') {
           setScore(data.score);
@@ -101,7 +103,7 @@ export default function AuditProgressPage() {
           </div>
           <h2 className="font-serif text-3xl text-on-surface mb-3">Audit Complete!</h2>
           <p className="bg-gradient-to-r from-primary to-primary-container bg-clip-text text-transparent text-4xl font-bold mb-2">{score}/100</p>
-          <p className="text-on-surface-muted mb-6">{pagesCrawled} pages analyzed</p>
+          <p className="text-on-surface-muted mb-6">{pagesCrawled}{pagesHitMax ? '+' : ''} pages analyzed</p>
           <p className="text-on-surface-light text-sm">Redirecting to your results...</p>
         </div>
       </div>
@@ -153,11 +155,14 @@ export default function AuditProgressPage() {
                     isDone ? 'text-tertiary' : isActive ? 'text-on-surface' : 'text-on-surface-light'
                   }`}>
                     {p.label}
-                    {isActive && p.key === 'crawling' && pagesTotal > 0 && (
-                      <span className="text-primary ml-2">{pagesCrawled}/{pagesTotal} pages</span>
+                    {isActive && p.key === 'crawling' && pagesCrawled > 0 && (
+                      <span className="text-primary ml-2">{pagesCrawled} pages found…</span>
                     )}
-                    {isActive && p.key === 'analyzing' && pagesCrawled > 0 && (
-                      <span className="text-primary ml-2">{pagesCrawled} pages</span>
+                    {isActive && p.key === 'analyzing' && pagesTotal > 0 && (
+                      <span className="text-primary ml-2">{pagesTotal}{pagesHitMax ? '+' : ''} pages</span>
+                    )}
+                    {isDone && p.key === 'crawling' && pagesTotal > 0 && (
+                      <span className="text-tertiary ml-2">{pagesTotal}{pagesHitMax ? '+' : ''} pages</span>
                     )}
                   </p>
                   {(isActive || isDone) && (
@@ -171,11 +176,24 @@ export default function AuditProgressPage() {
           })}
         </div>
 
-        {/* Crawl progress bar */}
-        {phase === 'crawling' && pagesTotal > 0 && (
+        {/* Progress bar */}
+        {phase === 'crawling' && pagesCrawled > 0 && (
+          // During crawling the final total is unknown — show an indeterminate bar
           <div className="mb-8">
             <div className="flex justify-between text-xs text-on-surface-muted mb-1">
-              <span>Crawling pages</span>
+              <span>Discovering pages</span>
+              <span>{pagesCrawled} found so far</span>
+            </div>
+            <div className="h-1.5 bg-surface-high rounded-full overflow-hidden">
+              <div className="h-full bg-gradient-cta rounded-full animate-pulse" style={{ width: '60%' }} />
+            </div>
+          </div>
+        )}
+        {phase === 'analyzing' && pagesTotal > 0 && pagesCrawled > 0 && (
+          // During analysis we know both the total and how many have been processed
+          <div className="mb-8">
+            <div className="flex justify-between text-xs text-on-surface-muted mb-1">
+              <span>Analyzing pages</span>
               <span>{pagesCrawled} / {pagesTotal}</span>
             </div>
             <div className="h-1.5 bg-surface-high rounded-full overflow-hidden">

@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 80" role="img" aria-label="WhatSEO.ai">
+  <title>WhatSEO.ai</title>
+  <defs>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#d4aa5a"/>
+      <stop offset="100%" stop-color="#b88c24"/>
+    </linearGradient>
+    <linearGradient id="iconBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#252525"/>
+      <stop offset="100%" stop-color="#141414"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ── Icon mark ── -->
+  <rect width="80" height="80" rx="18" fill="url(#iconBg)"/>
+  <!-- subtle border -->
+  <rect width="80" height="80" rx="18" fill="none" stroke="#c9a85c" stroke-width="0.75" opacity="0.25"/>
+
+  <!-- W-shaped bar chart — bars bottom-aligned at y=72 -->
+  <!-- Bar 1  tall, left -->
+  <rect x="13" y="20" width="9" height="52" rx="3" fill="url(#gold)"/>
+  <!-- Bar 2  short -->
+  <rect x="25" y="45" width="9" height="27" rx="3" fill="#c9a85c" opacity="0.5"/>
+  <!-- Bar 3  medium center -->
+  <rect x="37" y="35" width="9" height="37" rx="3" fill="#c9a85c" opacity="0.72"/>
+  <!-- Bar 4  short -->
+  <rect x="49" y="45" width="9" height="27" rx="3" fill="#c9a85c" opacity="0.5"/>
+  <!-- Bar 5  tall, right (brightest — "SEO score peak") -->
+  <rect x="61" y="20" width="9" height="52" rx="3" fill="url(#gold)"/>
+  <!-- Glow cap on bar 5 -->
+  <rect x="61" y="20" width="9" height="6" rx="3" fill="#e8c87a" opacity="0.6"/>
+
+  <!-- AI sparkle (4-point star) top-right corner of icon -->
+  <g transform="translate(68,11)">
+    <path d="M0-4.5 1.1-1.1 4.5 0 1.1 1.1 0 4.5-1.1 1.1-4.5 0-1.1-1.1Z"
+      fill="#c9a85c" opacity="0.9"/>
+  </g>
+
+  <!-- ── Wordmark ── -->
+  <!-- "What" — warm cream -->
+  <text x="96" y="52"
+    font-family="Georgia, Palatino, 'Times New Roman', serif"
+    font-size="33" font-weight="700"
+    fill="#f0ebe0" letter-spacing="-0.5">What</text>
+
+  <!-- "SEO" — gold -->
+  <text x="191" y="52"
+    font-family="Georgia, Palatino, 'Times New Roman', serif"
+    font-size="33" font-weight="700"
+    fill="url(#gold)" letter-spacing="-0.5">SEO</text>
+
+  <!-- ".ai" — muted -->
+  <text x="257" y="52"
+    font-family="Georgia, Palatino, 'Times New Roman', serif"
+    font-size="22"
+    fill="#9a8f7f">.ai</text>
+</svg>

@@ -18,9 +18,8 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { url, priorityPages = [], competitorUrls = [] } = body as {
+    const { url, competitorUrls = [] } = body as {
       url: string;
-      priorityPages?: string[];
       competitorUrls?: string[];
     };
 
@@ -82,10 +81,10 @@ export async function POST(request: NextRequest) {
       used_at: new Date().toISOString(),
     }).eq('id', creditId);
 
-    // Load Google tokens from onboarding data (using authenticated client — RLS safe)
+    // Load Google tokens + business metrics from onboarding data (authenticated client — RLS safe)
     const { data: onboarding } = await db
       .from('onboarding_data')
-      .select('google_access_token, google_refresh_token, ga4_property_id, gsc_connected')
+      .select('google_access_token, google_refresh_token, ga4_property_id, gsc_connected, avg_deal_value, conversion_rate_pct')
       .eq('user_id', user.id)
       .single();
 
@@ -98,12 +97,14 @@ export async function POST(request: NextRequest) {
         url: normalizedUrl,
         userId: user.id,
         email: user.email || '',
-        priorityPages,
         competitorUrls,
-        // Pass Google tokens directly — Trigger.dev can't read them from DB (RLS)
+        // Google tokens passed directly — Trigger.dev can't read them from DB (RLS)
         googleAccessToken: onboarding?.google_access_token || null,
         googleRefreshToken: onboarding?.google_refresh_token || null,
         ga4PropertyId: onboarding?.ga4_property_id || null,
+        // Business metrics for grounded revenue projections
+        avgDealValue: onboarding?.avg_deal_value || null,
+        conversionRatePct: onboarding?.conversion_rate_pct || null,
       });
 
       return NextResponse.json({

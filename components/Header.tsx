@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Menu, X, User } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
@@ -55,9 +56,8 @@ export default function Header() {
       }`}
     >
       <nav className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-        <Link href="/" className="text-xl font-bold text-on-surface">
-          What<span className="text-primary">SEO</span>
-          <span className="text-on-surface-light text-sm">.ai</span>
+        <Link href="/" className="flex items-center">
+          <Image src="/logo-light.svg" alt="WhatSEO.ai" width={135} height={36} priority />
         </Link>
 
         <div className="hidden md:flex items-center gap-8">

@@ -10,6 +10,7 @@ interface CrawledPageExtended extends CrawledPage {
 /** Extended CrawlResult with orphan page tracking */
 interface CrawlResultExtended extends CrawlResult {
   orphanPages?: string[];
+  hitMaxPages?: boolean;  // true when the crawl was stopped by the maxPages cap
 }
 
 interface CrawlOptions {
@@ -197,6 +198,8 @@ export async function crawlSite(rootUrl: string, options: CrawlOptions): Promise
   const skippedUrls: string[] = [];
   // Track which pages are linked from other crawled pages (for orphan detection)
   const linkedUrls = new Set<string>();
+  // Track final URLs (after redirects) to avoid analyzing the same page twice
+  const seenFinalUrls = new Set<string>();
   let queueIndex = 0;
 
   while (queueIndex < queue.length && pages.length < maxPages) {
@@ -219,6 +222,13 @@ export async function crawlSite(rootUrl: string, options: CrawlOptions): Promise
         }
         return;
       }
+
+      // Dedup by final URL — prevents counting the same page twice when multiple
+      // enqueued URLs (e.g. www vs non-www, or sitemap + internal link) redirect
+      // to the same destination.
+      const normalizedFinal = normalizeUrl(page.finalUrl, origin) || page.finalUrl;
+      if (seenFinalUrls.has(normalizedFinal)) return;
+      seenFinalUrls.add(normalizedFinal);
 
       // Detect JS rendering
       if (page.html) {
@@ -266,11 +276,13 @@ export async function crawlSite(rootUrl: string, options: CrawlOptions): Promise
     }
   }
 
+  const goodPages = pages.filter((p) => p.statusCode < 400 && !p.error);
   return {
-    pages: pages.filter((p) => p.statusCode < 400 && !p.error),
+    pages: goodPages,
     sitemapUrls,
     skippedUrls,
     orphanPages: orphanPages.length > 0 ? orphanPages : undefined,
+    hitMaxPages: goodPages.length >= maxPages,
     duration: Date.now() - start,
   };
 }

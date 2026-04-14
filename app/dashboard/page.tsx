@@ -15,7 +15,8 @@ interface OnboardingData {
   google_access_token: string | null;
   google_refresh_token: string | null;
   competitor_urls: string[];
-  priority_pages: string[];
+  avg_deal_value?: number | null;
+  conversion_rate_pct?: number | null;
   [key: string]: unknown;
 }
 
@@ -120,7 +121,6 @@ export default function DashboardPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           url: onboarding.website_url,
-          priorityPages: onboarding.priority_pages || [],
           competitorUrls: onboarding.competitor_urls || [],
         }),
       });

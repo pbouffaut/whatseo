@@ -152,6 +152,7 @@ export interface FullAuditResult {
   score: AuditScore;
   pagesCrawled: number;
   pagesTotal: number;
+  hitMaxPages?: boolean;  // true when site has more pages than the crawl cap
   crawlDuration: number;
 
   // Aggregated scores (averages across all pages)

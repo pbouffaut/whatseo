@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Globe, Mail, ExternalLink } from 'lucide-react';
 
 const serviceLinks = [
@@ -17,9 +18,8 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
           {/* Brand */}
           <div>
-            <div className="text-xl font-bold text-on-surface mb-3">
-              What<span className="text-primary">SEO</span>
-              <span className="text-on-surface-light text-sm">.ai</span>
+            <div className="mb-3">
+              <Image src="/logo-light.svg" alt="WhatSEO.ai" width={120} height={32} />
             </div>
             <p className="text-on-surface-muted text-sm leading-relaxed">
               Expert-level SEO insights delivered in minutes. Professional analysis your team can act on.
