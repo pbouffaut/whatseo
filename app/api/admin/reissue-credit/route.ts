@@ -43,16 +43,16 @@ export async function POST(request: NextRequest) {
     .insert({
       user_id: userId,
       status: 'available',
-      credit_type: 'admin_reissue',
+      credit_type: 'one_time',
       amount_cents: 0,
     })
     .select('id')
     .single();
 
   if (error || !credit) {
-    console.error('reissue-credit error:', error);
+    console.error('reissue-credit error:', error?.message, error?.code, error?.details);
     return NextResponse.json(
-      { error: 'Failed to issue credit' },
+      { error: error?.message ?? 'Failed to issue credit' },
       { status: 500 }
     );
   }
