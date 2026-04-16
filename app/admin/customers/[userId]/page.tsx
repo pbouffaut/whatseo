@@ -151,7 +151,12 @@ function AuditsTab({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId }),
       });
-      if (res.ok) setReissuedIds((prev) => new Set([...prev, audit.id]));
+      if (res.ok) {
+        setReissuedIds((prev) => new Set([...prev, audit.id]));
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert(`Failed to reissue credit: ${err.error ?? res.status}`);
+      }
     } finally {
       setReissuingId(null);
     }
@@ -441,7 +446,12 @@ export default function CustomerDetailPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId }),
       });
-      if (res.ok) setReissued(true);
+      if (res.ok) {
+        setReissued(true);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert(`Failed to reissue credit: ${err.error ?? res.status}`);
+      }
     } finally {
       setReissuing(false);
     }
