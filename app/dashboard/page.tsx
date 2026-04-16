@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { PLANS } from '@/lib/plans';
 import type { User } from '@supabase/supabase-js';
-import { Check, AlertCircle, Zap, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
+import { Check, AlertCircle, Zap, ChevronDown, ChevronUp, ExternalLink, TrendingUp } from 'lucide-react';
 
 interface OnboardingData {
   website_url: string;
@@ -69,6 +69,126 @@ function CardSkeleton() {
   );
 }
 
+// ─── Score Trend Chart ──────────────────────────────────────────────────────
+
+interface ScoreHistoryPoint {
+  overall: number;
+  recordedAt: string;
+}
+
+function ScoreTrendChart({ scoreHistory }: { scoreHistory: ScoreHistoryPoint[] }) {
+  const W = 280;
+  const H = 80;
+  const PAD_X = 20;
+  const PAD_Y = 14;
+  const innerW = W - PAD_X * 2;
+  const innerH = H - PAD_Y * 2;
+
+  if (scoreHistory.length === 0) return null;
+
+  if (scoreHistory.length === 1) {
+    return (
+      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
+        <circle cx={W / 2} cy={H / 2} r={4} fill="#c9a85c" />
+        <text
+          x={W / 2}
+          y={H / 2 + 16}
+          textAnchor="middle"
+          fontSize="10"
+          fill="#c9a85c"
+          fontFamily="sans-serif"
+        >
+          Baseline set
+        </text>
+      </svg>
+    );
+  }
+
+  const scores = scoreHistory.map((p) => p.overall);
+  const minScore = Math.min(...scores);
+  const maxScore = Math.max(...scores);
+  const range = maxScore - minScore || 1;
+
+  const toX = (i: number) =>
+    PAD_X + (i / (scoreHistory.length - 1)) * innerW;
+  const toY = (v: number) =>
+    PAD_Y + innerH - ((v - minScore) / range) * innerH;
+
+  const points = scoreHistory.map((p, i) => `${toX(i)},${toY(p.overall)}`).join(' ');
+
+  const firstScore = scoreHistory[0].overall;
+  const lastScore = scoreHistory[scoreHistory.length - 1].overall;
+  const lastIdx = scoreHistory.length - 1;
+
+  return (
+    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
+      <polyline
+        points={points}
+        fill="none"
+        stroke="#c9a85c"
+        strokeWidth="2"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+      {scoreHistory.map((p, i) => (
+        <circle
+          key={i}
+          cx={toX(i)}
+          cy={toY(p.overall)}
+          r={3}
+          fill="#c9a85c"
+        />
+      ))}
+      {/* First label */}
+      <text
+        x={toX(0)}
+        y={H - 2}
+        textAnchor="middle"
+        fontSize="9"
+        fill="#c9a85c"
+        fontFamily="sans-serif"
+      >
+        {firstScore}
+      </text>
+      {/* Last label */}
+      <text
+        x={toX(lastIdx)}
+        y={H - 2}
+        textAnchor="middle"
+        fontSize="9"
+        fill="#c9a85c"
+        fontFamily="sans-serif"
+      >
+        {lastScore}
+      </text>
+    </svg>
+  );
+}
+
+// ─── Types for monitoring ────────────────────────────────────────────────────
+
+interface MonitoringSchedule {
+  enabled: boolean;
+  intervalMonths: number;
+  nextRunAt: string | null;
+  lastRunAt: string | null;
+  lastAuditId: string | null;
+}
+
+interface ScoreHistoryEntry {
+  auditId: string;
+  overall: number;
+  technical: number | null;
+  onPage: number | null;
+  schema: number | null;
+  performance: number | null;
+  aiReadiness: number | null;
+  pagesCrawled: number | null;
+  recordedAt: string;
+}
+
+// ─── Plan labels ─────────────────────────────────────────────────────────────
+
 const planLabels: Record<string, string> = {
   professional: 'Professional Audit',
   monthly: 'Monthly Monitor',
@@ -92,6 +212,12 @@ export default function DashboardPage() {
   const [error, setError] = useState('');
   const [showCreditHistory, setShowCreditHistory] = useState(false);
   const [showAllAudits, setShowAllAudits] = useState(false);
+
+  // Monitoring
+  const [monitoringSchedule, setMonitoringSchedule] = useState<MonitoringSchedule | null | undefined>(undefined);
+  const [monitoringScoreHistory, setMonitoringScoreHistory] = useState<ScoreHistoryEntry[]>([]);
+  const [monitoringLoading, setMonitoringLoading] = useState(false);
+  const [monitoringToggling, setMonitoringToggling] = useState(false);
 
   const availableCredits = (credits ?? []).filter((c) => c.status === 'available');
   const runningAudit = (audits ?? []).find((a) => a.status === 'running');
@@ -156,6 +282,42 @@ export default function DashboardPage() {
         setCredits(creds);
       });
   }, [authChecked, user]);
+
+  // Monitoring: fetch status independently
+  useEffect(() => {
+    if (!authChecked) return;
+    setMonitoringLoading(true);
+    fetch('/api/monitoring/status')
+      .then(async (res) => {
+        if (!res.ok) {
+          setMonitoringSchedule(null);
+          return;
+        }
+        const json = await res.json();
+        setMonitoringSchedule(json.schedule ?? null);
+        setMonitoringScoreHistory(json.scoreHistory ?? []);
+      })
+      .catch(() => setMonitoringSchedule(null))
+      .finally(() => setMonitoringLoading(false));
+  }, [authChecked]);
+
+  async function handleMonitoringToggle() {
+    if (!monitoringSchedule) return;
+    setMonitoringToggling(true);
+    try {
+      const res = await fetch('/api/monitoring/toggle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: !monitoringSchedule.enabled }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        setMonitoringSchedule((prev) => prev ? { ...prev, enabled: json.enabled } : prev);
+      }
+    } finally {
+      setMonitoringToggling(false);
+    }
+  }
 
   async function handleRunAudit() {
     if (!user || !onboarding || availableCredits.length === 0) return;
@@ -400,6 +562,89 @@ export default function DashboardPage() {
             )}
           </div>
         )}
+
+        {/* Monitoring Card */}
+        {monitoringLoading || monitoringSchedule === undefined ? (
+          monitoringLoading ? <CardSkeleton /> : null
+        ) : monitoringSchedule !== null ? (
+          <div className="bg-surface-white rounded-[2rem] shadow-ambient p-8 mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2.5">
+                <TrendingUp className="w-4 h-4 text-primary" />
+                <h2 className="font-serif text-xl text-on-surface">
+                  {monitoringSchedule.intervalMonths === 1 ? 'Monthly Monitor' : 'Bi-Monthly Monitor'}
+                </h2>
+              </div>
+              <span
+                className={`text-xs font-bold px-3 py-1 rounded-full ${
+                  monitoringSchedule.enabled
+                    ? 'bg-tertiary-fixed/30 text-tertiary'
+                    : 'bg-surface-high text-on-surface-muted'
+                }`}
+              >
+                {monitoringSchedule.enabled ? 'Active' : 'Paused'}
+              </span>
+            </div>
+
+            {monitoringScoreHistory.length > 1 && (
+              <div className="mb-5">
+                <ScoreTrendChart scoreHistory={monitoringScoreHistory} />
+              </div>
+            )}
+
+            <div className="space-y-1.5 mb-5">
+              {monitoringSchedule.nextRunAt && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-on-surface-muted">Next audit</span>
+                  <span className="text-on-surface font-medium">
+                    {new Date(monitoringSchedule.nextRunAt).toLocaleDateString(undefined, {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })}
+                  </span>
+                </div>
+              )}
+              {monitoringSchedule.lastRunAt && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-on-surface-muted">Last audit</span>
+                  <span className="text-on-surface">
+                    {new Date(monitoringSchedule.lastRunAt).toLocaleDateString(undefined, {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })}
+                    {monitoringScoreHistory.length > 0 && (
+                      <>
+                        {' · Score: '}
+                        <span className="font-medium text-primary">
+                          {monitoringScoreHistory[monitoringScoreHistory.length - 1].overall}
+                        </span>
+                      </>
+                    )}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <button
+              onClick={handleMonitoringToggle}
+              disabled={monitoringToggling}
+              className="px-5 py-2 rounded-full text-sm font-semibold border border-on-surface-light/20 text-on-surface-muted hover:text-on-surface hover:border-on-surface-light/40 transition-colors disabled:opacity-50"
+            >
+              {monitoringToggling ? (
+                <span className="flex items-center gap-2">
+                  <Spinner size={4} />
+                  {monitoringSchedule.enabled ? 'Pausing…' : 'Resuming…'}
+                </span>
+              ) : monitoringSchedule.enabled ? (
+                'Pause monitoring'
+              ) : (
+                'Resume monitoring'
+              )}
+            </button>
+          </div>
+        ) : null}
 
         {/* Subscription + Config — side by side on md+ */}
         <div className="grid md:grid-cols-2 gap-6 mb-6">

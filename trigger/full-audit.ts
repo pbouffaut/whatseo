@@ -14,7 +14,7 @@ function getSupabase() {
 
 interface FullAuditPayload {
   auditId: string;
-  creditId: string;
+  creditId: string;          // 'scheduled' sentinel = no credit deduction
   url: string;
   userId: string;
   email: string;
@@ -24,6 +24,8 @@ interface FullAuditPayload {
   ga4PropertyId: string | null;
   avgDealValue?: number | null;
   conversionRatePct?: number | null;
+  isScheduled?: boolean;     // true = triggered by scheduled-monitor
+  previousAuditId?: string;  // for delta computation in monitoring email
 }
 
 export const fullAuditTask = task({
@@ -33,7 +35,7 @@ export const fullAuditTask = task({
 
   run: async (payload: FullAuditPayload) => {
     const supabase = getSupabase();
-    const { auditId, creditId, url, userId, competitorUrls } = payload;
+    const { auditId, creditId, url, userId, competitorUrls, isScheduled, previousAuditId } = payload;
     const businessMetrics = {
       avgDealValue: payload.avgDealValue ?? null,
       conversionRatePct: payload.conversionRatePct ?? null,
@@ -153,28 +155,7 @@ export const fullAuditTask = task({
         updatedAt: new Date().toISOString(),
       }).eq("id", auditId);
 
-      // Send email report (PDF generated on-demand via /api/report/[id])
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://whatseo.vercel.app";
-      try {
-        if (payload.email && process.env.RESEND_API_KEY) {
-          const resend = await import("resend");
-          const client = new resend.Resend(process.env.RESEND_API_KEY);
-          const scoreColor = result.score.overall >= 70 ? '#4aab6a' : result.score.overall >= 40 ? '#d4952b' : '#e05555';
-          await client.emails.send({
-            from: `WhatSEO.ai <${process.env.RESEND_FROM_EMAIL || 'reports@whatseo.ai'}>`,
-            to: payload.email,
-            subject: `Your SEO Audit is Ready — Score: ${result.score.overall}/100`,
-            html: `<div style="max-width:600px;margin:0 auto;padding:40px 24px;background:#1a1a1a;font-family:system-ui,sans-serif;"><div style="text-align:center;margin-bottom:32px;"><span style="font-size:20px;font-weight:bold;color:#f5f0e8;">What</span><span style="font-size:20px;font-weight:bold;color:#c9a85c;">SEO</span><span style="font-size:14px;color:#a09888;">.ai</span></div><div style="background:#232323;border-radius:16px;padding:32px;text-align:center;margin-bottom:24px;"><p style="color:#c9a85c;font-size:12px;text-transform:uppercase;letter-spacing:2px;margin:0 0 16px;">Audit Complete</p><div style="font-size:64px;font-weight:bold;color:${scoreColor};">${result.score.overall}</div><p style="color:#a09888;font-size:14px;margin:4px 0;">/ 100 SEO Health Score</p><p style="color:#a09888;font-size:12px;margin:8px 0 0;">${result.pagesCrawled} pages · ${result.recommendations.length} recommendations</p></div><div style="text-align:center;margin-bottom:24px;"><a href="${appUrl}/results/${auditId}" style="display:inline-block;background:#c9a85c;color:#1a1a1a;padding:14px 32px;border-radius:50px;text-decoration:none;font-weight:600;font-size:16px;">View Full Results</a></div><div style="text-align:center;"><a href="${appUrl}/api/report/${auditId}" style="color:#c9a85c;font-size:13px;text-decoration:none;">Download PDF Report →</a></div></div>`,
-          });
-          await supabase.from("Audit").update({
-            report_emailed_at: new Date().toISOString(),
-          }).eq("id", auditId);
-        }
-      } catch (emailErr) {
-        console.error("Email delivery failed:", emailErr);
-      }
-
-      // Save results
+      // Save results first so email links work
       metadata.set("phase", "complete");
       await supabase.from("Audit").update({
         status: "complete",
@@ -185,6 +166,105 @@ export const fullAuditTask = task({
         pages_total: result.pagesTotal,
         updatedAt: new Date().toISOString(),
       }).eq("id", auditId);
+
+      // Write score history row (used for trend chart + delta emails)
+      const cats = result.score.categories;
+      await supabase.from("score_history").insert({
+        user_id: userId,
+        audit_id: auditId,
+        overall: result.score.overall,
+        technical: cats?.technical?.score ?? null,
+        on_page: cats?.onPage?.score ?? null,
+        schema_score: cats?.schema?.score ?? null,
+        performance: cats?.performance?.score ?? null,
+        ai_readiness: cats?.aiReadiness?.score ?? null,
+        pages_crawled: result.pagesCrawled,
+      }).then(({ error }) => { if (error) console.warn("score_history insert failed:", error.message); });
+
+      // Update monitoring schedule if this was a scheduled run
+      if (isScheduled) {
+        await supabase.from("monitoring_schedules")
+          .update({ last_audit_id: auditId, updated_at: new Date().toISOString() })
+          .eq("user_id", userId);
+      }
+
+      // Send email
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://whatseo.ai";
+      try {
+        if (payload.email && process.env.RESEND_API_KEY) {
+          const resend = await import("resend");
+          const client = new resend.Resend(process.env.RESEND_API_KEY);
+
+          let emailHtml: string;
+          let emailSubject: string;
+
+          if (isScheduled) {
+            const { buildMonitoringEmail } = await import("../lib/monitoring/emails");
+            const { computeScoreDelta } = await import("../lib/monitoring/score-delta");
+
+            let previousSnapshot = null;
+            if (previousAuditId) {
+              const { data: prev } = await supabase.from("score_history")
+                .select("overall,technical,on_page,schema_score,performance,ai_readiness,recorded_at")
+                .eq("audit_id", previousAuditId)
+                .single();
+              if (prev) {
+                previousSnapshot = {
+                  overall: prev.overall as number, technical: prev.technical as number,
+                  onPage: prev.on_page as number, schema: prev.schema_score as number,
+                  performance: prev.performance as number, aiReadiness: prev.ai_readiness as number,
+                  recordedAt: prev.recorded_at as string,
+                };
+              }
+            }
+
+            const currentSnapshot = {
+              overall: result.score.overall,
+              technical: cats?.technical?.score,
+              onPage: cats?.onPage?.score,
+              schema: cats?.schema?.score,
+              performance: cats?.performance?.score,
+              aiReadiness: cats?.aiReadiness?.score,
+            };
+            const delta = previousSnapshot ? computeScoreDelta(previousSnapshot, currentSnapshot) : null;
+            const isFirstRun = !previousSnapshot;
+            const topActions = (result.insights as Record<string,unknown>)?.quickWins as string[] | undefined;
+
+            const built = buildMonitoringEmail({
+              email: payload.email, url, auditId, appUrl,
+              currentScore: result.score.overall,
+              previousScore: previousSnapshot?.overall ?? undefined,
+              delta,
+              topActions: (topActions ?? result.recommendations.slice(0, 3).map((r) => String((r as unknown as Record<string,unknown>).title || (r as unknown as Record<string,unknown>).message || r))),
+              gscSummary: result.googleData?.gsc ? {
+                totalClicks: result.googleData.gsc.totalClicks,
+                totalImpressions: result.googleData.gsc.totalImpressions,
+                avgPosition: result.googleData.gsc.avgPosition,
+                topMovers: [],
+              } : null,
+              pagesCrawled: result.pagesCrawled,
+              isFirstRun,
+            });
+            emailHtml = built.html;
+            emailSubject = built.subject;
+          } else {
+            // Standard on-demand completion email
+            const scoreColor = result.score.overall >= 70 ? '#4aab6a' : result.score.overall >= 40 ? '#d4952b' : '#e05555';
+            emailHtml = `<div style="max-width:600px;margin:0 auto;padding:40px 24px;background:#1a1a1a;font-family:system-ui,sans-serif;"><div style="text-align:center;margin-bottom:32px;"><span style="font-size:20px;font-weight:bold;color:#f5f0e8;">What</span><span style="font-size:20px;font-weight:bold;color:#c9a85c;">SEO</span><span style="font-size:14px;color:#a09888;">.ai</span></div><div style="background:#232323;border-radius:16px;padding:32px;text-align:center;margin-bottom:24px;"><p style="color:#c9a85c;font-size:12px;text-transform:uppercase;letter-spacing:2px;margin:0 0 16px;">Audit Complete</p><div style="font-size:64px;font-weight:bold;color:${scoreColor};">${result.score.overall}</div><p style="color:#a09888;font-size:14px;margin:4px 0;">/ 100 SEO Health Score</p><p style="color:#a09888;font-size:12px;margin:8px 0 0;">${result.pagesCrawled} pages · ${result.recommendations.length} recommendations</p></div><div style="text-align:center;margin-bottom:24px;"><a href="${appUrl}/results/${auditId}" style="display:inline-block;background:#c9a85c;color:#1a1a1a;padding:14px 32px;border-radius:50px;text-decoration:none;font-weight:600;font-size:16px;">View Full Results</a></div><div style="text-align:center;"><a href="${appUrl}/api/report/${auditId}" style="color:#c9a85c;font-size:13px;text-decoration:none;">Download PDF Report →</a></div></div>`;
+            emailSubject = `Your SEO Audit is Ready — Score: ${result.score.overall}/100`;
+          }
+
+          await client.emails.send({
+            from: `WhatSEO.ai <${process.env.RESEND_FROM_EMAIL || 'reports@whatseo.ai'}>`,
+            to: payload.email,
+            subject: emailSubject,
+            html: emailHtml,
+          });
+          await supabase.from("Audit").update({ report_emailed_at: new Date().toISOString() }).eq("id", auditId);
+        }
+      } catch (emailErr) {
+        console.error("Email delivery failed:", emailErr);
+      }
 
       return {
         success: true,
@@ -203,12 +283,14 @@ export const fullAuditTask = task({
         updatedAt: new Date().toISOString(),
       }).eq("id", auditId);
 
-      // Refund the credit
-      await supabase.from("audit_credits").update({
-        status: "available",
-        audit_id: null,
-        used_at: null,
-      }).eq("id", creditId);
+      // Refund the credit (skip for scheduled runs — no credit was consumed)
+      if (creditId && creditId !== 'scheduled') {
+        await supabase.from("audit_credits").update({
+          status: "available",
+          audit_id: null,
+          used_at: null,
+        }).eq("id", creditId);
+      }
 
       // Notify user by email
       try {
