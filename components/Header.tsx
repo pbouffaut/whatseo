@@ -36,10 +36,10 @@ export default function Header() {
   };
 
   const publicLinks = [
-    { href: '#features', label: 'Services' },
-    { href: '#how-it-works', label: 'How It Works' },
-    { href: '#results', label: 'Results' },
-    { href: '#pricing', label: 'Pricing' },
+    { href: '/about', label: 'About' },
+    { href: '/how-it-works', label: 'How It Works' },
+    { href: '/pricing', label: 'Pricing' },
+    { href: '/contact', label: 'Contact' },
   ];
 
   const authLinks = [
@@ -65,13 +65,13 @@ export default function Header() {
 
         <div className="hidden md:flex items-center gap-8">
           {navLinks.map((link) => (
-            <a
+            <Link
               key={link.href}
               href={link.href}
               className="text-sm font-medium text-on-surface-muted hover:text-primary transition-colors"
             >
               {link.label}
-            </a>
+            </Link>
           ))}
         </div>
 
@@ -114,14 +114,14 @@ export default function Header() {
         <div className="md:hidden glass px-6 py-6">
           <div className="flex flex-col gap-4">
             {navLinks.map((link) => (
-              <a
+              <Link
                 key={link.href}
                 href={link.href}
                 onClick={() => setMobileOpen(false)}
                 className="text-on-surface-muted hover:text-primary transition-colors py-2"
               >
                 {link.label}
-              </a>
+              </Link>
             ))}
             {user ? (
               <button
