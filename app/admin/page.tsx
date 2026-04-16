@@ -8,7 +8,7 @@ interface StatsData {
   failed: { today: number; week: number };
   users: { total: number; withSubscription: number };
   credits: { available: number; used: number; issuedThisMonth: number };
-  revenue: { total_cents: number; thisMonth_cents: number };
+  revenue: { total_cents: number; mrr_cents: number; one_time_cents: number; one_time_this_month_cents: number };
   monitoring: { active: number };
 }
 
@@ -177,8 +177,8 @@ export default function AdminOverviewPage() {
             />
           </div>
 
-          {/* Second row: 3 cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+          {/* Second row: 4 cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <StatCard
               label="Failed Today"
               value={stats.failed.today}
@@ -190,10 +190,15 @@ export default function AdminOverviewPage() {
               sub={`${stats.credits.issuedThisMonth} issued this month`}
             />
             <StatCard
-              label="MRR Estimate"
-              value={formatCents(stats.revenue.thisMonth_cents)}
+              label="MRR"
+              value={formatCents(stats.revenue.mrr_cents)}
               accent
-              sub={`${formatCents(stats.revenue.total_cents)} all-time`}
+              sub="active recurring subscriptions"
+            />
+            <StatCard
+              label="One-Time Revenue"
+              value={formatCents(stats.revenue.one_time_cents)}
+              sub={`${formatCents(stats.revenue.one_time_this_month_cents)} this month`}
             />
           </div>
         </>

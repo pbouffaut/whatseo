@@ -93,14 +93,15 @@ export async function GET() {
       .from('audit_credits')
       .select('id', { count: 'exact', head: true })
       .gte('created_at', monthIso),
+    // All active subscriptions with type info
+    supabase
+      .from('subscriptions')
+      .select('amount_cents, interval_months'),
+    // One-time (non-recurring) revenue this month
     supabase
       .from('subscriptions')
       .select('amount_cents')
-      .eq('status', 'active'),
-    supabase
-      .from('subscriptions')
-      .select('amount_cents')
-      .eq('status', 'active')
+      .is('interval_months', null)
       .gte('created_at', monthIso),
     supabase
       .from('monitoring_schedules')
@@ -118,15 +119,19 @@ export async function GET() {
   const creditsAvailable = allCredits.filter((c) => c.status === 'available').length;
   const creditsUsed = allCredits.filter((c) => c.status === 'used').length;
 
-  // Revenue totals
-  const totalRevenue = (revenueRes.data ?? []).reduce(
+  // Revenue split: recurring (MRR) vs one-time
+  const allSubs = revenueRes.data ?? [];
+  const mrr = allSubs
+    .filter((r) => r.interval_months != null)
+    .reduce((sum, row) => sum + (row.amount_cents ?? 0), 0);
+  const oneTimeAllTime = allSubs
+    .filter((r) => r.interval_months == null)
+    .reduce((sum, row) => sum + (row.amount_cents ?? 0), 0);
+  const oneTimeThisMonth = (revenueMonthRes.data ?? []).reduce(
     (sum, row) => sum + (row.amount_cents ?? 0),
     0
   );
-  const monthRevenue = (revenueMonthRes.data ?? []).reduce(
-    (sum, row) => sum + (row.amount_cents ?? 0),
-    0
-  );
+  const totalRevenue = allSubs.reduce((sum, row) => sum + (row.amount_cents ?? 0), 0);
 
   const totalUsers =
     (usersRes.data as { total?: number } | null)?.total ?? 0;
@@ -153,7 +158,9 @@ export async function GET() {
     },
     revenue: {
       total_cents: totalRevenue,
-      thisMonth_cents: monthRevenue,
+      mrr_cents: mrr,
+      one_time_cents: oneTimeAllTime,
+      one_time_this_month_cents: oneTimeThisMonth,
     },
     monitoring: {
       active: monitoringRes.count ?? 0,
