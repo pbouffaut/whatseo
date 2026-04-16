@@ -8,6 +8,7 @@ import type {
   AuditRow,
   ScoreHistoryRow,
   MonitoringRow,
+  ProfileRow,
 } from '@/lib/admin/types';
 
 interface UserDetail {
@@ -25,6 +26,7 @@ interface OnboardingDetail {
 
 interface CustomerDetailResponse {
   user: UserDetail;
+  profile: ProfileRow | null;
   onboarding: OnboardingDetail | null;
   subscriptions: SubscriptionRow[];
   credits: CreditRow[];
@@ -458,7 +460,7 @@ export default function CustomerDetailPage() {
     return <p className="text-red-400">{error || 'Customer not found.'}</p>;
   }
 
-  const { user, onboarding, subscriptions, credits, audits, scoreHistory, monitoring } = data;
+  const { user, profile, onboarding, subscriptions, credits, audits, scoreHistory, monitoring } = data;
 
   const activeSub = subscriptions.find((s) => s.status === 'active');
   const creditsAvailable = credits.filter((c) => c.status === 'available').length;
@@ -476,13 +478,38 @@ export default function CustomerDetailPage() {
       <div className="mb-6">
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-[#f5f0e8] break-all">{user.email}</h1>
-            <p className="text-[#a09888] text-sm mt-1">
-              Joined {new Date(user.created_at).toLocaleDateString()}
-              {user.last_sign_in_at && (
-                <> &bull; Last seen {new Date(user.last_sign_in_at).toLocaleDateString()}</>
+            {profile?.first_name || profile?.last_name ? (
+              <>
+                <h1 className="text-2xl font-bold text-[#f5f0e8]">
+                  {[profile.first_name, profile.last_name].filter(Boolean).join(' ')}
+                </h1>
+                <p className="text-[#a09888] text-sm mt-0.5 break-all">{user.email}</p>
+              </>
+            ) : (
+              <h1 className="text-2xl font-bold text-[#f5f0e8] break-all">{user.email}</h1>
+            )}
+            {(profile?.company || profile?.title) && (
+              <p className="text-[#a09888] text-sm mt-1">
+                {[profile.company, profile.title].filter(Boolean).join(' · ')}
+              </p>
+            )}
+            <div className="flex items-center gap-3 mt-2">
+              <p className="text-[#a09888] text-xs">
+                Joined {new Date(user.created_at).toLocaleDateString()}
+                {user.last_sign_in_at && (
+                  <> &bull; Last seen {new Date(user.last_sign_in_at).toLocaleDateString()}</>
+                )}
+              </p>
+              {profile?.profile_completed_at ? (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-900/40 text-green-400">
+                  Profile complete
+                </span>
+              ) : (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[#2e2e2e] text-[#a09888]">
+                  Profile incomplete
+                </span>
               )}
-            </p>
+            </div>
             {onboarding?.website_url && (
               <p className="text-[#c9a85c] text-sm mt-1">{onboarding.website_url}</p>
             )}

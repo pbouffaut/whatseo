@@ -15,13 +15,33 @@ export interface UserRow {
   id: string;
   email: string;
   created_at: string;
+  last_sign_in_at: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  company: string | null;
+  title: string | null;
   plan: string | null;
   subscription_status: string | null;
   credits_available: number;
+  free_audits: number;
+  paid_audits: number;
   audits_total: number;
   last_audit_date: string | null;
   last_score: number | null;
   website_url: string | null;
+  subscriptions_all: Array<{ plan: string; status: string; amount_cents: number; created_at: string }>;
+}
+
+export interface ProfileRow {
+  id: string;
+  user_id: string;
+  first_name: string | null;
+  last_name: string | null;
+  company: string | null;
+  title: string | null;
+  profile_completed_at: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface SubscriptionRow {

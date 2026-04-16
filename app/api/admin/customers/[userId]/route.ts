@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient as createServerClient } from '@/lib/supabase/server';
 import { createClient } from '@supabase/supabase-js';
-import type { SubscriptionRow, CreditRow, AuditRow, ScoreHistoryRow, MonitoringRow } from '@/lib/admin/types';
-export type { SubscriptionRow, CreditRow, AuditRow, ScoreHistoryRow, MonitoringRow } from '@/lib/admin/types';
+import type { SubscriptionRow, CreditRow, AuditRow, ScoreHistoryRow, MonitoringRow, ProfileRow } from '@/lib/admin/types';
+export type { SubscriptionRow, CreditRow, AuditRow, ScoreHistoryRow, MonitoringRow, ProfileRow } from '@/lib/admin/types';
 
 function isAdmin(email: string | undefined): boolean {
   if (!email) return false;
@@ -55,6 +55,7 @@ export async function GET(
     auditsRes,
     scoreHistoryRes,
     monitoringRes,
+    profileRes,
   ] = await Promise.all([
     supabase
       .from('onboarding_data')
@@ -88,6 +89,11 @@ export async function GET(
       .select('user_id,enabled,interval_months,next_run_at,last_run_at,last_audit_id')
       .eq('user_id', userId)
       .single(),
+    supabase
+      .from('user_profiles')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle(),
   ]);
 
   const onboardingData = onboardingRes.data;
@@ -99,6 +105,7 @@ export async function GET(
       created_at: authUser.created_at,
       last_sign_in_at: authUser.last_sign_in_at ?? null,
     },
+    profile: (profileRes.data ?? null) as ProfileRow | null,
     onboarding: onboardingData
       ? {
           website_url: onboardingData.website_url ?? null,

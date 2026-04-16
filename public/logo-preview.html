@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head><title>WhatSEO Logo Preview</title>
+<style>
+  body { margin: 0; font-family: system-ui; background: #f5f5f5; }
+  section { padding: 40px; display: flex; flex-direction: column; gap: 32px; }
+  .card { padding: 40px; border-radius: 16px; display: flex; flex-direction: column; gap: 24px; }
+  .dark { background: #1a1a1a; }
+  .light { background: #ffffff; border: 1px solid #e5e5e5; }
+  .row { display: flex; align-items: center; gap: 40px; flex-wrap: wrap; }
+  label { font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+  .dark label { color: #666; }
+  .light label { color: #999; }
+  img { display: block; }
+</style>
+</head>
+<body>
+<section>
+  <!-- Dark backgrounds -->
+  <div class="card dark">
+    <div class="row">
+      <div><label style="color:#444;margin-bottom:12px;display:block">Full logo — dark bg</label>
+        <img src="/logo.svg" height="80" alt="WhatSEO logo"></div>
+      <div><label style="color:#444;margin-bottom:12px;display:block">Icon only</label>
+        <img src="/logo-icon.svg" height="80" alt="WhatSEO icon"></div>
+      <div><label style="color:#444;margin-bottom:12px;display:block">Icon 48px</label>
+        <img src="/logo-icon.svg" height="48" alt="WhatSEO icon small"></div>
+      <div><label style="color:#444;margin-bottom:12px;display:block">Icon 32px</label>
+        <img src="/logo-icon.svg" height="32" alt="WhatSEO icon tiny"></div>
+    </div>
+  </div>
+
+  <!-- Light backgrounds -->
+  <div class="card light">
+    <div class="row">
+      <div><label style="margin-bottom:12px;display:block">Full logo — light bg</label>
+        <img src="/logo-light.svg" height="80" alt="WhatSEO logo light"></div>
+      <div><label style="margin-bottom:12px;display:block">Icon only (same)</label>
+        <img src="/logo-icon.svg" height="80" alt="WhatSEO icon"></div>
+      <div><label style="margin-bottom:12px;display:block">Icon 48px</label>
+        <img src="/logo-icon.svg" height="48" alt="WhatSEO icon small"></div>
+    </div>
+  </div>
+
+  <!-- Gradient bg similar to app -->
+  <div class="card" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);">
+    <div class="row">
+      <div><label style="color:#444;margin-bottom:12px;display:block">On gradient</label>
+        <img src="/logo.svg" height="80" alt="WhatSEO logo"></div>
+      <div><label style="color:#444;margin-bottom:12px;display:block">Small nav size</label>
+        <img src="/logo.svg" height="40" alt="WhatSEO logo small"></div>
+    </div>
+  </div>
+</section>
+</body>
+</html>

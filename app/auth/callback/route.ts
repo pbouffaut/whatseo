@@ -55,6 +55,20 @@ export async function GET(request: Request) {
         }
       }
 
+      // Check profile completion
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('profile_completed_at')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (!profile?.profile_completed_at) {
+        // New user or incomplete profile — send to setup
+        const setupUrl = new URL('/profile-setup', origin);
+        setupUrl.searchParams.set('next', redirect);
+        return NextResponse.redirect(setupUrl.toString());
+      }
+
       return NextResponse.redirect(`${origin}${redirect}`);
     }
   }

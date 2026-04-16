@@ -20,7 +20,6 @@ function getServiceClient() {
   );
 }
 
-
 export async function GET(request: NextRequest) {
   // Auth check
   const authClient = await createServerClient();
@@ -44,11 +43,11 @@ export async function GET(request: NextRequest) {
     id: string;
     email?: string;
     created_at: string;
+    last_sign_in_at?: string | null;
   }> = [];
   let total = 0;
 
   if (search) {
-    // For search we fetch a larger batch and filter client-side by email
     const { data: searchResult } = await supabase.auth.admin.listUsers({
       perPage: 500,
       page: 1,
@@ -59,7 +58,6 @@ export async function GET(request: NextRequest) {
       (u.email ?? '').toLowerCase().includes(lowerSearch)
     );
     total = userList.length;
-    // Apply manual pagination for search results
     userList = userList.slice((page - 1) * limit, page * limit);
   } else {
     const { data: listResult } = await supabase.auth.admin.listUsers({
@@ -76,67 +74,74 @@ export async function GET(request: NextRequest) {
 
   const userIds = userList.map((u) => u.id);
 
-  // Bulk queries — one per table
-  const [subsRes, creditsRes, auditsCountRes, lastAuditsRes, onboardingRes] =
+  // Bulk queries
+  const [subsRes, creditsRes, auditsRes, onboardingRes, profilesRes] =
     await Promise.all([
+      // All subscriptions (not just active)
       supabase
         .from('subscriptions')
-        .select('user_id,plan,status')
+        .select('user_id,plan,status,amount_cents,created_at')
         .in('user_id', userIds)
-        .eq('status', 'active')
         .order('created_at', { ascending: false }),
+      // All credits (compute available count client-side)
       supabase
         .from('audit_credits')
         .select('user_id,status')
-        .in('user_id', userIds)
-        .eq('status', 'available'),
-      supabase
-        .from('Audit')
-        .select('user_id', { count: 'exact', head: false })
         .in('user_id', userIds),
+      // Audits — no results column; only fields needed
       supabase
         .from('Audit')
-        .select('user_id,id,url,score,status,createdAt')
+        .select('user_id,audit_type,createdAt,score')
         .in('user_id', userIds)
         .order('createdAt', { ascending: false }),
       supabase
         .from('onboarding_data')
         .select('user_id,website_url')
         .in('user_id', userIds),
+      // User profiles
+      supabase
+        .from('user_profiles')
+        .select('user_id,first_name,last_name,company,title')
+        .in('user_id', userIds),
     ]);
 
-  // Build lookup maps
-  const subsByUser = new Map<
+  // Build subscription lookup: all subs per user
+  const allSubsByUser = new Map<
     string,
-    { plan: string; status: string } | null
+    Array<{ plan: string; status: string; amount_cents: number; created_at: string }>
   >();
   for (const sub of subsRes.data ?? []) {
-    if (!subsByUser.has(sub.user_id)) {
-      subsByUser.set(sub.user_id, { plan: sub.plan, status: sub.status });
+    const existing = allSubsByUser.get(sub.user_id) ?? [];
+    existing.push({
+      plan: sub.plan,
+      status: sub.status,
+      amount_cents: sub.amount_cents,
+      created_at: sub.created_at,
+    });
+    allSubsByUser.set(sub.user_id, existing);
+  }
+
+  // Credits available count
+  const creditsByUser = new Map<string, number>();
+  for (const credit of creditsRes.data ?? []) {
+    if (credit.status === 'available') {
+      creditsByUser.set(
+        credit.user_id,
+        (creditsByUser.get(credit.user_id) ?? 0) + 1
+      );
     }
   }
 
-  const creditsByUser = new Map<string, number>();
-  for (const credit of creditsRes.data ?? []) {
-    creditsByUser.set(
-      credit.user_id,
-      (creditsByUser.get(credit.user_id) ?? 0) + 1
-    );
-  }
-
-  const auditCountByUser = new Map<string, number>();
-  for (const row of auditsCountRes.data ?? []) {
-    auditCountByUser.set(
-      row.user_id,
-      (auditCountByUser.get(row.user_id) ?? 0) + 1
-    );
-  }
-
-  const lastAuditByUser = new Map<
-    string,
-    { createdAt: string; score: number | null }
-  >();
-  for (const audit of lastAuditsRes.data ?? []) {
+  // Audit counts by type + last audit info
+  const freeAuditsByUser = new Map<string, number>();
+  const paidAuditsByUser = new Map<string, number>();
+  const lastAuditByUser = new Map<string, { createdAt: string; score: number | null }>();
+  for (const audit of auditsRes.data ?? []) {
+    if (audit.audit_type === 'free') {
+      freeAuditsByUser.set(audit.user_id, (freeAuditsByUser.get(audit.user_id) ?? 0) + 1);
+    } else {
+      paidAuditsByUser.set(audit.user_id, (paidAuditsByUser.get(audit.user_id) ?? 0) + 1);
+    }
     if (!lastAuditByUser.has(audit.user_id)) {
       lastAuditByUser.set(audit.user_id, {
         createdAt: audit.createdAt,
@@ -150,20 +155,47 @@ export async function GET(request: NextRequest) {
     onboardingByUser.set(row.user_id, row.website_url ?? null);
   }
 
+  const profilesByUser = new Map<
+    string,
+    { first_name: string | null; last_name: string | null; company: string | null; title: string | null }
+  >();
+  for (const row of profilesRes.data ?? []) {
+    profilesByUser.set(row.user_id, {
+      first_name: row.first_name ?? null,
+      last_name: row.last_name ?? null,
+      company: row.company ?? null,
+      title: row.title ?? null,
+    });
+  }
+
   const users: UserRow[] = userList.map((u) => {
-    const sub = subsByUser.get(u.id) ?? null;
+    const subs = allSubsByUser.get(u.id) ?? [];
+    const activeSub = subs.find((s) => s.status === 'active');
+    const latestSub = activeSub ?? subs[0] ?? null;
     const lastAudit = lastAuditByUser.get(u.id) ?? null;
+    const profile = profilesByUser.get(u.id) ?? null;
+    const freeAudits = freeAuditsByUser.get(u.id) ?? 0;
+    const paidAudits = paidAuditsByUser.get(u.id) ?? 0;
+
     return {
       id: u.id,
       email: u.email ?? '',
       created_at: u.created_at,
-      plan: sub?.plan ?? null,
-      subscription_status: sub?.status ?? null,
+      last_sign_in_at: u.last_sign_in_at ?? null,
+      first_name: profile?.first_name ?? null,
+      last_name: profile?.last_name ?? null,
+      company: profile?.company ?? null,
+      title: profile?.title ?? null,
+      plan: latestSub?.plan ?? null,
+      subscription_status: latestSub?.status ?? null,
       credits_available: creditsByUser.get(u.id) ?? 0,
-      audits_total: auditCountByUser.get(u.id) ?? 0,
+      free_audits: freeAudits,
+      paid_audits: paidAudits,
+      audits_total: freeAudits + paidAudits,
       last_audit_date: lastAudit?.createdAt ?? null,
       last_score: lastAudit?.score ?? null,
       website_url: onboardingByUser.get(u.id) ?? null,
+      subscriptions_all: subs,
     };
   });
 
