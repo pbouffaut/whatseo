@@ -135,9 +135,11 @@ function ScoreTrendChart({ scoreHistory }: { scoreHistory: ScoreHistoryRow[] }) 
 function AuditsTab({
   audits,
   userId,
+  onRefresh,
 }: {
   audits: AuditRow[];
   userId: string;
+  onRefresh: () => void;
 }) {
   const [reissuingId, setReissuingId] = useState<string | null>(null);
   const [reissuedIds, setReissuedIds] = useState<Set<string>>(new Set());
@@ -153,6 +155,7 @@ function AuditsTab({
       });
       if (res.ok) {
         setReissuedIds((prev) => new Set([...prev, audit.id]));
+        onRefresh();
       } else {
         const err = await res.json().catch(() => ({}));
         alert(`Failed to reissue credit: ${err.error ?? res.status}`);
@@ -428,14 +431,16 @@ export default function CustomerDetailPage() {
   const [reissued, setReissued] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => {
+  function fetchData() {
     if (!userId) return;
     fetch(`/api/admin/customers/${userId}`)
       .then((r) => r.json())
       .then((d: CustomerDetailResponse) => setData(d))
       .catch(() => setError('Failed to load customer.'))
       .finally(() => setLoading(false));
-  }, [userId]);
+  }
+
+  useEffect(() => { fetchData(); }, [userId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleReissueCredit() {
     if (reissuing) return;
@@ -448,6 +453,7 @@ export default function CustomerDetailPage() {
       });
       if (res.ok) {
         setReissued(true);
+        fetchData(); // refresh credits list
       } else {
         const err = await res.json().catch(() => ({}));
         alert(`Failed to reissue credit: ${err.error ?? res.status}`);
@@ -610,7 +616,7 @@ export default function CustomerDetailPage() {
           ))}
         </div>
         <div className="p-6">
-          {activeTab === 'audits' && <AuditsTab audits={audits} userId={userId} />}
+          {activeTab === 'audits' && <AuditsTab audits={audits} userId={userId} onRefresh={fetchData} />}
           {activeTab === 'credits' && <CreditsTab credits={credits} />}
           {activeTab === 'subscriptions' && (
             <SubscriptionsTab subscriptions={subscriptions} />
