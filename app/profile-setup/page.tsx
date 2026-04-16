@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
@@ -26,7 +26,7 @@ function Spinner() {
   );
 }
 
-export default function ProfileSetupPage() {
+function ProfileSetupForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextUrl = searchParams.get('next') ?? '/dashboard';
@@ -233,5 +233,13 @@ export default function ProfileSetupPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ProfileSetupPage() {
+  return (
+    <Suspense>
+      <ProfileSetupForm />
+    </Suspense>
   );
 }
