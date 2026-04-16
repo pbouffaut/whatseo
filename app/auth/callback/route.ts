@@ -55,18 +55,21 @@ export async function GET(request: Request) {
         }
       }
 
-      // Check profile completion
-      const { data: profile } = await supabase
-        .from('user_profiles')
-        .select('profile_completed_at')
-        .eq('user_id', user.id)
-        .maybeSingle();
+      // Check profile completion (graceful fallback if table doesn't exist yet)
+      try {
+        const { data: profile, error: profileErr } = await supabase
+          .from('user_profiles')
+          .select('profile_completed_at')
+          .eq('user_id', user.id)
+          .maybeSingle();
 
-      if (!profile?.profile_completed_at) {
-        // New user or incomplete profile — send to setup
-        const setupUrl = new URL('/profile-setup', origin);
-        setupUrl.searchParams.set('next', redirect);
-        return NextResponse.redirect(setupUrl.toString());
+        if (!profileErr && !profile?.profile_completed_at) {
+          const setupUrl = new URL('/profile-setup', origin);
+          setupUrl.searchParams.set('next', redirect);
+          return NextResponse.redirect(setupUrl.toString());
+        }
+      } catch {
+        // Table doesn't exist yet — skip profile check and proceed normally
       }
 
       return NextResponse.redirect(`${origin}${redirect}`);
