@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient as createServerClient } from '@/lib/supabase/server';
 import { createClient } from '@supabase/supabase-js';
+import type { SubscriptionRow, CreditRow, AuditRow, ScoreHistoryRow, MonitoringRow } from '@/lib/admin/types';
+export type { SubscriptionRow, CreditRow, AuditRow, ScoreHistoryRow, MonitoringRow } from '@/lib/admin/types';
 
 function isAdmin(email: string | undefined): boolean {
   if (!email) return false;
@@ -16,62 +18,6 @@ function getServiceClient() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
-}
-
-export interface SubscriptionRow {
-  id: string;
-  user_id: string;
-  plan: string;
-  status: string;
-  amount_cents: number;
-  interval_months: number;
-  created_at: string;
-  expires_at: string | null;
-}
-
-export interface CreditRow {
-  id: string;
-  user_id: string;
-  status: string;
-  credit_type: string;
-  amount_cents: number;
-  audit_id: string | null;
-  created_at: string;
-  used_at: string | null;
-}
-
-export interface AuditRow {
-  id: string;
-  url: string;
-  status: string;
-  score: number | null;
-  audit_type: string;
-  createdAt: string;
-  error: string | null;
-  pages_crawled: number | null;
-}
-
-export interface ScoreHistoryRow {
-  id: string;
-  user_id: string;
-  audit_id: string;
-  overall: number;
-  technical: number | null;
-  on_page: number | null;
-  schema_score: number | null;
-  performance: number | null;
-  ai_readiness: number | null;
-  pages_crawled: number | null;
-  recorded_at: string;
-}
-
-export interface MonitoringRow {
-  user_id: string;
-  enabled: boolean;
-  interval_months: number;
-  next_run_at: string | null;
-  last_run_at: string | null;
-  last_audit_id: string | null;
 }
 
 export async function GET(

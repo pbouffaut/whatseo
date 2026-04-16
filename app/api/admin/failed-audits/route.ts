@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { createClient as createServerClient } from '@/lib/supabase/server';
 import { createClient } from '@supabase/supabase-js';
+import type { FailedAuditRow } from '@/lib/admin/types';
+export type { FailedAuditRow } from '@/lib/admin/types';
+
 
 function isAdmin(email: string | undefined): boolean {
   if (!email) return false;
@@ -16,16 +19,6 @@ function getServiceClient() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
-}
-
-export interface FailedAuditRow {
-  id: string;
-  url: string;
-  user_id: string;
-  error: string | null;
-  createdAt: string;
-  updatedAt: string;
-  user_email: string | null;
 }
 
 export async function GET() {

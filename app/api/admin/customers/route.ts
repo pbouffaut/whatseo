@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient as createServerClient } from '@/lib/supabase/server';
 import { createClient } from '@supabase/supabase-js';
+import type { UserRow } from '@/lib/admin/types';
+export type { UserRow } from '@/lib/admin/types';
 
 function isAdmin(email: string | undefined): boolean {
   if (!email) return false;
@@ -18,18 +20,6 @@ function getServiceClient() {
   );
 }
 
-export interface UserRow {
-  id: string;
-  email: string;
-  created_at: string;
-  plan: string | null;
-  subscription_status: string | null;
-  credits_available: number;
-  audits_total: number;
-  last_audit_date: string | null;
-  last_score: number | null;
-  website_url: string | null;
-}
 
 export async function GET(request: NextRequest) {
   // Auth check

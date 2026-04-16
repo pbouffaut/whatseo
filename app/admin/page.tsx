@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { FailedAuditRow } from '@/app/api/admin/failed-audits/route';
+import type { FailedAuditRow } from '@/lib/admin/types';
 
 interface StatsData {
   audits: { today: number; week: number; month: number; total: number };

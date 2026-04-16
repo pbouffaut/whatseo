@@ -8,7 +8,7 @@ import type {
   AuditRow,
   ScoreHistoryRow,
   MonitoringRow,
-} from '@/app/api/admin/customers/[userId]/route';
+} from '@/lib/admin/types';
 
 interface UserDetail {
   id: string;

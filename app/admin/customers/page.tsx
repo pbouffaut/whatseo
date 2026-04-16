@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
-import type { UserRow } from '@/app/api/admin/customers/route';
+import type { UserRow } from '@/lib/admin/types';
 
 interface CustomersResponse {
   users: UserRow[];
