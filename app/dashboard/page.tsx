@@ -222,7 +222,9 @@ function StepConfigure({ plan }: { plan: string }) {
 
 function StepFirstAudit({
   plan, onboarding, availableCredits, runningAudit, confirmStep, setConfirmStep,
-  handleRunAudit,
+  handleRunAudit, monitoringSchedule,
+  showDatePicker, setShowDatePicker, pendingDate, setPendingDate,
+  rescheduling, handleReschedule,
 }: {
   plan: string;
   onboarding: OnboardingData;
@@ -231,11 +233,35 @@ function StepFirstAudit({
   confirmStep: ConfirmStep;
   setConfirmStep: (s: ConfirmStep) => void;
   handleRunAudit: () => void;
+  monitoringSchedule: MonitoringSchedule | null | undefined;
+  showDatePicker: boolean;
+  setShowDatePicker: (v: boolean) => void;
+  pendingDate: string;
+  setPendingDate: (v: string) => void;
+  rescheduling: boolean;
+  handleReschedule: () => void;
 }) {
   const hasCredits = availableCredits.length > 0;
   const missingGSC = !onboarding.gsc_connected;
   const missingGA4 = !onboarding.ga4_property_id;
   const hasMissing = missingGSC || missingGA4;
+  const recurring = isRecurring(plan);
+
+  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+  const minDate = tomorrow.toISOString().slice(0, 10);
+
+  // Compute the first auto-run date: use schedule if set, otherwise today + intervalMonths
+  const defaultNextRun = (() => {
+    if (monitoringSchedule?.nextRunAt) return monitoringSchedule.nextRunAt;
+    const d = new Date();
+    const months = monitoringSchedule?.intervalMonths ?? 1;
+    d.setMonth(d.getMonth() + months);
+    return d.toISOString();
+  })();
+
+  const nextRunDisplay = new Date(defaultNextRun).toLocaleDateString(undefined, {
+    weekday: 'short', month: 'long', day: 'numeric', year: 'numeric',
+  });
 
   if (runningAudit) {
     return (
@@ -260,14 +286,59 @@ function StepFirstAudit({
           <Play className="w-5 h-5 text-[#c9a85c]" />
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-slate-800 mb-1">Run your baseline audit</h3>
-          <p className="text-sm text-slate-600 leading-relaxed mb-1">
-            This first audit establishes your SEO baseline — a score across 80+ checks with your real Google data.
-            {isRecurring(plan) && ' After this, your plan auto-scans your site on a schedule so you can track progress over time.'}
+          <h3 className="font-semibold text-slate-800 mb-1">Start auditing {onboarding.website_url}</h3>
+          <p className="text-sm text-slate-600 leading-relaxed">
+            This first audit establishes your SEO baseline — a score across 80+ checks using your real Google data.
           </p>
 
+          {/* Scheduled auto-runs callout — only for recurring plans */}
+          {recurring && (
+            <div className="mt-4 bg-white border border-slate-200 rounded-xl overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-3">
+                <div className="flex items-start gap-2.5">
+                  <RefreshCw className="w-4 h-4 text-[#c9a85c] mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-0.5">First auto-run after this</p>
+                    <p className="text-sm font-semibold text-slate-800">{nextRunDisplay}</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      Runs automatically every {monitoringSchedule?.intervalMonths === 12 ? 'year' : 'month'} · pauses if subscription is canceled
+                    </p>
+                  </div>
+                </div>
+                {!showDatePicker && (
+                  <button
+                    onClick={() => {
+                      setPendingDate(new Date(defaultNextRun).toISOString().slice(0, 10));
+                      setShowDatePicker(true);
+                    }}
+                    className="flex items-center gap-1 text-xs text-slate-400 hover:text-[#c9a85c] transition-colors px-2 py-1.5 rounded-lg hover:bg-slate-50 shrink-0"
+                  >
+                    <Pencil className="w-3 h-3" /> Change
+                  </button>
+                )}
+              </div>
+              {showDatePicker && (
+                <div className="px-4 pb-4 pt-1 border-t border-slate-100 flex items-center gap-2 flex-wrap">
+                  <input
+                    type="date" value={pendingDate} min={minDate}
+                    onChange={(e) => setPendingDate(e.target.value)}
+                    className="px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#c9a85c]/30 focus:border-[#c9a85c]/50"
+                  />
+                  <button onClick={handleReschedule} disabled={!pendingDate || rescheduling}
+                    className="px-4 py-2 rounded-lg bg-[#c9a85c] text-white text-sm font-semibold hover:bg-[#d4b46a] transition-colors disabled:opacity-50 flex items-center gap-1.5">
+                    {rescheduling ? <><Spinner size={3} /> Saving…</> : 'Save'}
+                  </button>
+                  <button onClick={() => { setShowDatePicker(false); setPendingDate(''); }}
+                    className="p-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
           {hasMissing && (
-            <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5 mt-3 mb-4">
+            <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5 mt-3">
               <AlertCircle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
               <div className="text-xs text-amber-700">
                 {missingGSC && <p>Google Search Console not connected — you&apos;ll get a partial audit.</p>}
@@ -290,17 +361,22 @@ function StepFirstAudit({
               onClick={() => setConfirmStep('confirming')}
               className="mt-4 inline-flex items-center gap-2 bg-[#c9a85c] text-white px-6 py-3 rounded-xl text-sm font-semibold hover:bg-[#d4b46a] transition-colors shadow-sm"
             >
-              <Zap className="w-4 h-4" /> Run My First Audit
+              <Play className="w-4 h-4" /> Start auditing →
             </button>
           ) : confirmStep === 'confirming' ? (
             <div className="mt-4 bg-white border border-slate-200 rounded-xl p-4">
-              <p className="text-sm text-slate-700 mb-3">
-                This uses <strong>1 credit</strong> and starts a full analysis of <strong>{onboarding.website_url}</strong>.
+              <p className="text-sm text-slate-700 mb-1">
+                Uses <strong>1 credit</strong> · analyzes <strong className="font-medium text-slate-600">{onboarding.website_url}</strong>
               </p>
+              {recurring && (
+                <p className="text-xs text-slate-400 mb-3">
+                  Next auto-run will be scheduled for {nextRunDisplay}.
+                </p>
+              )}
               <div className="flex gap-3">
                 <button onClick={handleRunAudit}
                   className="bg-[#c9a85c] text-white px-5 py-2 rounded-xl text-sm font-semibold hover:bg-[#d4b46a] transition-colors flex items-center gap-2">
-                  <Check className="w-4 h-4" /> Confirm & run
+                  <Play className="w-3.5 h-3.5" /> Yes, start auditing
                 </button>
                 <button onClick={() => setConfirmStep('idle')}
                   className="px-4 py-2 rounded-xl text-sm text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors">
@@ -555,7 +631,7 @@ function AdHocRunCard({
           {confirmStep === 'idle' && (
             <button onClick={() => setConfirmStep('confirming')}
               className="w-full bg-[#c9a85c] text-white py-3 rounded-xl text-sm font-semibold hover:bg-[#d4b46a] transition-colors flex items-center justify-center gap-2">
-              <Zap className="w-4 h-4" /> Run Audit Now
+              <Play className="w-4 h-4" /> Start audit now
             </button>
           )}
           {confirmStep === 'confirming' && (
@@ -827,6 +903,13 @@ export default function DashboardPage() {
                   confirmStep={confirmStep}
                   setConfirmStep={setConfirmStep}
                   handleRunAudit={handleRunAudit}
+                  monitoringSchedule={monitoringSchedule}
+                  showDatePicker={showDatePicker}
+                  setShowDatePicker={setShowDatePicker}
+                  pendingDate={pendingDate}
+                  setPendingDate={setPendingDate}
+                  rescheduling={rescheduling}
+                  handleReschedule={handleReschedule}
                 />
               )}
 
