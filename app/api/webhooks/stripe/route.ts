@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import stripe from '@/lib/stripe';
+import getStripe from '@/lib/stripe';
 import type Stripe from 'stripe';
 
 function getServiceClient() {
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
 
   let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+    event = getStripe().webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET);
   } catch (err) {
     console.error('Stripe webhook signature verification failed:', err);
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
@@ -125,7 +125,7 @@ async function handleCheckoutCompleted(
     });
   } else if (session.mode === 'subscription' && session.subscription) {
     const stripeSubId = session.subscription as string;
-    const stripeSub = await stripe.subscriptions.retrieve(stripeSubId);
+    const stripeSub = await getStripe().subscriptions.retrieve(stripeSubId);
     const periodEndTimestamp = getPeriodEndFromSubscription(stripeSub);
     const periodEnd = periodEndTimestamp
       ? new Date(periodEndTimestamp * 1000).toISOString()
@@ -174,7 +174,7 @@ async function handleInvoicePaid(
   if (!sub) return;
 
   // Fetch subscription to get updated period end
-  const stripeSub = await stripe.subscriptions.retrieve(stripeSubId);
+  const stripeSub = await getStripe().subscriptions.retrieve(stripeSubId);
   const periodEndTimestamp = getPeriodEndFromSubscription(stripeSub);
   const periodEnd = periodEndTimestamp
     ? new Date(periodEndTimestamp * 1000).toISOString()

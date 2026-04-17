@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient as createServerClient } from '@/lib/supabase/server';
 import { createClient } from '@supabase/supabase-js';
-import stripe from '@/lib/stripe';
+import getStripe from '@/lib/stripe';
 
 function isAdmin(email: string | undefined) {
   if (!email) return false;
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No refundable payment found' }, { status: 404 });
     }
 
-    const refund = await stripe.refunds.create({
+    const refund = await getStripe().refunds.create({
       payment_intent: payment.stripe_payment_intent_id,
       amount: amountCents,
       reason: 'requested_by_customer',
@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'No refundable payment found' }, { status: 404 });
   }
 
-  const refund = await stripe.refunds.create({
+  const refund = await getStripe().refunds.create({
     payment_intent: lastPayment.stripe_payment_intent_id,
     reason: 'requested_by_customer',
     metadata: { admin_user_id: user.id, target_user_id: userId, note: 'last month refund' },

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient as createServerClient } from '@/lib/supabase/server';
 import { createClient } from '@supabase/supabase-js';
-import stripe from '@/lib/stripe';
+import getStripe from '@/lib/stripe';
 
 function isAdmin(email: string | undefined) {
   if (!email) return false;
@@ -48,13 +48,13 @@ export async function POST(request: NextRequest) {
   }
 
   if (immediately) {
-    await stripe.subscriptions.cancel(sub.stripe_subscription_id);
+    await getStripe().subscriptions.cancel(sub.stripe_subscription_id);
     await supabase
       .from('subscriptions')
       .update({ status: 'canceled' })
       .eq('id', sub.id);
   } else {
-    await stripe.subscriptions.update(sub.stripe_subscription_id, {
+    await getStripe().subscriptions.update(sub.stripe_subscription_id, {
       cancel_at_period_end: true,
     });
     await supabase
