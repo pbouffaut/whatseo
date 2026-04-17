@@ -348,7 +348,7 @@ function StepFirstAudit({
             </div>
           )}
 
-          {!hasCredits ? (
+          {!hasCredits && !recurring ? (
             <div className="flex flex-wrap gap-3 mt-4">
               <p className="w-full text-sm text-slate-500">No credits — purchase one to run your first audit.</p>
               <Link href="/checkout/one_time"
@@ -366,7 +366,10 @@ function StepFirstAudit({
           ) : confirmStep === 'confirming' ? (
             <div className="mt-4 bg-white border border-slate-200 rounded-xl p-4">
               <p className="text-sm text-slate-700 mb-1">
-                Uses <strong>1 credit</strong> · analyzes <strong className="font-medium text-slate-600">{onboarding.website_url}</strong>
+                {recurring
+                  ? <>Included in your subscription · analyzes <strong className="font-medium text-slate-600">{onboarding.website_url}</strong></>
+                  : <>Uses <strong>1 credit</strong> · analyzes <strong className="font-medium text-slate-600">{onboarding.website_url}</strong></>
+                }
               </p>
               {recurring && (
                 <p className="text-xs text-slate-400 mb-3">
