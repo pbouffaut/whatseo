@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Noto_Serif } from "next/font/google";
 import "./globals.css";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+import ShellProvider from "@/components/ShellProvider";
 
 const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], variable: "--font-jakarta" });
 const notoSerif = Noto_Serif({ subsets: ["latin"], variable: "--font-noto-serif", weight: ["400", "500", "600", "700"] });
@@ -68,9 +67,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${jakarta.variable} ${notoSerif.variable} antialiased`}>
       <body className="min-h-screen flex flex-col font-sans">
-        <Header />
-        <main className="flex-1">{children}</main>
-        <Footer />
+        <ShellProvider>{children}</ShellProvider>
       </body>
     </html>
   );

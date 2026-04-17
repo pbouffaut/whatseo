@@ -87,14 +87,22 @@ export default function ContactContent() {
 
   return (
     <>
-      {/* Hero */}
-      <section className="relative bg-background pt-36 pb-20 px-6 overflow-hidden">
-        <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-[radial-gradient(ellipse_at_center,rgba(242,140,40,0.07),transparent_70%)]" />
-        <div className="relative z-10 max-w-4xl mx-auto">
+      {/* Hero — editorial photography */}
+      <section className="relative min-h-[55vh] flex items-center overflow-hidden">
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage:
+              'url(https://images.unsplash.com/photo-1531297484001-80022131f5a1?auto=format&fit=crop&w=1920&q=80)',
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#1a1108]/90 via-[#1a1108]/72 to-[#1a1108]/40" />
+
+        <div className="relative z-10 max-w-4xl mx-auto px-6 pt-28 pb-20">
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-secondary text-xs uppercase tracking-[0.2em] font-semibold mb-6"
+            className="text-[#c9a85c] text-xs uppercase tracking-[0.2em] font-semibold mb-6"
           >
             Contact Us
           </motion.p>
@@ -102,15 +110,17 @@ export default function ContactContent() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="font-serif text-5xl sm:text-6xl md:text-7xl text-on-surface leading-[1.08] mb-6 tracking-tight"
+            className="font-serif text-5xl sm:text-6xl md:text-7xl text-[#f5f0e8] leading-[1.08] mb-6 tracking-tight"
           >
-            Get in Touch
+            Let&apos;s Refine Your
+            <br />
+            <span className="italic text-[#c9a85c]">Digital Footprint.</span>
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-xl text-on-surface-muted max-w-xl leading-relaxed"
+            className="text-xl text-[#c8bfb0] max-w-xl leading-relaxed"
           >
             We&apos;re a small team and we actually read every message.
             No support tickets, no automated first responses.

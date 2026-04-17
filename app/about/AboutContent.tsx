@@ -18,7 +18,7 @@ const differentiators = [
   {
     icon: Bot,
     title: 'AI-Ready Analysis',
-    desc: 'We check your site against how ChatGPT, Perplexity, and AI Overviews discover and cite content — including llms.txt, AI crawler access, and entity structure. Most agencies don\'t even know this exists yet.',
+    desc: "We check your site against how ChatGPT, Perplexity, and AI Overviews discover and cite content — including llms.txt, AI crawler access, and entity structure. Most agencies don't even know this exists yet.",
   },
 ];
 
@@ -26,12 +26,12 @@ const values = [
   {
     icon: Shield,
     title: 'We never sell your data',
-    desc: 'Your site data, Google connections, and reports are yours. We don\'t share, sell, or use your data to train models.',
+    desc: "Your site data, Google connections, and reports are yours. We don't share, sell, or use your data to train models.",
   },
   {
     icon: Heart,
     title: 'Obsessed with accuracy',
-    desc: 'We\'d rather show you fewer findings that are definitely true than 300 items that waste your team\'s time.',
+    desc: "We'd rather show you fewer findings that are definitely true than 300 items that waste your team's time.",
   },
   {
     icon: Users,
@@ -49,14 +49,22 @@ const fadeUp = {
 export default function AboutContent() {
   return (
     <>
-      {/* Hero */}
-      <section className="relative bg-background pt-36 pb-24 px-6 overflow-hidden">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[radial-gradient(ellipse_at_center,rgba(242,140,40,0.07),transparent_70%)]" />
-        <div className="relative z-10 max-w-4xl mx-auto">
+      {/* Hero — editorial photography */}
+      <section className="relative min-h-[70vh] flex items-center overflow-hidden">
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage:
+              'url(https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1920&q=80)',
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#1a1108]/90 via-[#1a1108]/75 to-[#1a1108]/40" />
+
+        <div className="relative z-10 max-w-4xl mx-auto px-6 pt-28 pb-20">
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-secondary text-xs uppercase tracking-[0.2em] font-semibold mb-6"
+            className="text-[#c9a85c] text-xs uppercase tracking-[0.2em] font-semibold mb-6"
           >
             Our Story
           </motion.p>
@@ -64,28 +72,28 @@ export default function AboutContent() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="font-serif text-5xl sm:text-6xl md:text-7xl text-on-surface leading-[1.08] mb-8 tracking-tight"
+            className="font-serif text-5xl sm:text-6xl md:text-7xl text-[#f5f0e8] leading-[1.08] mb-8 tracking-tight"
           >
-            We Believe Every Website
+            We Believe Every
             <br />
-            <span className="bg-gradient-to-r from-primary to-primary-container bg-clip-text text-transparent">
-              Deserves Expert SEO
-            </span>
+            Website Deserves
+            <br />
+            <span className="italic text-[#c9a85c]">Expert SEO.</span>
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-xl text-on-surface-muted max-w-2xl leading-relaxed"
+            className="text-xl text-[#c8bfb0] max-w-2xl leading-relaxed"
           >
-            Expert SEO analysis used to cost $5,000–$15,000 from agencies — and the deliverable was
-            often a PDF full of screenshots and vague recommendations. We built something better.
+            Expert SEO analysis used to cost $5,000–$15,000 from agencies — and the deliverable
+            was often a PDF full of screenshots and vague recommendations. We built something better.
           </motion.p>
         </div>
       </section>
 
       {/* Our Story */}
-      <section className="bg-surface-low py-24 px-6">
+      <section className="bg-surface-low py-28 px-6">
         <div className="max-w-4xl mx-auto">
           <div className="grid md:grid-cols-2 gap-16 items-center">
             <motion.div {...fadeUp}>
@@ -123,6 +131,31 @@ export default function AboutContent() {
         </div>
       </section>
 
+      {/* Dark authority strip */}
+      <section
+        className="relative py-24 px-6 overflow-hidden"
+        style={{
+          backgroundImage:
+            'url(https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1920&q=80)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        <div className="absolute inset-0 bg-[#0e0c08]/88" />
+        <div className="relative z-10 max-w-4xl mx-auto text-center">
+          <motion.p
+            {...fadeUp}
+            className="font-serif text-2xl md:text-4xl text-[#f5f0e8] leading-relaxed italic"
+          >
+            &ldquo;The difference between a ranking site and an invisible one
+            is rarely luck — it&apos;s data.&rdquo;
+          </motion.p>
+          <motion.p {...fadeUp} transition={{ delay: 0.1 }} className="text-[#c9a85c] text-sm mt-6 uppercase tracking-widest">
+            The WhatSEO Principle
+          </motion.p>
+        </div>
+      </section>
+
       {/* What Makes Us Different */}
       <section className="bg-background py-28 px-6">
         <div className="max-w-6xl mx-auto">
@@ -149,7 +182,7 @@ export default function AboutContent() {
         </div>
       </section>
 
-      {/* Team & Values */}
+      {/* Values */}
       <section className="bg-surface-low py-28 px-6">
         <div className="max-w-5xl mx-auto">
           <motion.div {...fadeUp} className="text-center mb-16">
@@ -198,7 +231,7 @@ export default function AboutContent() {
             </p>
             <Link
               href="/#audit-form"
-              className="inline-flex items-center gap-2 bg-gradient-cta text-on-primary rounded-full px-10 py-4 text-lg font-semibold hover:opacity-90 transition-opacity hover:scale-[1.02] transform"
+              className="inline-flex items-center gap-2 bg-gradient-cta text-white rounded-full px-10 py-4 text-lg font-semibold hover:opacity-90 transition-opacity hover:scale-[1.02] transform"
             >
               Run Your Free Scan
               <ArrowRight className="w-5 h-5" />

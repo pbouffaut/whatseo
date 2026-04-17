@@ -2,11 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import Image from 'next/image';
 import { Menu, X, User } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
+
+// Pages that open with a full-bleed dark photo hero
+const DARK_HERO_PAGES = ['/', '/about', '/how-it-works', '/pricing', '/contact'];
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
@@ -14,6 +17,10 @@ export default function Header() {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const supabase = createClient();
   const router = useRouter();
+  const pathname = usePathname();
+
+  // True only when we're sitting on top of a dark hero section
+  const onDark = !scrolled && DARK_HERO_PAGES.includes(pathname);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -42,13 +49,6 @@ export default function Header() {
     { href: '/contact', label: 'Contact' },
   ];
 
-  const authLinks = [
-    { href: '/dashboard', label: 'Dashboard' },
-    { href: '/onboarding', label: 'Settings' },
-  ];
-
-  const navLinks = user ? authLinks : publicLinks;
-
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
@@ -57,18 +57,31 @@ export default function Header() {
     >
       <nav className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2.5">
-          <Image src="/logo-icon.svg" alt="" width={32} height={32} priority />
-          <span className="text-xl font-bold text-on-surface">
-            What<span className="text-primary">SEO</span><span className="text-on-surface-light text-sm">.ai</span>
+          <Image
+            src={onDark ? '/logo-icon-light.svg' : '/logo-icon.svg'}
+            alt=""
+            width={32}
+            height={32}
+            priority
+            className="transition-all duration-500"
+          />
+          <span className="text-xl font-bold transition-colors duration-500">
+            <span className={onDark ? 'text-[#f5f0e8]' : 'text-on-surface'}>What</span>
+            <span className={onDark ? 'text-[#c9a85c]' : 'text-primary'}>SEO</span>
+            <span className={`text-sm ${onDark ? 'text-[#c8bfb0]' : 'text-on-surface-light'}`}>.ai</span>
           </span>
         </Link>
 
         <div className="hidden md:flex items-center gap-8">
-          {navLinks.map((link) => (
+          {publicLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className="text-sm font-medium text-on-surface-muted hover:text-primary transition-colors"
+              className={`text-sm font-medium transition-colors duration-500 ${
+                onDark
+                  ? 'text-[#c8bfb0] hover:text-[#f5f0e8]'
+                  : 'text-on-surface-muted hover:text-primary'
+              }`}
             >
               {link.label}
             </Link>
@@ -77,20 +90,32 @@ export default function Header() {
 
         {user ? (
           <div className="hidden md:flex items-center gap-4">
-            <Link href="/dashboard" className="flex items-center gap-2 text-sm text-on-surface-muted hover:text-primary transition-colors">
+            <Link
+              href="/dashboard"
+              className={`flex items-center gap-2 text-sm transition-colors duration-500 ${
+                onDark ? 'text-[#c8bfb0] hover:text-[#f5f0e8]' : 'text-on-surface-muted hover:text-primary'
+              }`}
+            >
               <User className="w-4 h-4" />
               {user.email?.split('@')[0]}
             </Link>
             <button
               onClick={handleSignOut}
-              className="text-sm text-on-surface-light hover:text-on-surface transition-colors"
+              className={`text-sm transition-colors duration-500 ${
+                onDark ? 'text-[#a09888] hover:text-[#f5f0e8]' : 'text-on-surface-light hover:text-on-surface'
+              }`}
             >
               Sign Out
             </button>
           </div>
         ) : (
           <div className="hidden md:flex items-center gap-4">
-            <Link href="/auth/login" className="text-sm text-on-surface-muted hover:text-primary transition-colors">
+            <Link
+              href="/auth/login"
+              className={`text-sm transition-colors duration-500 ${
+                onDark ? 'text-[#c8bfb0] hover:text-[#f5f0e8]' : 'text-on-surface-muted hover:text-primary'
+              }`}
+            >
               Sign In
             </Link>
             <a
@@ -104,7 +129,9 @@ export default function Header() {
 
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
-          className="md:hidden text-on-surface-muted hover:text-on-surface"
+          className={`md:hidden transition-colors duration-500 ${
+            onDark ? 'text-[#c8bfb0] hover:text-[#f5f0e8]' : 'text-on-surface-muted hover:text-on-surface'
+          }`}
         >
           {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
@@ -113,7 +140,7 @@ export default function Header() {
       {mobileOpen && (
         <div className="md:hidden glass px-6 py-6">
           <div className="flex flex-col gap-4">
-            {navLinks.map((link) => (
+            {publicLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
@@ -124,12 +151,16 @@ export default function Header() {
               </Link>
             ))}
             {user ? (
-              <button
-                onClick={() => { handleSignOut(); setMobileOpen(false); }}
-                className="text-on-surface-muted hover:text-on-surface text-left py-2"
-              >
-                Sign Out
-              </button>
+              <>
+                <Link href="/dashboard" onClick={() => setMobileOpen(false)}
+                  className="text-on-surface-muted hover:text-primary py-2">Dashboard</Link>
+                <button
+                  onClick={() => { handleSignOut(); setMobileOpen(false); }}
+                  className="text-on-surface-muted hover:text-on-surface text-left py-2"
+                >
+                  Sign Out
+                </button>
+              </>
             ) : (
               <>
                 <Link href="/auth/login" onClick={() => setMobileOpen(false)}

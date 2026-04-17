@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" role="img" aria-label="WhatSEO.ai icon">
+  <title>WhatSEO</title>
+  <defs>
+    <linearGradient id="gold-l" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e8c87a"/>
+      <stop offset="100%" stop-color="#c9a85c"/>
+    </linearGradient>
+  </defs>
+
+  <!-- No background — transparent for use on dark/photo sections -->
+
+  <!-- W-shaped bar chart -->
+  <rect x="13" y="20" width="9" height="52" rx="3" fill="url(#gold-l)"/>
+  <rect x="25" y="45" width="9" height="27" rx="3" fill="#c9a85c" opacity="0.65"/>
+  <rect x="37" y="35" width="9" height="37" rx="3" fill="#c9a85c" opacity="0.85"/>
+  <rect x="49" y="45" width="9" height="27" rx="3" fill="#c9a85c" opacity="0.65"/>
+  <rect x="61" y="20" width="9" height="52" rx="3" fill="url(#gold-l)"/>
+  <!-- Glow cap -->
+  <rect x="61" y="20" width="9" height="6" rx="3" fill="#f5e0a0" opacity="0.8"/>
+
+  <!-- AI sparkle -->
+  <g transform="translate(68,11)">
+    <path d="M0-4.5 1.1-1.1 4.5 0 1.1 1.1 0 4.5-1.1 1.1-4.5 0-1.1-1.1Z"
+      fill="#e8c87a" opacity="1"/>
+  </g>
+</svg>

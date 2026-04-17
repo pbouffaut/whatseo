@@ -7,7 +7,7 @@ import { getPlan, PLANS, type PlanSlug } from '@/lib/plans';
 import Link from 'next/link';
 import { Check, Lock } from 'lucide-react';
 
-type Step = 'details' | 'processing' | 'success';
+type Step = 'details' | 'redirecting' | 'error';
 
 export default function CheckoutPage() {
   const params = useParams();
@@ -46,7 +46,6 @@ export default function CheckoutPage() {
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setStep('processing');
 
     try {
       // Create account if not logged in
@@ -60,37 +59,24 @@ export default function CheckoutPage() {
         if (!data.user) throw new Error('Account creation failed');
       }
 
-      // Simulate payment processing
-      await new Promise((resolve) => setTimeout(resolve, 2500));
+      setStep('redirecting');
 
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
-      // Create subscription
-      const { error: subError } = await supabase.from('subscriptions').insert({
-        user_id: user.id,
-        plan: planSlug,
-        status: 'active',
-        amount_cents: plan.price,
-        interval_months: plan.intervalMonths,
-        expires_at: plan.intervalMonths
-          ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
-          : null,
+      // Create Stripe Checkout session
+      const res = await fetch('/api/checkout/create-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: planSlug }),
       });
-      if (subError) throw subError;
 
-      // Grant audit credit(s)
-      const { error: creditError } = await supabase.from('audit_credits').insert({
-        user_id: user.id,
-        credit_type: plan.intervalMonths ? 'subscription' : 'one_time',
-        status: 'available',
-        amount_cents: plan.price,
-      });
-      if (creditError) throw creditError;
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error ?? 'Failed to create checkout session');
+      }
 
-      setStep('success');
-      setTimeout(() => router.push('/onboarding'), 2000);
+      const { url } = await res.json();
+      if (!url) throw new Error('No checkout URL returned');
+
+      window.location.href = url;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
       setStep('details');
@@ -105,7 +91,7 @@ export default function CheckoutPage() {
     if (error) setError(error.message);
   };
 
-  if (step === 'processing') {
+  if (step === 'redirecting') {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -113,22 +99,8 @@ export default function CheckoutPage() {
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
           </svg>
-          <h2 className="font-serif text-2xl text-warm-white mb-2">Processing your payment...</h2>
-          <p className="text-warm-gray text-sm">This will only take a moment</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (step === 'success') {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 rounded-full bg-[#4aab6a]/10 flex items-center justify-center mx-auto mb-6">
-            <Check className="w-8 h-8 text-[#4aab6a]" />
-          </div>
-          <h2 className="font-serif text-3xl text-warm-white mb-3">Payment successful!</h2>
-          <p className="text-warm-gray">Redirecting you to set up your audit...</p>
+          <h2 className="font-serif text-2xl text-warm-white mb-2">Redirecting to secure checkout…</h2>
+          <p className="text-warm-gray text-sm">You&apos;ll be taken to Stripe to complete payment</p>
         </div>
       </div>
     );
@@ -141,14 +113,14 @@ export default function CheckoutPage() {
         <div className="bg-dark-card rounded-2xl border border-warm-white/8 p-8">
           <p className="text-gold text-sm uppercase tracking-[0.2em] font-semibold mb-3">Your Plan</p>
           <h2 className="font-serif text-2xl text-warm-white mb-2">{plan.name}</h2>
-          <div className="mb-6">
+          <div className="mb-2">
             <span className="text-4xl font-bold text-warm-white">{plan.displayPrice}</span>
             <span className="text-warm-gray ml-1">{plan.period}</span>
           </div>
           {plan.commitment && (
             <p className="text-gold text-sm mb-6">{plan.commitment}</p>
           )}
-          <ul className="space-y-3">
+          <ul className="space-y-3 mt-4">
             {plan.features.map((f) => (
               <li key={f} className="flex items-start gap-2 text-sm text-warm-gray">
                 <Check className="w-4 h-4 text-gold mt-0.5 shrink-0" />
@@ -164,7 +136,7 @@ export default function CheckoutPage() {
           </div>
         </div>
 
-        {/* Checkout Form */}
+        {/* Auth + Checkout */}
         <div>
           <h2 className="font-serif text-2xl text-warm-white mb-6">
             {isLoggedIn ? 'Complete your purchase' : 'Create your account'}
@@ -216,19 +188,14 @@ export default function CheckoutPage() {
               </div>
             )}
 
-            {/* Dummy card fields */}
             <div className="pt-4 border-t border-warm-white/10">
-              <p className="text-sm text-warm-gray mb-4 flex items-center gap-2">
-                <Lock className="w-4 h-4" /> Payment details
-              </p>
-              <input type="text" placeholder="4242 4242 4242 4242" maxLength={19}
-                className="w-full px-5 py-3 rounded-xl bg-warm-white/5 border border-warm-white/10 text-warm-white placeholder-warm-gray-light focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold mb-3" />
-              <div className="grid grid-cols-2 gap-3">
-                <input type="text" placeholder="MM / YY" maxLength={7}
-                  className="px-5 py-3 rounded-xl bg-warm-white/5 border border-warm-white/10 text-warm-white placeholder-warm-gray-light focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold" />
-                <input type="text" placeholder="CVC" maxLength={4}
-                  className="px-5 py-3 rounded-xl bg-warm-white/5 border border-warm-white/10 text-warm-white placeholder-warm-gray-light focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold" />
+              <div className="flex items-center gap-2 text-warm-gray text-sm mb-3">
+                <Lock className="w-4 h-4" />
+                Secure payment via Stripe
               </div>
+              <p className="text-xs text-warm-gray-light">
+                You&apos;ll be redirected to Stripe&apos;s secure checkout. Your payment info is never stored on our servers.
+              </p>
             </div>
 
             {error && <p className="text-[#e05555] text-sm">{error}</p>}
@@ -236,11 +203,11 @@ export default function CheckoutPage() {
             <button type="submit"
               className="w-full py-4 bg-gold text-dark rounded-full font-semibold text-lg hover:bg-gold-light transition-colors mt-4"
             >
-              Pay {plan.displayPrice}
+              Continue to Payment →
             </button>
 
             <p className="text-xs text-warm-gray-light text-center">
-              Encrypted with TLS 1.3. Your payment info is never stored on our servers.
+              Powered by Stripe. 256-bit SSL encryption.
             </p>
           </form>
         </div>

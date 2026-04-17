@@ -50,9 +50,13 @@ export interface SubscriptionRow {
   plan: string;
   status: string;
   amount_cents: number;
-  interval_months: number;
+  interval_months: number | null;
   created_at: string;
   expires_at: string | null;
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
+  current_period_end: string | null;
+  cancel_at_period_end: boolean | null;
 }
 
 export interface CreditRow {
@@ -98,4 +102,19 @@ export interface MonitoringRow {
   next_run_at: string | null;
   last_run_at: string | null;
   last_audit_id: string | null;
+}
+
+export interface PaymentRow {
+  id: string;
+  user_id: string;
+  stripe_payment_intent_id: string | null;
+  stripe_subscription_id: string | null;
+  stripe_customer_id: string | null;
+  stripe_refund_id: string | null;
+  amount_cents: number;
+  currency: string;
+  status: 'succeeded' | 'failed' | 'refunded' | 'pending';
+  plan: string | null;
+  description: string | null;
+  created_at: string;
 }

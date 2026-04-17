@@ -206,14 +206,22 @@ export default function PricingContent() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      {/* Hero */}
-      <section className="relative bg-background pt-36 pb-24 px-6 overflow-hidden">
-        <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-[radial-gradient(ellipse_at_center,rgba(242,140,40,0.07),transparent_70%)]" />
-        <div className="relative z-10 max-w-4xl mx-auto text-center">
+      {/* Hero — editorial photography */}
+      <section className="relative min-h-[60vh] flex items-center overflow-hidden">
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage:
+              'url(https://images.unsplash.com/photo-1497366412874-3415097a27e7?auto=format&fit=crop&w=1920&q=80)',
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#1a1108]/88 via-[#1c1510]/80 to-[#0e0c08]/75" />
+
+        <div className="relative z-10 max-w-4xl mx-auto px-6 pt-28 pb-20 text-center w-full">
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-secondary text-xs uppercase tracking-[0.2em] font-semibold mb-6"
+            className="text-[#c9a85c] text-xs uppercase tracking-[0.2em] font-semibold mb-6"
           >
             Pricing
           </motion.p>
@@ -221,19 +229,17 @@ export default function PricingContent() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="font-serif text-5xl sm:text-6xl md:text-7xl text-on-surface leading-[1.08] mb-8 tracking-tight"
+            className="font-serif text-5xl sm:text-6xl md:text-7xl text-[#f5f0e8] leading-[1.08] mb-8 tracking-tight"
           >
             Transparent Pricing.
             <br />
-            <span className="bg-gradient-to-r from-primary to-primary-container bg-clip-text text-transparent">
-              No Retainers. No Surprises.
-            </span>
+            <span className="italic text-[#c9a85c]">No Retainers. No Surprises.</span>
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-xl text-on-surface-muted max-w-2xl mx-auto leading-relaxed"
+            className="text-xl text-[#c8bfb0] max-w-2xl mx-auto leading-relaxed"
           >
             Agency-quality SEO insights without the agency price tag.
             Pay once for a deep-dive audit, or subscribe for continuous monitoring.
